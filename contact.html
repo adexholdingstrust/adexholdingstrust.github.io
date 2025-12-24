@@ -8,7 +8,8 @@
 <body>
 
 <header>
-  <h1>Contact</h1>
+  <img src="assets/images/logo.png" class="logo" alt="Adex Holdings Trust Logo">
+  <h1>Contact Adex Holdings Trust</h1>
   <nav>
     <a href="index.html">Home</a>
     <a href="properties.html">Rental Properties</a>
@@ -19,12 +20,40 @@
 </header>
 
 <section class="section">
+  <h2>Get in Touch</h2>
+
   <p>
-    For general inquiries regarding Adex Holdings Trust, please contact us via email.
+    For general inquiries regarding Adex Holdings Trust, please contact us using
+    the form below or via the contact information provided.
   </p>
+
   <p>
-    <strong>Email:</strong> tenantservices@adexholdings.com
+    <strong>Email:</strong> tenantservices@adexholdings.com<br>
     <strong>Phone:</strong> 949-415-4633
+  </p>
+
+  <!-- Formspree Form -->
+  <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" class="contact-form">
+    <label>
+      Full Name
+      <input type="text" name="name" required>
+    </label>
+
+    <label>
+      Email Address
+      <input type="email" name="email" required>
+    </label>
+
+    <label>
+      Message
+      <textarea name="message" rows="5" required></textarea>
+    </label>
+
+    <button type="submit">Submit Inquiry</button>
+  </form>
+
+  <p class="note">
+    Submissions are logged and reviewed for security and operational purposes.
   </p>
 </section>
 
