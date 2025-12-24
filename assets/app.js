@@ -6,9 +6,9 @@
 const CFG = {
   // Set this to your Cloudflare Worker base URL after you deploy it, e.g.:
   // WORKER_BASE: "https://adex-trust-security.<your-subdomain>.workers.dev"
-  WORKER_BASE: "",
+  WORKER_BASE: "https://adex-trust-security.tenantservices.workers.dev",
   // If you use Turnstile in the Tenant Portal form, set your public site key here:
-  TURNSTILE_SITE_KEY: ""
+  TURNSTILE_SITE_KEY: "0x4AAAAAACI86yCKmFT74NN1"
 };
 
 function qs(sel, root=document){ return root.querySelector(sel); }
