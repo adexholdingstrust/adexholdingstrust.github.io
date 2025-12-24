@@ -1,0 +1,21 @@
+name = "adex-trust-security"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Bind a KV namespace for availability + logs
+kv_namespaces = [
+  { binding = "ADEX_KV", id = "REPLACE_WITH_YOUR_KV_ID" }
+]
+
+# Allowed origins for CORS (comma-separated).
+# Example:
+# ALLOWED_ORIGINS = "https://<user>.github.io,https://adexholdings.com"
+[vars]
+ALLOWED_ORIGINS = ""
+EMAIL_ON_LOG = "true"
+LOG_MAX_ENTRIES = "200"
+
+# Secrets you must set via wrangler:
+# - ADMIN_TOKEN
+# - EMAIL_TO
+# - EMAIL_FROM

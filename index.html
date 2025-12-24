@@ -1,51 +1,128 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Adex Holdings Trust</title>
-  <link rel="stylesheet" href="assets/css/style.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Adex Holdings Trust | Home</title>
+  <link rel="icon" href="assets/logo.png"/>
+  <link rel="stylesheet" href="assets/styles.css"/>
+  
 </head>
 <body>
-
-<header>
-  <img src="assets/images/logo.png" alt="Adex Holdings Trust Logo" class="logo">
-  <h1>Adex Holdings Trust</h1>
-  <p class="tagline">Live where you love. Love where you live.</p>
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="properties.html">Rental Properties</a>
-    <a href="land.html">Land Holdings</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-  </nav>
-</header>
-
-<section class="section">
-  <h2>Welcome</h2>
-  <p>
-    Adex Holdings Trust is a real estate holding trust managing residential rental
-    properties and strategic land investments across California, Colorado, Nevada,
-    Arizona, Utah, and New Mexico.
-  </p>
-
-  <div class="cards">
+  <div class="container">
+    
+    <div class="nav">
+      <a class="brand" href="index.html" aria-label="Home">
+        <img src="assets/logo.png" alt="Adex Holdings Trust logo" />
+        <div>
+          <div class="title">ADEX HOLDINGS TRUST</div>
+          <div class="subtitle">Residential real estate & land holdings</div>
+        </div>
+      </a>
+      <div class="navlinks">
+        <a href="index.html" style='color:var(--text);border-color:var(--line)'>Home</a>
+        <a href="properties.html" >Rental Properties</a>
+        <a href="lands.html" >Lands</a>
+        <a href="tenant-portal.html" >Tenant Portal</a>
+        <a href="privacy.html" >Privacy</a>
+        <a href="admin.html" >Admin</a>
+      </div>
+    </div>
+    
+    
+  <div class="hero">
     <div class="card">
-      <h3>Residential Rentals</h3>
-      <p>Professionally managed long-term rental properties.</p>
-      <a class="button" href="properties.html">View Rentals</a>
+      <div class="kicker">Adex Holdings Trust</div>
+      <div class="h1">Real estate you can trust.</div>
+      <p class="lead">
+        A family of rental homes and land holdings across the western U.S.
+        Use the links below to explore properties, land parcels, and the tenant portal.
+      </p>
+      <div class="hr"></div>
+      <div class="grid">
+        <div class="tile">
+          <div class="kicker">Explore</div>
+          <h3>Rental Properties</h3>
+          <div class="meta">Townhouse (CO), Condo (CO), and a two-story single family home (CA).</div>
+          <div class="btnRow">
+            <a class="btn primary" href="properties.html">View rentals</a>
+            <a class="btn" href="tenant-portal.html">Tenant Portal</a>
+          </div>
+          <div class="badgeRow">
+            <span class="badge">Rented status shown</span>
+            <span class="badge">Admin toggles</span>
+          </div>
+        </div>
+
+        <div class="tile">
+          <div class="kicker">Explore</div>
+          <h3>Lands</h3>
+          <div class="meta">Parcels in NV, AZ, UT, NM, and CA with Google Maps parcel links.</div>
+          <div class="btnRow">
+            <a class="btn primary" href="lands.html">View lands</a>
+          </div>
+          <div class="badgeRow">
+            <span class="badge">11 parcels</span>
+            <span class="badge">Maps links</span>
+          </div>
+        </div>
+
+        <div class="tile">
+          <div class="kicker">For tenants</div>
+          <h3>Tenant Portal</h3>
+          <div class="meta">Submit maintenance requests or general inquiries (Formspree + CAPTCHA).</div>
+          <div class="btnRow">
+            <a class="btn primary" href="tenant-portal.html">Open portal</a>
+            <a class="btn" href="privacy.html">Privacy Policy</a>
+          </div>
+          <div class="badgeRow">
+            <span class="badge">Spam protection</span>
+            <span class="badge">Fast response</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="notice">
+        <b>Optional security logging:</b> If you deploy the included Cloudflare Worker, the site can log visits (page, referrer, IP as seen by Cloudflare) and email you summaries.
+        This is described in <a href="privacy.html">Privacy</a> and can be disabled anytime.
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Land Investments</h3>
-      <p>Diversified land holdings across multiple western states.</p>
-      <a class="button" href="land.html">View Land</a>
+    <div class="heroLogo">
+      <img src="assets/logo.png" alt="Adex Holdings Trust logo"/>
     </div>
   </div>
-</section>
 
-<footer>
-  <p>© Adex Holdings Trust</p>
-</footer>
+  <div class="sectionTitle">Quick links</div>
+  <div class="grid">
+    <div class="tile">
+      <h3>Rental Properties</h3>
+      <div class="meta">Availability is shown on the rentals page.</div>
+      <div class="btnRow"><a class="btn primary" href="properties.html">Go to rentals</a></div>
+    </div>
+    <div class="tile">
+      <h3>Lands</h3>
+      <div class="meta">Open each parcel area in Google Maps.</div>
+      <div class="btnRow"><a class="btn primary" href="lands.html">Go to lands</a></div>
+    </div>
+    <div class="tile">
+      <h3>Admin</h3>
+      <div class="meta">Set rental availability (admin token recommended).</div>
+      <div class="btnRow"><a class="btn primary" href="admin.html">Open admin</a></div>
+    </div>
+  </div>
 
+    <div class="footer">
+      <div class="hr"></div>
+      <div><b>Contact:</b> <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a> • <a href="tel:+19494154633">949-415-4633</a></div>
+      <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
+    </div>
+  </div>
+
+  <div id="toast" class="notice" style="display:none;position:fixed;right:18px;bottom:18px;max-width:520px"></div>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
 </body>
 </html>
