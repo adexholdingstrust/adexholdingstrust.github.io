@@ -6,12 +6,18 @@
   <meta name="robots" content="noindex,nofollow"/>
   <title>Adex Holdings Trust | Admin</title>
 
-  <!-- ABSOLUTE HARD BLOCK (executes before ANYTHING else) -->
+  <!-- HARD CONTEXT BLOCK: runs before ANY UI, CSS, or JS -->
   <script>
     (function () {
-      const allowedHost = "admin.adexholdings.com";
+      const allowedHost = "adexholdings.com";
+      const allowedPath = "/admin.html";
+      const isHttps = location.protocol === "https:";
 
-      if (location.hostname !== allowedHost) {
+      if (
+        location.hostname !== allowedHost ||
+        location.pathname !== allowedPath ||
+        !isHttps
+      ) {
         document.open();
         document.write(`
           <!doctype html>
@@ -66,12 +72,12 @@
           </html>
         `);
         document.close();
-        throw new Error("Blocked: unauthorized host");
+        throw new Error("Blocked: invalid access context");
       }
     })();
   </script>
 
-  <!-- SAFE TO LOAD ONLY AFTER HOST VALIDATION -->
+  <!-- Assets load ONLY after context validation -->
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
 </head>
@@ -118,7 +124,7 @@
 
 </div>
 
-<!-- ADMIN JS LOADS ONLY IF HOST IS CORRECT -->
+<!-- Admin logic loads ONLY when context is valid -->
 <script src="assets/data.js"></script>
 <script src="assets/app.js"></script>
 
