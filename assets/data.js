@@ -1,78 +1,148 @@
 window.ADEX_DATA = {
-  "trustName": "Adex Holdings Trust",
-  "tagline": "Residential rentals & land holdings across the western U.S.",
-  "contact": {
-    "email": "tenantservices@adexholdings.com",
-    "phone": "949-415-4633"
+  trustName: "Adex Holdings Trust",
+  tagline: "Residential rentals & land holdings across the U.S. and Nigeria",
+  contact: {
+    email: "tenantservices@adexholdings.com",
+    phone: "+1-949-415-4633"
   },
-  "rentals": [
+
+  /* ======================
+     RENTAL PROPERTIES
+  ====================== */
+
+  rentals: [
     {
-      "id": "co-townhouse",
-      "name": "Colorado Townhouse",
-      "type": "Townhouse",
-      "address": "12061 E Hoye Drive, Aurora, CO 80012",
-      "state": "CO",
-      "status": "rented",
-      "details": "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
-      "mapsLink": "https://www.google.com/maps/search/?api=1&query=12061%20E%20Hoye%20Drive%2C%20Aurora%2C%20CO%2080012",
-      "embedQuery": "12061 E Hoye Drive, Aurora, CO 80012"
+      id: "co-townhouse",
+      name: "Colorado Townhouse",
+      type: "Townhouse",
+      address: "12061 E Hoye Drive, Aurora, CO 80012",
+      state: "CO",
+      country: "USA",
+      currency: "USD",
+      status: "rented",
+      details:
+        "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
+      mapsLink:
+        "https://www.google.com/maps/search/?api=1&query=12061+E+Hoye+Drive+Aurora+CO+80012",
+      embedQuery:
+        "12061 E Hoye Drive, Aurora, CO 80012",
+      streetViewEmbed:
+        "https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcFBzN0RHRVhWQ2NBRmQyWHl6Z0pLd3d6dWJmM2ZtbjA2X1ZV!2m2!1d39.699204!2d-104.84129!3f0!4f0!5f1.1924812503605782"
     },
+
     {
-      "id": "co-condo",
-      "name": "Colorado Condo",
-      "type": "Condo",
-      "address": "13950 East Oxford Place, Aurora, CO 80014",
-      "state": "CO",
-      "status": "rented",
-      "details": "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
-      "mapsLink": "https://www.google.com/maps/search/?api=1&query=13950%20East%20Oxford%20Place%2C%20Aurora%2C%20CO%2080014",
-      "embedQuery": "13950 East Oxford Place, Aurora, CO 80014"
+      id: "co-condo",
+      name: "Colorado Condo",
+      type: "Condo",
+      address: "13950 East Oxford Place, Aurora, CO 80014",
+      state: "CO",
+      country: "USA",
+      currency: "USD",
+      status: "rented",
+      details:
+        "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
+      mapsLink:
+        "https://www.google.com/maps/search/?api=1&query=13950+East+Oxford+Place+Aurora+CO+80014",
+      embedQuery:
+        "13950 East Oxford Place, Aurora, CO 80014",
+      streetViewEmbed:
+        "https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcE5fT3dDd2d5Zl9QbU9XbTdwZkt2M19XcUl2QnZzV1d5RVRa!2m2!1d39.66469!2d-104.82283!3f0!4f0!5f1.1924812503605782"
     },
+
     {
-      "id": "ca-sfh-2story",
-      "name": "California Two-Story Single Family Home",
-      "type": "Single Family",
-      "address": "464 Calabrese St, Fallbrook, CA 92028",
-      "state": "CA",
-      "status": "rented",
-      "details": "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
-      "mapsLink": "https://www.google.com/maps/search/?api=1&query=464%20Calabrese%20St%2C%20Fallbrook%2C%20CA%2092028",
-      "embedQuery": "464 Calabrese St, Fallbrook, CA 92028"
+      id: "ca-sfh-2story",
+      name: "California Two-Story Single Family Home",
+      type: "Single Family",
+      address: "464 Calabrese St, Fallbrook, CA 92028",
+      state: "CA",
+      country: "USA",
+      currency: "USD",
+      status: "rented",
+      details:
+        "Two-story single-family home located in Fallbrook, California.",
+      mapsLink:
+        "https://www.google.com/maps/search/?api=1&query=464+Calabrese+St+Fallbrook+CA+92028",
+      embedQuery:
+        "464 Calabrese St, Fallbrook, CA 92028",
+      streetViewEmbed:
+        "https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcFBQY3hNYTRpZ2tnUEJVaEN6bUtSaVZkYkVPSlB4RGxVNE9Z!2m2!1d33.37652!2d-117.24716!3f0!4f0!5f1.1924812503605782"
     },
-  {
-  id: "lagos-sterling-greenbay-apt7",
-  name: "Sterling Cooperative Estate – Apt 7",
-  type: "Apartment",
-  address:
-    "Block E, Apartment 7, Sterling Cooperative Estate (GreenBay), Off Mobil Road, Ilaje, Lagos State, Nigeria 23401",
-  city: "Ilaje",
-  state: "Lagos",
-  country: "Nigeria",
-  status: "rented", // change to "available" when ready
-  details:
-    "Apartment located in Sterling Cooperative Estate (GreenBay), Ilaje, Lagos. Residential cooperative estate with secure access.",
-  mapsLink:
-    "https://www.google.com/maps/search/?api=1&query=Sterling+Cooperative+Estate+GreenBay+Ilaje+Lagos",
-  embedQuery:
-    "Sterling Cooperative Estate GreenBay Ilaje Lagos Nigeria"
-},
-{
-  id: "lagos-ibudo-wura-house63",
-  name: "Ibudo Wura – House 63",
-  type: "House",
-  address:
-    "Block 8, House 63, Ibudo Wura, Lagos State, Nigeria 23401",
-  city: "Lagos",
-  state: "Lagos",
-  country: "Nigeria",
-  status: "available",
-  details:
-    "Single-family residential house located in Ibudo Wura community, Lagos State.",
-  mapsLink:
-    "https://www.google.com/maps/search/?api=1&query=Ibudo+Wura+Lagos+Nigeria",
-  embedQuery:
-    "Ibudo Wura Lagos Nigeria"
-}
+
+    {
+      id: "lagos-sterling-greenbay-apt7",
+      name: "Sterling Cooperative Estate – Apt 7",
+      type: "Apartment",
+      address:
+        "Block E, Apartment 7, Sterling Cooperative Estate (GreenBay), Off Mobil Road, Ilaje, Lagos State, Nigeria 23401",
+      city: "Ilaje",
+      state: "Lagos",
+      country: "Nigeria",
+      currency: "NGN",
+      status: "rented",
+      details:
+        "Apartment located in Sterling Cooperative Estate (GreenBay), Ilaje, Lagos. Secure residential cooperative estate.",
+      mapsLink:
+        "https://www.google.com/maps/search/?api=1&query=Sterling+Cooperative+Estate+GreenBay+Ilaje+Lagos",
+      embedQuery:
+        "Sterling Cooperative Estate GreenBay Ilaje Lagos Nigeria"
+      // Street View often unavailable in this area
+    },
+
+    {
+      id: "lagos-ibudo-wura-house63",
+      name: "Ibudo Wura – House 63",
+      type: "House",
+      address:
+        "Block 8, House 63, Ibudo Wura, Lagos State, Nigeria 23401",
+      city: "Lagos",
+      state: "Lagos",
+      country: "Nigeria",
+      currency: "NGN",
+      status: "available",
+      details:
+        "Single-family residential house located in the Ibudo Wura community, Lagos.",
+      mapsLink:
+        "https://www.google.com/maps/search/?api=1&query=Ibudo+Wura+Lagos+Nigeria",
+      embedQuery:
+        "Ibudo Wura Lagos Nigeria"
+    }
+  ],
+
+  /* ======================
+     LAND HOLDINGS
+  ====================== */
+
+  lands: [
+    {
+      id: "pahrump-nv-232",
+      name: "Pahrump, Nevada",
+      acres: 2.32,
+      state: "NV",
+      county: "Nye County",
+      country: "USA",
+      parcelId: "045-243-39",
+      currency: "USD",
+      links: {
+        maps:
+          "https://www.google.com/maps/search/?api=1&query=7600+Arabian+Way+Pahrump+NV+89061"
+      }
+    },
+
+    {
+      id: "apache-az-464",
+      name: "Apache County, Arizona",
+      acres: 4.64,
+      state: "AZ",
+      county: "Apache County",
+      country: "USA",
+      parcelId: "206-30-098",
+      currency: "USD",
+      legal:
+        "ARIZONA PARK ESTATES UNIT IV Lot 98 Unit 4",
+      links: {
+        maps:
+          "https://www.google.com/maps/search/?api=1&query=Apache+County+AZ+206-30-098"
+      }
 ],
   "lands": [
     {
