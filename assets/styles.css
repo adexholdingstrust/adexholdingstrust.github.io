@@ -367,3 +367,14 @@ textarea{min-height:120px;resize:vertical}
 img{max-width:100%}
 button, input, textarea, select{font: inherit}
 ::selection{background: rgba(217,177,95,.25)}
+
+
+.map-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(255,255,255,.03);
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
