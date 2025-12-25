@@ -6,78 +6,32 @@
   <meta name="robots" content="noindex,nofollow"/>
   <title>Adex Holdings Trust | Admin</title>
 
-  <!-- HARD CONTEXT BLOCK: runs before ANY UI, CSS, or JS -->
+  <!-- HARD CONTEXT BLOCK -->
   <script>
     (function () {
-      const allowedHost = "adexholdings.com";
-      const allowedPath = "/admin.html";
-      const isHttps = location.protocol === "https:";
-
       if (
-        location.hostname !== allowedHost ||
-        location.pathname !== allowedPath ||
-        !isHttps
+        location.protocol !== "https:" ||
+        location.hostname !== "adexholdings.com" ||
+        location.pathname !== "/admin.html"
       ) {
         document.open();
         document.write(`
           <!doctype html>
-          <html lang="en">
-          <head>
-            <meta charset="utf-8"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1"/>
-            <meta name="robots" content="noindex,nofollow"/>
-            <title>Access Restricted</title>
-            <style>
-              body {
-                margin: 0;
-                height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #f5f6f8;
-                font-family: Arial, Helvetica, sans-serif;
-                color: #333;
-              }
-              .box {
-                max-width: 600px;
-                background: #ffffff;
-                padding: 40px;
-                border-radius: 10px;
-                box-shadow: 0 14px 40px rgba(0,0,0,0.1);
-                text-align: center;
-              }
-              h2 {
-                margin-top: 0;
-                margin-bottom: 12px;
-              }
-              p {
-                line-height: 1.6;
-                margin: 10px 0;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="box">
+          <html><head><title>Access Restricted</title></head>
+          <body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial">
+            <div>
               <h2>Access Restricted</h2>
-              <p>
-                This account has no access to this page.
-              </p>
-              <p>
-                Please use the appropriate link to access the required page or
-                contact <strong>Adex Holdings, LLC</strong> or
-                <strong>Adex Holdings Trust</strong>.
-              </p>
+              <p>This account has no access to this page.</p>
+              <p>Please use the appropriate link or contact Adex Holdings, LLC or Adex Holdings Trust.</p>
             </div>
-          </body>
-          </html>
+          </body></html>
         `);
         document.close();
-        throw new Error("Blocked: invalid access context");
+        throw new Error("Blocked context");
       }
     })();
   </script>
 
-  <!-- Assets load ONLY after context validation -->
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
 </head>
@@ -87,45 +41,78 @@
 <div class="container">
 
   <div class="nav">
-    <a class="brand" href="index.html">
+    <div class="brand">
       <img src="assets/logo.png" alt="Adex Holdings Trust logo"/>
       <div>
         <div class="title">ADEX HOLDINGS TRUST</div>
-        <div class="subtitle">Residential rentals & land holdings</div>
-      </div>
-    </a>
-  </div>
-
-  <div class="card" style="margin-top:18px">
-    <div class="kicker">Admin</div>
-    <div class="h1" style="font-size:30px">Availability toggle</div>
-
-    <div id="adminWrap">
-      <p class="lead">
-        Set each rental to <b>Rented</b> or <b>Available</b>.
-      </p>
-
-      <div class="row2">
-        <div>
-          <label for="adminToken">Admin Token</label>
-          <input id="adminToken" placeholder="Paste Bearer token here"/>
-        </div>
-      </div>
-
-      <div id="adminList" class="form"></div>
-
-      <div class="btnRow">
-        <button id="saveBtn" class="btn primary" type="button">
-          Save availability
-        </button>
+        <div class="subtitle">Admin Portal</div>
       </div>
     </div>
+    <div id="whoami" class="badge">Loading identity…</div>
+  </div>
+
+  <div id="maintenanceBanner" class="notice danger" style="display:none">
+    🚨 Maintenance Mode Active — Admin actions are disabled.
+  </div>
+
+  <div class="card">
+    <div class="kicker">Admin</div>
+    <div class="h1">Rental Availability</div>
+    <div id="adminList" class="form"></div>
+    <div class="btnRow">
+      <button id="saveBtn" class="btn primary">Save availability</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kicker">Audit</div>
+    <div class="h1">Admin Activity</div>
+    <table class="table" id="auditTable">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 
 </div>
 
-<!-- Admin logic loads ONLY when context is valid -->
 <script src="assets/data.js"></script>
+<script>
+(async function () {
+  const api = "https://YOUR-WORKER-URL";
+
+  // Identity
+  const who = await fetch(api + "/whoami").then(r => r.json());
+  document.getElementById("whoami").textContent = `Logged in as ${who.email}`;
+
+  // Maintenance lock
+  if (who.maintenance === true) {
+    document.getElementById("maintenanceBanner").style.display = "block";
+    document.getElementById("saveBtn").disabled = true;
+  }
+
+  // Audit log
+  const audit = await fetch(api + "/admin/audit").then(r => r.json());
+  const tbody = document.querySelector("#auditTable tbody");
+  audit.log.forEach(e => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${e.ts}</td>
+      <td>${e.email}</td>
+      <td>${e.action}</td>
+      <td>${e.details || ""}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+})();
+</script>
+
 <script src="assets/app.js"></script>
 
 </body>
