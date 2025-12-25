@@ -303,7 +303,7 @@ window.ADEX_DATA = {
       county: "Valencia County",
       country: "USA",
       currency: "USD",
-      parcelId: "APN 1015029264264141100",
+      parcelId: "Recorder ID 101-502-926-426-4141100",
       embedQuery: "Rio Grande Estates Valencia County NM",
       center: [-106.7952, 34.8031],
       links: {
