@@ -4,34 +4,44 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Adex Holdings Trust | Admin</title>
+  <meta name="robots" content="noindex,nofollow"/>
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
-  
-  <meta name="robots" content="noindex,nofollow"/>
 </head>
+
 <body>
-  <div class="container">
-    
-    <div class="nav">
-      <a class="brand" href="index.html" aria-label="Home">
-        <img src="assets/logo.png" alt="Adex Holdings Trust logo" />
-        <div>
-          <div class="title">ADEX HOLDINGS TRUST</div>
-          <div class="subtitle">Residential rentals & land holdings</div>
-        </div>
-      </a>
-      <div class="navlinks">
-        <a href="index.html" >About</a>
-        <a href="properties.html" >Rental Properties</a>
-        <a href="lands.html" >Lands</a>
-        <a href="tenant-portal.html" >Tenant Portal</a>
-        <a href="tenant-faq.html" >Tenant FAQ</a>
-        <a href="careers-vendors.html" >Careers / Vendors</a>
-        <a href="privacy.html" >Privacy & Legal</a>
+
+<script>
+  if (location.hostname !== "admin.adexholdings.com") {
+    document.body.innerHTML = `
+      <h2>Restricted Access</h2>
+      <p>This admin interface is only available through the authorized admin portal.</p>
+    `;
+    throw new Error("Unauthorized host");
+  }
+</script>
+
+<div class="container">
+
+  <div class="nav">
+    <a class="brand" href="index.html" aria-label="Home">
+      <img src="assets/logo.png" alt="Adex Holdings Trust logo" />
+      <div>
+        <div class="title">ADEX HOLDINGS TRUST</div>
+        <div class="subtitle">Residential rentals & land holdings</div>
       </div>
+    </a>
+    <div class="navlinks">
+      <a href="index.html">About</a>
+      <a href="properties.html">Rental Properties</a>
+      <a href="lands.html">Lands</a>
+      <a href="tenant-portal.html">Tenant Portal</a>
+      <a href="tenant-faq.html">Tenant FAQ</a>
+      <a href="careers-vendors.html">Careers / Vendors</a>
+      <a href="privacy.html">Privacy & Legal</a>
     </div>
-    
-    
+  </div>
+
   <div class="card" style="margin-top:18px">
     <div class="kicker">Admin</div>
     <div class="h1" style="font-size:30px">Availability toggle</div>
@@ -39,44 +49,79 @@
     <div id="adminGate" class="notice" style="display:none">
       <b>Restricted page.</b> Enter the admin passcode to continue.
       <div class="row2" style="margin-top:12px">
-        <div><label for="adminPasscode">Passcode</label><input id="adminPasscode" placeholder="Enter passcode"/></div>
-        <div style="display:flex;align-items:flex-end"><button id="adminLoginBtn" class="btn primary" type="button">Unlock</button></div>
+        <div>
+          <label for="adminPasscode">Passcode</label>
+          <input id="adminPasscode" placeholder="Enter passcode"/>
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button id="adminLoginBtn" class="btn primary" type="button">Unlock</button>
+        </div>
       </div>
-      <div class="small">This is convenience only. Protect <b>/admin.html</b> with Cloudflare Access for real security.</div>
+      <div class="small">
+        This is convenience only. Real protection is enforced by Cloudflare Access.
+      </div>
     </div>
 
     <div id="adminWrap" style="display:none">
-      <p class="lead">Set each rental to <b>Rented</b> or <b>Available</b>. Use the Cloudflare Worker for shared status across all devices.</p>
+      <p class="lead">
+        Set each rental to <b>Rented</b> or <b>Available</b>. Status is synced via Cloudflare Worker.
+      </p>
+
       <div class="hr"></div>
+
       <div class="row2" style="margin-top:12px">
-        <div><label for="adminToken">Admin Token (Worker mode)</label><input id="adminToken" placeholder="Paste Bearer token here"/></div>
-        <div><label>Save mode</label><div class="code" id="adminMode">Auto</div></div>
+        <div>
+          <label for="adminToken">Admin Token (Worker mode)</label>
+          <input id="adminToken" placeholder="Paste Bearer token here"/>
+        </div>
+        <div>
+          <label>Save mode</label>
+          <div class="code" id="adminMode">Auto</div>
+        </div>
       </div>
+
       <div class="hr"></div>
+
       <div id="adminList" class="form"></div>
-      <div class="btnRow" style="margin-top:12px"><button id="saveBtn" class="btn primary" type="button">Save availability</button></div>
+
+      <div class="btnRow" style="margin-top:12px">
+        <button id="saveBtn" class="btn primary" type="button">
+          Save availability
+        </button>
+      </div>
     </div>
   </div>
 
-    
-    <div class="footer">
-      <div class="hr"></div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between">
-        <div>
-          <div><b>Adex Holdings Trust</b></div>
-          <div class="small">Email: <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a> • Phone: <a href="tel:+19494154633">949-415-4633</a></div>
-          <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
+  <div class="footer">
+    <div class="hr"></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div>
+        <div><b>Adex Holdings Trust</b></div>
+        <div class="small">
+          Email: <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a>
+          • Phone: <a href="tel:+19494154633">949-415-4633</a>
         </div>
-        <div class="small" style="text-align:right;max-width:520px">
-          <div><a href="privacy.html">Privacy</a> • <a href="privacy.html#terms">Terms</a> • <a href="privacy.html#disclaimer">Disclaimer</a></div>
-          <div>Information on this site is provided for general informational purposes and does not constitute legal or financial advice.</div>
+        <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
+      </div>
+      <div class="small" style="text-align:right;max-width:520px">
+        <div>
+          <a href="privacy.html">Privacy</a> •
+          <a href="privacy.html#terms">Terms</a> •
+          <a href="privacy.html#disclaimer">Disclaimer</a>
+        </div>
+        <div>
+          Information on this site is provided for general informational purposes and does not constitute legal or financial advice.
         </div>
       </div>
     </div>
-    
   </div>
-  <div id="toast" class="notice" style="display:none;position:fixed;right:18px;bottom:18px;max-width:520px"></div>
-  <script src="assets/data.js"></script>
-  <script src="assets/app.js"></script>
+
+</div>
+
+<div id="toast" class="notice" style="display:none;position:fixed;right:18px;bottom:18px;max-width:520px"></div>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+
 </body>
 </html>
