@@ -259,7 +259,7 @@ function ensureFilterBar(hostId, items, kind) {
   // kind: "rentals" | "lands"
   const host = qs(hostId);
   if (!host) return null;
-
+   
   // Insert filter bar if not present
   let bar = qs(".filterBar", host.parentElement);
   if (!bar) {
@@ -611,20 +611,41 @@ function renderLandsPage() {
 
   const controls = ensureFilterBar(host.id ? `#${host.id}` : "#landList", window.ADEX_DATA.lands, "lands");
 
+   // Add acreage hint ONCE (outside applyFilter)
+if (controls && !controls.bar.querySelector(".acreHint")) {
+  const hint = document.createElement("div");
+  hint.className = "small acreHint";
+  hint.style.opacity = ".75";
+  hint.textContent =
+    "Acreage filters are optional. Leave blank to view all parcels.";
+  controls.bar.appendChild(hint);
+}
+
   const applyFilter = () => {
     const country = controls?.countrySel?.value || "ALL";
     const county = controls?.countySel?.value || "ALL";
-    const minA = controls?.acreMin?.value ? Number(controls.acreMin.value) : null;
-    const maxA = controls?.acreMax?.value ? Number(controls.acreMax.value) : null;
+const minA =
+  controls?.acreMin?.value !== "" && controls?.acreMin?.value != null
+    ? Number(controls.acreMin.value)
+    : null;
+
+const maxA =
+  controls?.acreMax?.value !== "" && controls?.acreMax?.value != null
+    ? Number(controls.acreMax.value)
+    : null;
 
 
-    const items = window.ADEX_DATA.lands.filter(l => {
-      if (country !== "ALL" && l.country !== country) return false;
-      if (county !== "ALL" && l.county !== county) return false;
-      if (minA != null && l.acres != null && l.acres < minA) return false;
-      if (maxA != null && l.acres != null && l.acres > maxA) return false;
-      return true;
-    });
+const items = window.ADEX_DATA.lands.filter(l => {
+  if (country !== "ALL" && l.country !== country) return false;
+  if (county !== "ALL" && l.county !== county) return false;
+
+  // Acres filter (OPTIONAL)
+  if (minA !== null && Number.isFinite(l.acres) && l.acres < minA) return false;
+  if (maxA !== null && Number.isFinite(l.acres) && l.acres > maxA) return false;
+
+  return true;
+});
+
 
     draw(items);
     injectSchemaJsonLd(items, "lands");
