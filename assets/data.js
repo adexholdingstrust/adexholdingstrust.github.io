@@ -141,7 +141,7 @@ window.ADEX_DATA = {
       links: {
         maps: "https://www.google.com/maps?q=7600+Arabian+Way+Pahrump+NV+89061"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://nyenv-assessor.devnetwedge.com/parcel/view/04524339/2026", zoning: null, assessedValue: null },
       geo: null
     },
 
@@ -159,7 +159,7 @@ window.ADEX_DATA = {
       links: {
         maps: "https://www.google.com/maps?q=Apache+County+AZ+206-30-098"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://eagleassessor.co.apache.az.us/assessor/taxweb/account.jsp?guest=true&accountNum=R0042800", zoning: null, assessedValue: null },
       geo: null
     },
 
@@ -197,7 +197,7 @@ window.ADEX_DATA = {
         parcelPdf: "https://elko-search.gsacorp.io/platmaps/Bk007/007-12Q.pdf",
         maps: "https://www.google.com/maps?q=Elko+County+NV+007-12Q-011"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://elko-search.gsacorp.io/parcel/00712Q011", zoning: null, assessedValue: null },
       geo: null
     },
 
@@ -216,7 +216,7 @@ window.ADEX_DATA = {
         parcelPdf: "https://elko-search.gsacorp.io/platmaps/Bk010/010-81H.pdf",
         maps: "https://www.google.com/maps?q=Elko+County+NV+010-81H-024"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://elko-search.gsacorp.io/parcel/01081H024", zoning: null, assessedValue: null },
       geo: null
     },
 
@@ -234,7 +234,7 @@ window.ADEX_DATA = {
       links: {
         maps: "https://www.google.com/maps?q=Garden+Valley+Ranchos+UT+84753"
       },
-      assessor: { deepLink: "https://eagleweb.ironcounty.net/eaglesoftware/eagleweb/viewDoc.jsp?node=DOC2230S488", zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://eagleweb.ironcounty.net/eaglesoftware/taxweb/account.jsp?accountNum=0503376", zoning: null, assessedValue: null },
       geo: null
     },
 
@@ -252,7 +252,7 @@ window.ADEX_DATA = {
       links: {
         maps: "https://www.google.com/maps?q=Modena+UT"
       },
-      assessor: { deepLink: "https://eagleweb.ironcounty.net/eaglesoftware/eagleweb/viewDoc.jsp?node=DOC2171S225", zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://eagleweb.ironcounty.net/eaglesoftware/taxweb/account.jsp?accountNum=0331246", zoning: null, assessedValue: null },
       geo: null
     },
 
@@ -271,7 +271,7 @@ window.ADEX_DATA = {
       links: {
         maps: "https://maps.app.goo.gl/zVqjSQW6rqFQSiB47"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://portal.assessor.lacounty.gov/parceldetail/3344011068", zoning: null, assessedValue: null },
       geo: null
     },
 
@@ -290,7 +290,7 @@ window.ADEX_DATA = {
       links: {
         maps: "https://maps.app.goo.gl/dMrgtdRDRggyzGbN6"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://portal.assessor.lacounty.gov/parceldetail/3322023014", zoning: null, assessedValue: null },
       geo: null
     },
 
