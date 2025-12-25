@@ -23,14 +23,15 @@ const CFG = {
  * - no Access redirect explosions
  */
 async function apiFetch(path, options = {}) {
-  return fetch(path, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    ...options
-  });
+return fetch(path, {
+  credentials: "include",
+  redirect: "manual", // ⬅️ THIS IS KEY
+  headers: {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  },
+  ...options
+});
 }
 
 /* ---------- DOM HELPERS ---------- */
