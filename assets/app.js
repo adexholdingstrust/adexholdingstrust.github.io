@@ -1,15 +1,20 @@
 /* =========================================================
    ADEX HOLDINGS TRUST — app.js (CLOUDFLARE ACCESS SAFE)
-   FINAL + PUBLIC PAGES PATCH (FILTERS + CAROUSELS + SEO)
+   FINAL + PUBLIC PAGES PATCH (UPGRADED)
 ========================================================= */
 
 const CFG = {
   WORKER_BASE: "/api",
 
-  // OPTIONAL (only needed if you want Google Places Photos API)
-  // 1) set window.ADEX_PLACES_API_KEY = "YOUR_KEY" before app.js loads (recommended)
-  // 2) set googlePlaceId on properties you want photos for
-  PLACES_KEY: () => (window.ADEX_PLACES_API_KEY || "")
+  // Optional (only needed if you want Google Places Photos, Static Maps with key, etc.)
+  GOOGLE_MAPS_KEY: "",     // e.g. "AIza..."
+  GOOGLE_PLACES_KEY: "",   // e.g. "AIza..."
+
+  // Optional (only needed for interactive parcel overlays + clustering map)
+  MAPBOX_TOKEN: "",        // e.g. "pk.eyJ..."
+  MAPBOX_STYLE_STREETS: "mapbox://styles/mapbox/streets-v12",
+  MAPBOX_STYLE_SAT: "mapbox://styles/mapbox/satellite-streets-v12",
+  MAPBOX_STYLE_TERRAIN: "mapbox://styles/mapbox/outdoors-v12"
 };
 
 /* =======================
@@ -41,145 +46,97 @@ function notify(msg, bad = false) {
   window.__toastTimer = setTimeout(() => (t.style.display = "none"), 4000);
 }
 
+function uniq(arr) {
+  return [...new Set((arr || []).filter(Boolean))];
+}
+
 function currencySymbol(code) {
-  if (code === "NGN") return "₦";
-  return "$";
+  return code === "NGN" ? "₦" : "$";
 }
 
-function formatMoney(amount, currency) {
-  if (!amount || Number(amount) <= 0) return "";
-  const sym = currencySymbol(currency);
-  // keep it simple; no Intl assumptions for NGN formatting
-  return `${sym}${Number(amount).toLocaleString()}`;
+function formatMoney(amount, currencyCode) {
+  if (amount == null || amount === "") return "—";
+  const sym = currencySymbol(currencyCode);
+  const num = Number(amount);
+  if (!Number.isFinite(num)) return `${sym}${amount}`;
+  return `${sym}${num.toLocaleString()}`;
 }
 
-function rentLabel(rent, currency) {
-  if (!rent || !rent.amount) return "";
-  const amt = formatMoney(rent.amount, currency);
-  if (!amt) return "";
-  const period = rent.period === "year" ? " / year" : " / month";
-  return `${amt}${period}`;
-}
-
-function normalizeCountry(v) {
-  const s = String(v || "").toLowerCase().trim();
-  if (!s) return "";
-  if (s === "us" || s === "usa" || s === "united states" || s === "united states of america") return "USA";
-  if (s === "nigeria" || s === "ng") return "Nigeria";
-  return v;
+function rentLabel(rent) {
+  if (!rent) return "";
+  const period = rent.period === "year" ? "/yr" : "/mo";
+  const amt = rent.amount == null ? "—" : rent.amount;
+  return `${amt === "—" ? "Rent: —" : `Rent: ${amt}`}${period}`;
 }
 
 /* =======================
    LAZY LOADING
 ======================= */
 
-function setupLazyLoading() {
-  const els = qsa("[data-lazy-src], [data-lazy-iframe]");
-  if (!els.length) return;
-
+function setupLazy() {
   const io = new IntersectionObserver(
     entries => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        const el = e.target;
+      entries.forEach(ent => {
+        if (!ent.isIntersecting) return;
+        const el = ent.target;
 
-        const imgSrc = el.getAttribute("data-lazy-src");
-        if (imgSrc) {
-          el.setAttribute("src", imgSrc);
-          el.removeAttribute("data-lazy-src");
+        // Lazy images
+        if (el.tagName === "IMG" && el.dataset.src) {
+          el.src = el.dataset.src;
+          el.removeAttribute("data-src");
         }
 
-        const ifSrc = el.getAttribute("data-lazy-iframe");
-        if (ifSrc) {
-          el.setAttribute("src", ifSrc);
-          el.removeAttribute("data-lazy-iframe");
+        // Lazy iframes
+        if (el.tagName === "IFRAME" && el.dataset.src) {
+          el.src = el.dataset.src;
+          el.removeAttribute("data-src");
         }
 
         io.unobserve(el);
       });
     },
-    { rootMargin: "200px 0px" }
+    { rootMargin: "300px" }
   );
 
-  els.forEach(el => io.observe(el));
+  qsa("img[data-src], iframe[data-src]").forEach(el => io.observe(el));
 }
 
 /* =======================
    MAP HELPERS (PUBLIC)
-   - No API key required.
-   - Use OSM static map for thumbnails (free).
-   - Use Google embed for interactive map.
+   - fallback chain: Street View -> satellite -> static map
 ======================= */
 
-function osmStaticMap(query) {
-  // free static map provider; good enough for thumbnails
+function googleStaticMap(query, maptype = "roadmap") {
+  // Works without a key sometimes, but Google may rate-limit.
+  // If you provide a key, it becomes reliable.
+  const base = "https://maps.googleapis.com/maps/api/staticmap";
+  const q = encodeURIComponent(query);
+  const keyPart = CFG.GOOGLE_MAPS_KEY ? `&key=${encodeURIComponent(CFG.GOOGLE_MAPS_KEY)}` : "";
+  return `${base}?center=${q}&zoom=15&size=900x520&maptype=${maptype}&markers=color:red|${q}${keyPart}`;
+}
+
+function osmStaticFallback(query) {
+  // Keyless fallback (OpenStreetMap static render)
+  // Note: public tile endpoints can rate-limit; this is best-effort.
   return `https://staticmap.openstreetmap.de/staticmap.php?center=${encodeURIComponent(
     query
-  )}&zoom=14&size=640x360&maptype=mapnik&markers=${encodeURIComponent(query)},red-pushpin`;
+  )}&zoom=14&size=900x520&markers=${encodeURIComponent(query)},red-pushpin`;
 }
 
-function googleMapEmbed(query, mapType = "m") {
-  // m=map, k=satellite
-  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&t=${encodeURIComponent(
-    mapType
-  )}&output=embed`;
+function mapEmbedSrc(query) {
+  // Keyless embed
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
 }
 
-function mapEmbedIframe(query, mapType = "m") {
-  return `
-    <iframe
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade"
-      data-lazy-iframe="${googleMapEmbed(query, mapType)}">
-    </iframe>
-  `;
-}
-
-function streetViewEmbedIframe(streetViewEmbedUrl) {
-  // user-provided embed URL; no key needed
-  return `
-    <iframe
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade"
-      data-lazy-iframe="${streetViewEmbedUrl}">
-    </iframe>
-  `;
-}
-
-/* =======================
-   GOOGLE PLACES PHOTOS (OPTIONAL)
-   Works only if:
-   - window.ADEX_PLACES_API_KEY set
-   - property.googlePlaceId set
-   This fetches via Places Photo endpoint using photo_reference.
-======================= */
-
-async function tryFetchPlacesPhotos(placeId, maxPhotos = 6) {
-  const key = CFG.PLACES_KEY();
-  if (!key || !placeId) return [];
-
-  // Places Details to get photo references
-  const url =
-    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(
-      placeId
-    )}&fields=photos&key=${encodeURIComponent(key)}`;
-
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const data = await res.json();
-    const photos = data?.result?.photos || [];
-    const refs = photos.slice(0, maxPhotos).map(p => p.photo_reference).filter(Boolean);
-
-    // Convert refs into photo URLs (no fetch needed; browser loads images)
-    return refs.map(ref =>
-      `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photoreference=${encodeURIComponent(
-        ref
-      )}&key=${encodeURIComponent(key)}`
-    );
-  } catch {
-    return [];
-  }
+function safeImgWithFallbacks(imgEl, fallbacks) {
+  let idx = 0;
+  const tryNext = () => {
+    idx += 1;
+    if (idx >= fallbacks.length) return;
+    imgEl.src = fallbacks[idx];
+  };
+  imgEl.addEventListener("error", tryNext);
+  imgEl.src = fallbacks[0];
 }
 
 /* =======================
@@ -287,115 +244,172 @@ function renderAudit(rows) {
 }
 
 /* =======================
-   FILTER UI (COUNTRY)
-   Works if the page has a container:
-   - #filtersHost (optional)
+   FILTER UI (PUBLIC)
 ======================= */
 
-function uniqueCountries(items) {
-  const set = new Set();
-  items.forEach(it => set.add(normalizeCountry(it.country || "USA") || "USA"));
-  return [...set].sort((a, b) => a.localeCompare(b));
-}
-
-function ensureFilters(hostId, items, onChange) {
+function ensureFilterBar(hostId, items, kind) {
+  // kind: "rentals" | "lands"
   const host = qs(hostId);
   if (!host) return null;
 
-  const countries = uniqueCountries(items);
-  const current = new URL(location.href);
-  const selected = current.searchParams.get("country") || "All";
-
-  host.innerHTML = `
-    <div class="filtersRow">
-      <label>
-        Country:
-        <select id="countryFilter">
-          <option value="All">All</option>
-          ${countries.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")}
-        </select>
-      </label>
-    </div>
-  `;
-
-  const sel = qs("#countryFilter", host);
-  if (sel) {
-    sel.value = selected;
-    sel.addEventListener("change", () => {
-      const v = sel.value;
-      const u = new URL(location.href);
-      if (v === "All") u.searchParams.delete("country");
-      else u.searchParams.set("country", v);
-      history.replaceState({}, "", u.toString());
-      onChange(v);
-    });
+  // Insert filter bar if not present
+  let bar = qs(".filterBar", host.parentElement);
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.className = "filterBar";
+    bar.style.display = "flex";
+    bar.style.gap = "10px";
+    bar.style.flexWrap = "wrap";
+    bar.style.margin = "12px 0 18px";
+    bar.innerHTML = `
+      <select class="countrySel">
+        <option value="ALL">All Countries</option>
+      </select>
+      <select class="countySel" style="display:${kind === "lands" ? "inline-flex" : "none"}">
+        <option value="ALL">All Counties</option>
+      </select>
+      <input class="acreMin" style="display:${kind === "lands" ? "inline-flex" : "none"}" type="number" min="0" step="0.01" placeholder="Min acres" />
+      <input class="acreMax" style="display:${kind === "lands" ? "inline-flex" : "none"}" type="number" min="0" step="0.01" placeholder="Max acres" />
+    `;
+    host.parentElement.insertBefore(bar, host);
   }
 
-  return sel;
-}
+  const countrySel = qs(".countrySel", bar);
+  const countySel = qs(".countySel", bar);
+  const acreMin = qs(".acreMin", bar);
+  const acreMax = qs(".acreMax", bar);
 
-function readCountryFilter() {
-  const u = new URL(location.href);
-  return u.searchParams.get("country") || "All";
-}
+  // Populate options
+  const countries = uniq(items.map(x => x.country));
+  countrySel.innerHTML =
+    `<option value="ALL">All Countries</option>` +
+    countries.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
 
-function applyCountry(items) {
-  const wanted = readCountryFilter();
-  if (wanted === "All") return items;
-  return items.filter(it => normalizeCountry(it.country || "USA") === wanted);
+  if (kind === "lands") {
+    const counties = uniq(items.map(x => x.county));
+    countySel.innerHTML =
+      `<option value="ALL">All Counties</option>` +
+      counties.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  }
+
+  return { bar, countrySel, countySel, acreMin, acreMax };
 }
 
 /* =======================
-   PHOTO + MAP RENDERING
-   - Carousel supports:
-     1) p.photos (your own URLs)
-     2) Google Places Photos (optional)
-     3) fallback images:
-        - if streetViewEmbed exists: show Street View iframe (above map)
-        - else show satellite map iframe (k)
-        - always show normal map iframe
+   SEO STRUCTURED DATA
 ======================= */
 
-function carouselHtml(imgUrls, alt, idPrefix) {
-  if (!imgUrls || !imgUrls.length) return "";
+function injectSchemaJsonLd(items, type) {
+  // type: "rentals" or "lands"
+  const id = `schema-${type}`;
+  const old = qs(`#${id}`);
+  if (old) old.remove();
 
-  const mainId = `${idPrefix}-main`;
+  const script = document.createElement("script");
+  script.type = "application/ld+json";
+  script.id = id;
 
-  const thumbs = imgUrls
-    .slice(0, 8)
-    .map((u, i) => {
-      const safe = escapeHtml(u);
-      return `
-        <button class="thumbBtn" type="button" data-target="${escapeHtml(mainId)}" data-src="${safe}" aria-label="Photo ${i + 1}">
-          <img loading="lazy" data-lazy-src="${safe}" alt="${escapeHtml(alt)} photo ${i + 1}"/>
-        </button>
-      `;
-    })
+  const baseOrg = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: window.ADEX_DATA?.trustName || "Adex Holdings Trust",
+    email: window.ADEX_DATA?.contact?.email || undefined,
+    telephone: window.ADEX_DATA?.contact?.phone || undefined
+  };
+
+  const entries =
+    type === "rentals"
+      ? items.map(p => ({
+          "@type": "Residence",
+          name: p.name,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: p.address || undefined,
+            addressLocality: p.city || undefined,
+            addressRegion: p.state || undefined,
+            addressCountry: p.country || undefined
+          }
+        }))
+      : items.map(l => ({
+          "@type": "Landform",
+          name: l.name,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: l.address || undefined,
+            addressRegion: l.state || undefined,
+            addressCountry: l.country || undefined
+          },
+          additionalProperty: [
+            l.parcelId ? { "@type": "PropertyValue", name: "Parcel ID", value: l.parcelId } : null,
+            l.county ? { "@type": "PropertyValue", name: "County", value: l.county } : null,
+            l.acres != null ? { "@type": "PropertyValue", name: "Acres", value: String(l.acres) } : null
+          ].filter(Boolean)
+        }));
+
+  script.textContent = JSON.stringify(
+    {
+      ...baseOrg,
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: type === "rentals" ? "Rental Properties" : "Land Holdings",
+        itemListElement: entries
+      }
+    },
+    null,
+    2
+  );
+
+  document.head.appendChild(script);
+}
+
+/* =======================
+   PHOTO CAROUSEL (DATA-DRIVEN)
+======================= */
+
+function buildCarouselHtml(photos, alt) {
+  const list = (photos || []).filter(Boolean);
+  if (!list.length) return "";
+
+  const slides = list
+    .map(
+      (u, i) => `
+      <div class="slide" data-i="${i}" style="min-width:100%;max-width:100%;">
+        <img loading="lazy" data-src="${escapeHtml(u)}" alt="${escapeHtml(alt)} photo ${i + 1}" />
+      </div>`
+    )
     .join("");
 
-  const first = escapeHtml(imgUrls[0]);
-
   return `
-    <div class="photoBlock">
-      <img class="photoMain" id="${escapeHtml(mainId)}" loading="lazy" data-lazy-src="${first}" alt="${escapeHtml(alt)}"/>
-      <div class="thumbRow">${thumbs}</div>
+    <div class="carousel" style="position:relative;overflow:hidden;border-radius:16px;">
+      <div class="track" style="display:flex;transition:transform .25s ease;will-change:transform;">
+        ${slides}
+      </div>
+      <button class="carPrev" type="button" aria-label="Previous photo"
+        style="position:absolute;left:10px;top:50%;transform:translateY(-50%);z-index:2;">‹</button>
+      <button class="carNext" type="button" aria-label="Next photo"
+        style="position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:2;">›</button>
     </div>
   `;
 }
 
-function bindCarouselClicks(root = document) {
-  qsa(".thumbBtn", root).forEach(btn => {
-    if (btn.dataset.bound) return;
-    btn.dataset.bound = "true";
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-target");
-      const src = btn.getAttribute("data-src");
-      const main = targetId ? document.getElementById(targetId) : null;
-      if (main && src) {
-        main.setAttribute("src", src);
-        main.removeAttribute("data-lazy-src");
-      }
-    });
+function wireCarousels(scope = document) {
+  qsa(".carousel", scope).forEach(car => {
+    const track = qs(".track", car);
+    const prev = qs(".carPrev", car);
+    const next = qs(".carNext", car);
+    if (!track || !prev || !next) return;
+
+    let i = 0;
+    const slides = qsa(".slide", track);
+    const max = Math.max(0, slides.length - 1);
+
+    const go = n => {
+      i = Math.max(0, Math.min(max, n));
+      track.style.transform = `translateX(${-i * 100}%)`;
+    };
+
+    prev.addEventListener("click", () => go(i - 1));
+    next.addEventListener("click", () => go(i + 1));
   });
 }
 
@@ -407,11 +421,9 @@ function renderRentals(avail) {
   const host = qs("#rentalsGrid");
   if (!host || !window.ADEX_DATA?.rentals) return;
 
-  const items = applyCountry(window.ADEX_DATA.rentals);
-
   host.innerHTML = "";
 
-  items.forEach(p => {
+  window.ADEX_DATA.rentals.forEach(p => {
     const status = avail[p.id] || p.status || "rented";
     const available = status === "available";
 
@@ -420,8 +432,17 @@ function renderRentals(avail) {
     div.innerHTML = `
       <h3>${escapeHtml(p.name)}</h3>
       <div>${escapeHtml(p.address || "")}</div>
-      <div style="opacity:.8">${escapeHtml(normalizeCountry(p.country || "USA"))}</div>
-      <span class="badge ${available ? "ok" : "bad"}">
+      <div style="opacity:.8;margin-top:4px;">
+        ${escapeHtml(p.country || "")}${p.country ? " • " : ""}${escapeHtml(p.state || "")}
+      </div>
+      ${
+        p.rent
+          ? `<div style="opacity:.85;margin-top:6px;">
+              ${escapeHtml(formatMoney(p.rent.amount, p.currency))}${p.rent.period === "year" ? "/yr" : "/mo"}
+            </div>`
+          : ""
+      }
+      <span class="badge ${available ? "ok" : "bad"}" style="margin-top:8px;display:inline-block;">
         ${available ? "Available" : "Rented"}
       </span>
     `;
@@ -431,192 +452,474 @@ function renderRentals(avail) {
 
 /* =======================
    PROPERTIES PAGE (FULL)
-   Expected host: #propertyList
-   Optional filters host: #filtersHost
 ======================= */
 
-async function renderPropertiesPage(avail) {
-  const host = qs("#propertyList");
+function renderPropertiesPage(avail) {
+  const host = qs("#propertyList") || qs("#propertiesList") || qs("#properties");
   if (!host || !window.ADEX_DATA?.rentals) return;
-
-  // build filters once
-  ensureFilters("#filtersHost", window.ADEX_DATA.rentals, () => {
-    // re-render on change
-    renderPropertiesPage(avail);
-    renderRentals(avail);
-    injectSchemaForRentals();
-    setupLazyLoading();
-    bindCarouselClicks();
-  });
-
-  const items = applyCountry(window.ADEX_DATA.rentals);
 
   host.innerHTML = "";
 
-  for (const p of items) {
-    const status = avail[p.id] || p.status || "rented";
-    const available = status === "available";
-    const q = p.embedQuery || p.address || p.name;
+  const controls = ensureFilterBar(host.id ? `#${host.id}` : "#propertyList", window.ADEX_DATA.rentals, "rentals");
+  const applyFilter = () => {
+    const country = controls?.countrySel?.value || "ALL";
+    const items = window.ADEX_DATA.rentals.filter(p => (country === "ALL" ? true : p.country === country));
+    draw(items);
+    injectSchemaJsonLd(items, "rentals");
+    setupLazy();
+    wireCarousels(host);
+  };
 
-    // Photo sources
-    let photos = Array.isArray(p.photos) ? [...p.photos] : [];
+  const draw = items => {
+    host.innerHTML = "";
 
-    // Optional Places photos if you provided key + placeId
-    if (photos.length < 2 && p.googlePlaceId) {
-      const more = await tryFetchPlacesPhotos(p.googlePlaceId, 6);
-      photos = photos.concat(more);
-    }
+    items.forEach(p => {
+      const status = avail[p.id] || p.status || "rented";
+      const available = status === "available";
+      const q = p.embedQuery || p.address || p.name;
 
-    // Always include a “nice fallback” thumbnail if no photos
-    if (!photos.length) {
-      photos.push(osmStaticMap(q));
-    }
+      const heroImg = document.createElement("img");
+      heroImg.alt = p.name;
+      heroImg.loading = "lazy";
 
-    const rentTxt = rentLabel(p.rent, p.currency);
+      // Fallback chain (no key required):
+      // 1) satellite static map  2) roadmap static  3) osm
+      const fallbacks = [
+        googleStaticMap(q, "satellite"),
+        googleStaticMap(q, "roadmap"),
+        osmStaticFallback(q)
+      ];
+      safeImgWithFallbacks(heroImg, fallbacks);
 
-    const card = document.createElement("div");
-    card.className = "propertyCard";
+      const streetView = p.streetViewEmbed
+        ? `
+          <div class="map" style="margin-top:12px;">
+            <iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+              data-src="${escapeHtml(p.streetViewEmbed)}"></iframe>
+            <div style="opacity:.75;font-size:12px;margin-top:6px;">Street View (when available)</div>
+          </div>
+        `
+        : "";
 
-    const sv = p.streetViewEmbed ? `
-      <div class="mapBlock">
-        <div class="mapTitle">Street View</div>
-        ${streetViewEmbedIframe(p.streetViewEmbed)}
-      </div>
-    ` : "";
+      const carousel = buildCarouselHtml(p.photos, p.name);
 
-    const satellite = `
-      <div class="mapBlock">
-        <div class="mapTitle">Satellite</div>
-        ${mapEmbedIframe(q, "k")}
-      </div>
-    `;
+      const rentText =
+        p.rent
+          ? `${formatMoney(p.rent.amount, p.currency)}${p.rent.period === "year" ? "/yr" : "/mo"}`
+          : "";
 
-    const map = `
-      <div class="mapBlock">
-        <div class="mapTitle">Map</div>
-        ${mapEmbedIframe(q, "m")}
-      </div>
-    `;
+      const card = document.createElement("div");
+      card.className = "propertyCard";
+      card.innerHTML = `
+        <div class="media"></div>
+        <div class="body">
+          <h3>${escapeHtml(p.name)}</h3>
+          <div class="meta">${escapeHtml(p.type)} • ${escapeHtml(p.state || "—")} • ${escapeHtml(p.country || "—")}</div>
+          <div class="addr">${escapeHtml(p.address || "")}</div>
 
-    card.innerHTML = `
-      ${carouselHtml(photos, p.name, `prop-${p.id}`)}
+          ${rentText ? `<div class="meta" style="margin-top:6px;">Rent: ${escapeHtml(rentText)}</div>` : ""}
 
-      <div class="body">
-        <h3>${escapeHtml(p.name)}</h3>
-        <div class="meta">
-          ${escapeHtml(p.type || "Property")}
-          ${p.state ? ` • ${escapeHtml(p.state)}` : ""}
-          ${p.country ? ` • ${escapeHtml(normalizeCountry(p.country))}` : ""}
+          <span class="badge ${available ? "ok" : "bad"}" style="margin-top:10px;display:inline-block;">
+            ${available ? "Available" : "Rented"}
+          </span>
+
+          <p style="margin-top:10px;">${escapeHtml(p.details || "")}</p>
+
+          <a href="${escapeHtml(p.mapsLink || "#")}" target="_blank" rel="noopener">
+            View on Google Maps
+          </a>
         </div>
 
-        <div class="addr">${escapeHtml(p.address || "")}</div>
+        ${streetView}
 
-        ${rentTxt ? `<div class="rentLine"><strong>Rent:</strong> ${escapeHtml(rentTxt)}</div>` : ""}
+        <div class="map" style="margin-top:12px;">
+          <iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            data-src="${escapeHtml(mapEmbedSrc(q))}"></iframe>
+          <div style="opacity:.75;font-size:12px;margin-top:6px;">Map</div>
+        </div>
+      `;
 
-        <span class="badge ${available ? "ok" : "bad"}">
-          ${available ? "Available" : "Rented"}
-        </span>
+      // media area
+      const media = qs(".media", card);
+      if (carousel) {
+        media.innerHTML = carousel;
+      } else {
+        // Use fallback images
+        heroImg.setAttribute("data-src", heroImg.src);
+        heroImg.removeAttribute("src");
+        media.appendChild(heroImg);
+      }
 
-        ${p.details ? `<p>${escapeHtml(p.details)}</p>` : ""}
+      host.appendChild(card);
+    });
+  };
 
-        ${p.mapsLink ? `
-          <a href="${escapeHtml(p.mapsLink)}" target="_blank" rel="noopener">
-            View on Google Maps
-          </a>` : ""}
-      </div>
-
-      <div class="map">
-        ${sv || ""}
-        ${!p.streetViewEmbed ? satellite : ""} 
-        ${map}
-      </div>
-    `;
-
-    host.appendChild(card);
+  if (controls?.countrySel) {
+    controls.countrySel.addEventListener("change", applyFilter);
   }
 
-  setupLazyLoading();
-  bindCarouselClicks(host);
-  injectSchemaForRentals();
+  applyFilter();
 }
 
 /* =======================
    LANDS PAGE (FULL)
-   Expected host: #landList
-   Optional filters host: #filtersHost
+   - Restores land cards
+   - Adds county + acreage filters
+   - Assessor deep links
 ======================= */
 
+function assessorLinkFor(land) {
+  // Use per-parcel override if present
+  if (land.assessor?.deepLink) return land.assessor.deepLink;
+
+  // County-based best-effort templates (you can refine these)
+  const county = (land.county || "").toLowerCase();
+  const state = (land.state || "").toUpperCase();
+  const pid = land.parcelId ? encodeURIComponent(land.parcelId) : "";
+
+  // Examples (replace with your verified endpoints):
+  if (state === "CA" && county.includes("los angeles") && pid) {
+    return `https://portal.assessor.lacounty.gov/parceldetail/${pid}`;
+  }
+  if (state === "NV" && county.includes("nye") && pid) {
+    return `https://nyecounty.net/?s=${pid}`;
+  }
+  // Fallback: Google search
+  if (land.parcelId) {
+    return `https://www.google.com/search?q=${encodeURIComponent(`${land.county} ${land.state} assessor parcel ${land.parcelId}`)}`;
+  }
+  return `https://www.google.com/search?q=${encodeURIComponent(`${land.county} ${land.state} assessor`)}`;
+}
+
 function renderLandsPage() {
-  const host = qs("#landList");
+  const host =
+    qs("#landList") ||
+    qs("#landsList") ||
+    qs("#landsGrid") ||
+    qs("#lands");
+
   if (!host || !window.ADEX_DATA?.lands) return;
 
-  ensureFilters("#filtersHost", window.ADEX_DATA.lands, () => {
-    renderLandsPage();
-    injectSchemaForLands();
-    setupLazyLoading();
+  const controls = ensureFilterBar(host.id ? `#${host.id}` : "#landList", window.ADEX_DATA.lands, "lands");
+
+  const applyFilter = () => {
+    const country = controls?.countrySel?.value || "ALL";
+    const county = controls?.countySel?.value || "ALL";
+    const minA = Number(controls?.acreMin?.value || "");
+    const maxA = Number(controls?.acreMax?.value || "");
+
+    const items = window.ADEX_DATA.lands.filter(l => {
+      if (country !== "ALL" && l.country !== country) return false;
+      if (county !== "ALL" && l.county !== county) return false;
+      if (Number.isFinite(minA) && l.acres != null && Number(l.acres) < minA) return false;
+      if (Number.isFinite(maxA) && l.acres != null && Number(l.acres) > maxA) return false;
+      return true;
+    });
+
+    draw(items);
+    injectSchemaJsonLd(items, "lands");
+    setupLazy();
+  };
+
+  const draw = items => {
+    host.innerHTML = "";
+
+    items.forEach(l => {
+      const q = l.address || `${l.county || ""} ${l.state || ""}`.trim() || l.name;
+
+      const img = document.createElement("img");
+      img.alt = l.name;
+      img.loading = "lazy";
+      const fallbacks = [
+        googleStaticMap(q, "satellite"),
+        googleStaticMap(q, "terrain"),
+        googleStaticMap(q, "roadmap"),
+        osmStaticFallback(q)
+      ];
+      safeImgWithFallbacks(img, fallbacks);
+
+      // Lazy: move to data-src
+      img.setAttribute("data-src", img.src);
+      img.removeAttribute("src");
+
+      const assessor = assessorLinkFor(l);
+      const maps = l.links?.maps || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+
+      const card = document.createElement("div");
+      card.className = "propertyCard";
+      card.innerHTML = `
+        <div class="media"></div>
+        <div class="body">
+          <h3>${escapeHtml(l.name)}</h3>
+          <div class="meta">${escapeHtml(String(l.acres ?? "—"))} acres • ${escapeHtml(l.state || "—")} • ${escapeHtml(l.county || "—")} • ${escapeHtml(l.country || "—")}</div>
+
+          ${l.address ? `<div class="addr">${escapeHtml(l.address)}</div>` : ""}
+
+          <div class="parcel" style="margin-top:10px;">
+            <strong>Parcel ID:</strong> ${escapeHtml(l.parcelId || "—")}<br/>
+            <strong>County:</strong> ${escapeHtml(l.county || "—")}<br/>
+            ${l.legal ? `<strong>Legal:</strong> ${escapeHtml(l.legal)}<br/>` : ""}
+          </div>
+
+          <div style="margin-top:10px;">
+            ${
+              l.links?.parcelPdf
+                ? `<a href="${escapeHtml(l.links.parcelPdf)}" target="_blank" rel="noopener">Parcel Map (PDF)</a><br/>`
+                : ""
+            }
+            <a href="${escapeHtml(maps)}" target="_blank" rel="noopener">View on Google Maps</a><br/>
+            <a href="${escapeHtml(assessor)}" target="_blank" rel="noopener">County Assessor / Parcel Lookup</a>
+          </div>
+        </div>
+
+        <div class="map" style="margin-top:12px;">
+          <iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            data-src="${escapeHtml(mapEmbedSrc(q))}"></iframe>
+          <div style="opacity:.75;font-size:12px;margin-top:6px;">Map</div>
+        </div>
+      `;
+
+      const media = qs(".media", card);
+      media.appendChild(img);
+
+      host.appendChild(card);
+    });
+  };
+
+  if (controls?.countrySel) controls.countrySel.addEventListener("change", applyFilter);
+  if (controls?.countySel) controls.countySel.addEventListener("change", applyFilter);
+  if (controls?.acreMin) controls.acreMin.addEventListener("input", applyFilter);
+  if (controls?.acreMax) controls.acreMax.addEventListener("input", applyFilter);
+
+  applyFilter();
+}
+
+/* =======================
+   INTERACTIVE LANDS MAP (MAPBOX + GEOJSON)
+   - clusters pins (requires land.center or geo centroid)
+   - parcel overlay polygons (requires land.geo)
+   - satellite/terrain toggle
+======================= */
+
+function buildLandGeoJSON(lands) {
+  const feats = [];
+
+  lands.forEach(l => {
+    // 1) Polygon overlay
+    if (l.geo && l.geo.type && l.geo.geometry) {
+      feats.push({
+        type: "Feature",
+        properties: {
+          id: l.id,
+          name: l.name,
+          county: l.county || "",
+          state: l.state || "",
+          acres: l.acres ?? null,
+          parcelId: l.parcelId || ""
+        },
+        geometry: l.geo.geometry
+      });
+      return;
+    }
+
+    // 2) Point pin (requires center)
+    if (Array.isArray(l.center) && l.center.length === 2) {
+      feats.push({
+        type: "Feature",
+        properties: {
+          id: l.id,
+          name: l.name,
+          county: l.county || "",
+          state: l.state || "",
+          acres: l.acres ?? null,
+          parcelId: l.parcelId || ""
+        },
+        geometry: { type: "Point", coordinates: l.center }
+      });
+    }
   });
 
-  const items = applyCountry(window.ADEX_DATA.lands);
+  return { type: "FeatureCollection", features: feats };
+}
 
-  host.innerHTML = "";
+async function initLandsInteractiveMap() {
+  const el = qs("#landsMap");
+  if (!el) return;
 
-  items.forEach(l => {
-    const q = l.address || `${l.county || ""} ${l.state || ""}`.trim() || l.name;
+  if (!CFG.MAPBOX_TOKEN) {
+    el.innerHTML =
+      `<div style="opacity:.75;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:14px;">
+        Mapbox token not set. Add <code>CFG.MAPBOX_TOKEN</code> in <code>assets/app.js</code> to enable interactive parcel overlays.
+      </div>`;
+    return;
+  }
 
-    const currency = l.currency || "USD";
-    const valueTxt = l.value?.amount ? formatMoney(l.value.amount, currency) : "";
+  // Expect mapbox-gl loaded by lands.html (recommended):
+  // <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  // <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  if (!window.mapboxgl) {
+    el.innerHTML =
+      `<div style="opacity:.75;padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:14px;">
+        Mapbox GL not loaded. Add Mapbox script+css to <code>lands.html</code>.
+      </div>`;
+    return;
+  }
 
-    const card = document.createElement("div");
-    card.className = "propertyCard";
+  window.mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
 
-    // Simple carousel for lands: map thumbnail + (optionally) more images later
-    const photos = [osmStaticMap(q)];
+  const lands = window.ADEX_DATA?.lands || [];
+  const fc = buildLandGeoJSON(lands);
 
-    card.innerHTML = `
-      ${carouselHtml(photos, l.name, `land-${l.id}`)}
-
-      <div class="body">
-        <h3>${escapeHtml(l.name)}</h3>
-
-        <div class="meta">
-          ${escapeHtml(String(l.acres ?? "—"))} acres
-          ${l.state ? ` • ${escapeHtml(l.state)}` : ""}
-          ${l.country ? ` • ${escapeHtml(normalizeCountry(l.country))}` : ""}
-        </div>
-
-        ${l.address ? `<div class="addr">${escapeHtml(l.address)}</div>` : ""}
-
-        ${valueTxt ? `<div class="rentLine"><strong>Value:</strong> ${escapeHtml(valueTxt)}</div>` : ""}
-
-        <div class="parcel">
-          <strong>County:</strong> ${escapeHtml(l.county || "—")}<br/>
-          <strong>Parcel ID:</strong> ${escapeHtml(l.parcelId || "—")}<br/>
-          ${l.legal ? `<strong>Legal:</strong> ${escapeHtml(l.legal)}<br/>` : ""}
-          ${l.notes ? `<strong>Notes:</strong> ${escapeHtml(l.notes)}<br/>` : ""}
-        </div>
-
-        ${l.links?.parcelPdf ? `<a href="${escapeHtml(l.links.parcelPdf)}" target="_blank" rel="noopener">Parcel Map (PDF)</a><br/>` : ""}
-        ${l.links?.maps ? `<a href="${escapeHtml(l.links.maps)}" target="_blank" rel="noopener">View on Google Maps</a>` : ""}
-      </div>
-
-      <div class="map">
-        <div class="mapBlock">
-          <div class="mapTitle">Satellite</div>
-          ${mapEmbedIframe(q, "k")}
-        </div>
-        <div class="mapBlock">
-          <div class="mapTitle">Map</div>
-          ${mapEmbedIframe(q, "m")}
-        </div>
-      </div>
-    `;
-
-    host.appendChild(card);
+  const map = new mapboxgl.Map({
+    container: el,
+    style: CFG.MAPBOX_STYLE_STREETS,
+    center: [-115.2, 36.2], // default (you can adjust)
+    zoom: 4
   });
 
-  setupLazyLoading();
-  bindCarouselClicks(host);
-  injectSchemaForLands();
+  // Toggle UI
+  const toggle = document.createElement("div");
+  toggle.style.position = "absolute";
+  toggle.style.top = "12px";
+  toggle.style.right = "12px";
+  toggle.style.zIndex = "5";
+  toggle.style.display = "flex";
+  toggle.style.gap = "8px";
+  toggle.innerHTML = `
+    <button type="button" class="btnMap" data-style="streets">Streets</button>
+    <button type="button" class="btnMap" data-style="sat">Satellite</button>
+    <button type="button" class="btnMap" data-style="terrain">Terrain</button>
+  `;
+  el.style.position = "relative";
+  el.appendChild(toggle);
+
+  toggle.addEventListener("click", e => {
+    const b = e.target.closest(".btnMap");
+    if (!b) return;
+    const s = b.dataset.style;
+    map.setStyle(
+      s === "sat" ? CFG.MAPBOX_STYLE_SAT : s === "terrain" ? CFG.MAPBOX_STYLE_TERRAIN : CFG.MAPBOX_STYLE_STREETS
+    );
+  });
+
+  map.on("load", () => {
+    map.addSource("lands", {
+      type: "geojson",
+      data: fc,
+      cluster: true,
+      clusterRadius: 40,
+      clusterMaxZoom: 12
+    });
+
+    // Cluster circles
+    map.addLayer({
+      id: "clusters",
+      type: "circle",
+      source: "lands",
+      filter: ["has", "point_count"],
+      paint: {
+        "circle-radius": ["step", ["get", "point_count"], 16, 10, 20, 30, 26],
+        "circle-opacity": 0.85
+      }
+    });
+
+    // Cluster count
+    map.addLayer({
+      id: "cluster-count",
+      type: "symbol",
+      source: "lands",
+      filter: ["has", "point_count"],
+      layout: {
+        "text-field": "{point_count_abbreviated}",
+        "text-size": 12
+      }
+    });
+
+    // Unclustered points
+    map.addLayer({
+      id: "unclustered",
+      type: "circle",
+      source: "lands",
+      filter: ["!", ["has", "point_count"]],
+      paint: {
+        "circle-radius": 7,
+        "circle-stroke-width": 1.5,
+        "circle-opacity": 0.9
+      }
+    });
+
+    // Parcel polygon fill (if provided)
+    map.addLayer({
+      id: "parcel-fill",
+      type: "fill",
+      source: "lands",
+      filter: ["==", ["geometry-type"], "Polygon"],
+      paint: {
+        "fill-opacity": 0.18
+      }
+    });
+
+    // Parcel outline
+    map.addLayer({
+      id: "parcel-outline",
+      type: "line",
+      source: "lands",
+      filter: ["==", ["geometry-type"], "Polygon"],
+      paint: {
+        "line-width": 2,
+        "line-opacity": 0.85
+      }
+    });
+
+    // Click cluster to zoom
+    map.on("click", "clusters", e => {
+      const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+      const clusterId = features[0].properties.cluster_id;
+      map.getSource("lands").getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return;
+        map.easeTo({ center: features[0].geometry.coordinates, zoom });
+      });
+    });
+
+    // Click point/polygon to popup
+    const popup = new mapboxgl.Popup({ closeButton: true, closeOnClick: true });
+
+    const showPopup = (e) => {
+      const f = e.features?.[0];
+      if (!f) return;
+      const props = f.properties || {};
+      const id = props.id;
+      const land = (window.ADEX_DATA?.lands || []).find(x => x.id === id);
+      const assessor = land ? assessorLinkFor(land) : "#";
+      const maps = land?.links?.maps || "#";
+
+      popup
+        .setLngLat(e.lngLat)
+        .setHTML(`
+          <div style="min-width:220px;">
+            <b>${escapeHtml(props.name || "")}</b><br/>
+            <span style="opacity:.8">${escapeHtml(props.county || "")}, ${escapeHtml(props.state || "")}</span><br/>
+            <span style="opacity:.85">Acres: ${escapeHtml(String(props.acres ?? "—"))}</span><br/>
+            <span style="opacity:.85">Parcel: ${escapeHtml(props.parcelId || "—")}</span><br/>
+            <div style="margin-top:8px;">
+              <a href="${escapeHtml(maps)}" target="_blank" rel="noopener">Maps</a> •
+              <a href="${escapeHtml(assessor)}" target="_blank" rel="noopener">Assessor</a>
+            </div>
+          </div>
+        `)
+        .addTo(map);
+    };
+
+    map.on("click", "unclustered", showPopup);
+    map.on("click", "parcel-fill", showPopup);
+
+    map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
+    map.on("mouseenter", "unclustered", () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", "unclustered", () => (map.getCanvas().style.cursor = ""));
+    map.on("mouseenter", "parcel-fill", () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", "parcel-fill", () => (map.getCanvas().style.cursor = ""));
+  });
 }
 
 /* =======================
@@ -667,157 +970,25 @@ function renderAdmin(avail) {
 }
 
 /* =======================
-   SEO — SCHEMA.ORG JSON-LD
-======================= */
-
-function upsertJsonLd(id, obj) {
-  let el = document.getElementById(id);
-  if (!el) {
-    el = document.createElement("script");
-    el.type = "application/ld+json";
-    el.id = id;
-    document.head.appendChild(el);
-  }
-  el.textContent = JSON.stringify(obj, null, 2);
-}
-
-function pageUrl(path) {
-  try {
-    const u = new URL(location.href);
-    u.pathname = path;
-    u.search = "";
-    u.hash = "";
-    return u.toString();
-  } catch {
-    return path;
-  }
-}
-
-function injectSchemaForRentals() {
-  if (!window.ADEX_DATA?.rentals) return;
-
-  const items = applyCountry(window.ADEX_DATA.rentals);
-
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": window.ADEX_DATA.trustName,
-    "url": pageUrl("/properties.html"),
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "email": window.ADEX_DATA.contact?.email,
-      "telephone": window.ADEX_DATA.contact?.phone
-    },
-    "hasOfferCatalog": {
-      "@type": "OfferCatalog",
-      "name": "Rental Properties",
-      "itemListElement": items.map(p => {
-        const offer = (p.rent?.amount && p.currency) ? {
-          "@type": "Offer",
-          "priceCurrency": p.currency,
-          "price": String(p.rent.amount),
-          "priceSpecification": {
-            "@type": "UnitPriceSpecification",
-            "priceCurrency": p.currency,
-            "price": String(p.rent.amount),
-            "unitText": p.rent.period === "year" ? "YEAR" : "MONTH"
-          }
-        } : undefined;
-
-        return {
-          "@type": "Offer",
-          "name": p.name,
-          ...(offer ? { "itemOffered": {
-            "@type": "Accommodation",
-            "name": p.name,
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": p.address || "",
-              "addressRegion": p.state || "",
-              "addressLocality": p.city || "",
-              "addressCountry": normalizeCountry(p.country || "USA")
-            }
-          },
-          ...offer } : {
-            "itemOffered": {
-              "@type": "Accommodation",
-              "name": p.name,
-              "address": {
-                "@type": "PostalAddress",
-                "streetAddress": p.address || "",
-                "addressRegion": p.state || "",
-                "addressLocality": p.city || "",
-                "addressCountry": normalizeCountry(p.country || "USA")
-              }
-            }
-          })
-        };
-      })
-    }
-  };
-
-  upsertJsonLd("adex-jsonld", schema);
-}
-
-function injectSchemaForLands() {
-  if (!window.ADEX_DATA?.lands) return;
-
-  const items = applyCountry(window.ADEX_DATA.lands);
-
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "Land Holdings",
-    "url": pageUrl("/lands.html"),
-    "isPartOf": {
-      "@type": "Organization",
-      "name": window.ADEX_DATA?.trustName || "Adex Holdings Trust"
-    },
-    "mainEntity": items.map(l => ({
-      "@type": "Place",
-      "name": l.name,
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": l.address || "",
-        "addressRegion": l.state || "",
-        "addressCountry": normalizeCountry(l.country || "USA")
-      },
-      "additionalProperty": [
-        l.county ? { "@type": "PropertyValue", "name": "County", "value": l.county } : null,
-        l.parcelId ? { "@type": "PropertyValue", "name": "Parcel ID", "value": l.parcelId } : null,
-        (typeof l.acres === "number") ? { "@type": "PropertyValue", "name": "Acres", "value": String(l.acres) } : null
-      ].filter(Boolean)
-    }))
-  };
-
-  upsertJsonLd("adex-jsonld", schema);
-}
-
-/* =======================
    INIT
 ======================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Ensure countries normalized (safe)
-  if (window.ADEX_DATA?.rentals) {
-    window.ADEX_DATA.rentals.forEach(p => (p.country = normalizeCountry(p.country || "USA")));
-  }
-  if (window.ADEX_DATA?.lands) {
-    window.ADEX_DATA.lands.forEach(l => (l.country = normalizeCountry(l.country || "USA")));
-  }
-
   const availability = await fetchAvailability();
 
+  // admin + simple public
   renderRentals(availability);
   renderAdmin(availability);
 
-  // Full pages (only render if the host exists)
-  await renderPropertiesPage(availability);
+  // full public pages
+  renderPropertiesPage(availability);
   renderLandsPage();
+
+  // interactive lands map if lands.html provides <div id="landsMap"></div>
+  initLandsInteractiveMap().catch(() => {});
 
   await loadWhoAmI();
   await loadAudit();
 
-  setupLazyLoading();
-  bindCarouselClicks();
+  setupLazy();
 });
