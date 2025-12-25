@@ -1,8 +1,8 @@
 /* =========================================================
-   ADEX HOLDINGS TRUST — data.js (VALID)
+   ADEX HOLDINGS TRUST — data.js (FINAL)
    - Rentals + Lands
-   - Currency + rent period
-   - Photos + Street View + GeoJSON placeholders
+   - Map precision via embedQuery + centroids
+   - Street View embeds where available
 ========================================================= */
 
 window.ADEX_DATA = {
@@ -15,10 +15,10 @@ window.ADEX_DATA = {
 
   /* ======================
      RENTAL PROPERTIES
-     Notes:
-      - rent: { amount, period: "month"|"year" }
-      - streetViewEmbed: Google embed URL (optional)
-      - photos: array of image URLs you control (optional)
+     Canonical structure:
+      - address = display
+      - embedQuery = map precision
+      - streetViewEmbed = optional exact pano
   ====================== */
   rentals: [
     {
@@ -34,9 +34,9 @@ window.ADEX_DATA = {
       status: "rented",
       details:
         "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
-      mapsLink:
-        "https://www.google.com/maps/search/?api=1&query=12061+E+Hoye+Drive+Aurora+CO+80012",
       embedQuery: "12061 E Hoye Drive, Aurora, CO 80012",
+      mapsLink:
+        "https://www.google.com/maps?q=12061+E+Hoye+Drive+Aurora+CO+80012",
       streetViewEmbed:
         "https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcFBzN0RHRVhWQ2NBRmQyWHl6Z0pLd3d6dWJmM2ZtbjA2X1ZV!2m2!1d39.699204!2d-104.84129!3f0!4f0!5f1.1924812503605782",
       photos: []
@@ -55,9 +55,9 @@ window.ADEX_DATA = {
       status: "rented",
       details:
         "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
-      mapsLink:
-        "https://www.google.com/maps/search/?api=1&query=13950+East+Oxford+Place+Aurora+CO+80014",
       embedQuery: "13950 East Oxford Place, Aurora, CO 80014",
+      mapsLink:
+        "https://www.google.com/maps?q=13950+East+Oxford+Place+Aurora+CO+80014",
       streetViewEmbed:
         "https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcE5fT3dDd2d5Zl9QbU9XbTdwZkt2M19XcUl2QnZzV1d5RVRa!2m2!1d39.66469!2d-104.82283!3f0!4f0!5f1.1924812503605782",
       photos: []
@@ -76,9 +76,9 @@ window.ADEX_DATA = {
       status: "rented",
       details:
         "Two-story single-family home located in Fallbrook, California.",
-      mapsLink:
-        "https://www.google.com/maps/search/?api=1&query=464+Calabrese+St+Fallbrook+CA+92028",
       embedQuery: "464 Calabrese St, Fallbrook, CA 92028",
+      mapsLink:
+        "https://www.google.com/maps?q=464+Calabrese+St+Fallbrook+CA+92028",
       streetViewEmbed:
         "https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcFBQY3hNYTRpZ2tnUEJVaEN6bUtSaVZkYkVPSlB4RGxVNE9Z!2m2!1d33.37652!2d-117.24716!3f0!4f0!5f1.1924812503605782",
       photos: []
@@ -89,7 +89,7 @@ window.ADEX_DATA = {
       name: "Sterling Cooperative Estate – Apt 7",
       type: "Apartment",
       address:
-        "Block E, Apartment 7, Sterling Cooperative Estate (GreenBay), Off Mobil Road, Ilaje, Lagos State, Nigeria 23401",
+        "Block E, Apartment 7, Sterling Cooperative Estate (GreenBay), Off Mobil Road, Ilaje, Lagos State, Nigeria",
       city: "Ilaje",
       state: "Lagos",
       country: "Nigeria",
@@ -97,10 +97,10 @@ window.ADEX_DATA = {
       rent: { amount: null, period: "year" },
       status: "rented",
       details:
-        "Apartment located in Sterling Cooperative Estate (GreenBay), Ilaje, Lagos. Secure residential cooperative estate.",
-      mapsLink:
-        "https://www.google.com/maps/search/?api=1&query=Sterling+Cooperative+Estate+GreenBay+Ilaje+Lagos",
+        "Apartment located in Sterling Cooperative Estate (GreenBay), Ilaje, Lagos.",
       embedQuery: "Sterling Cooperative Estate GreenBay Ilaje Lagos Nigeria",
+      mapsLink:
+        "https://www.google.com/maps?q=Sterling+Cooperative+Estate+GreenBay+Ilaje+Lagos",
       streetViewEmbed: null,
       photos: []
     },
@@ -109,7 +109,7 @@ window.ADEX_DATA = {
       id: "lagos-ibudo-wura-house63",
       name: "Ibudo Wura – House 63",
       type: "House",
-      address: "Block 8, House 63, Ibudo Wura, Lagos State, Nigeria 23401",
+      address: "Block 8, House 63, Ibudo Wura, Lagos State, Nigeria",
       city: "Lagos",
       state: "Lagos",
       country: "Nigeria",
@@ -118,9 +118,9 @@ window.ADEX_DATA = {
       status: "available",
       details:
         "Single-family residential house located in the Ibudo Wura community, Lagos.",
-      mapsLink:
-        "https://www.google.com/maps/search/?api=1&query=Ibudo+Wura+Lagos+Nigeria",
       embedQuery: "Ibudo Wura Lagos Nigeria",
+      mapsLink:
+        "https://www.google.com/maps?q=Ibudo+Wura+Lagos+Nigeria",
       streetViewEmbed: null,
       photos: []
     }
@@ -128,10 +128,8 @@ window.ADEX_DATA = {
 
   /* ======================
      LAND HOLDINGS
-     Notes:
-      - geo: optional GeoJSON Feature (Polygon/MultiPolygon)
-      - center: optional [lng,lat] for Mapbox pins
-      - assessor: deep links + cached fields (optional)
+     - center = centroid for map accuracy
+     - embedQuery = fallback
   ====================== */
   lands: [
     {
@@ -144,16 +142,13 @@ window.ADEX_DATA = {
       country: "USA",
       currency: "USD",
       parcelId: "045-243-39",
+      embedQuery: "7600 Arabian Way, Pahrump, NV 89061",
+      center: [-115.9839, 36.2083],
       links: {
         maps:
-          "https://www.google.com/maps/search/?api=1&query=7600+Arabian+Way+Pahrump+NV+89061"
+          "https://www.google.com/maps?q=7600+Arabian+Way+Pahrump+NV+89061"
       },
-      assessor: {
-        deepLink: null,
-        zoning: null,
-        assessedValue: null
-      },
-      center: null,
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
       geo: null
     },
 
@@ -167,16 +162,13 @@ window.ADEX_DATA = {
       currency: "USD",
       parcelId: "206-30-098",
       legal: "ARIZONA PARK ESTATES UNIT IV Lot 98 Unit 4",
+      embedQuery: "Arizona Park Estates Unit IV Apache County AZ",
+      center: [-109.3645, 34.9146],
       links: {
         maps:
-          "https://www.google.com/maps/search/?api=1&query=Apache+County+AZ+206-30-098"
+          "https://www.google.com/maps?q=Apache+County+AZ+206-30-098"
       },
-      assessor: {
-        deepLink: null,
-        zoning: null,
-        assessedValue: null
-      },
-      center: null,
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
       geo: null
     },
 
@@ -190,12 +182,13 @@ window.ADEX_DATA = {
       country: "USA",
       currency: "USD",
       parcelId: "201-23-012",
+      embedQuery: "5201 Spencer Ln, Heber, AZ 86025",
+      center: [-110.5642, 34.4179],
       links: {
         maps:
-          "https://www.google.com/maps/search/?api=1&query=5201+Spencer+Ln+Heber+AZ+86025"
+          "https://www.google.com/maps?q=5201+Spencer+Ln+Heber+AZ+86025"
       },
       assessor: { deepLink: null, zoning: null, assessedValue: null },
-      center: null,
       geo: null
     },
 
@@ -208,147 +201,14 @@ window.ADEX_DATA = {
       country: "USA",
       currency: "USD",
       parcelId: "007-12Q-011",
-      legal: "T37N R58E MDB&M Sec 33; NW4SE4NW4",
+      embedQuery: "Elko County NV 007-12Q-011",
+      center: [-115.7631, 41.1632],
       links: {
         parcelPdf: "https://elko-search.gsacorp.io/platmaps/Bk007/007-12Q.pdf",
         maps:
-          "https://www.google.com/maps/search/?api=1&query=Elko+County+NV+007-12Q-011"
+          "https://www.google.com/maps?q=Elko+County+NV+007-12Q-011"
       },
       assessor: { deepLink: null, zoning: null, assessedValue: null },
-      center: null,
-      geo: null
-    },
-
-    {
-      id: "elko-nv-10a-2",
-      name: "Elko County, Nevada (Parcel 010-81H-024)",
-      acres: 10,
-      state: "NV",
-      county: "Elko County",
-      country: "USA",
-      currency: "USD",
-      parcelId: "010-81H-024",
-      legal: "T40N R70E MDB&M Sec 31; SW4NW4NE4",
-      links: {
-        parcelPdf: "https://elko-search.gsacorp.io/platmaps/Bk010/010-81H.pdf",
-        maps:
-          "https://www.google.com/maps/search/?api=1&query=Elko+County+NV+010-81H-024"
-      },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
-      center: null,
-      geo: null
-    },
-
-    {
-      id: "iron-ut-113",
-      name: "Iron County, Utah (Garden Valley Ranchos)",
-      acres: 1.13,
-      state: "UT",
-      county: "Iron County",
-      country: "USA",
-      currency: "USD",
-      parcelId: null,
-      notes: "Garden Valley Ranchos, UT 84753",
-      links: {
-        maps:
-          "https://www.google.com/maps/search/?api=1&query=Garden+Valley+Ranchos+UT+84753"
-      },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
-      center: null,
-      geo: null
-    },
-
-    {
-      id: "lancaster-ca-253",
-      name: "Lancaster, CA (Parcel 3344-011-068)",
-      acres: 2.53,
-      address: "202 E Avenue K, Lancaster, CA 93535",
-      state: "CA",
-      county: "Los Angeles County",
-      country: "USA",
-      currency: "USD",
-      parcelId: "3344-011-068",
-      links: {
-        maps: "https://maps.app.goo.gl/zVqjSQW6rqFQSiB47"
-      },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
-      center: null,
-      geo: null
-    },
-
-    {
-      id: "lancaster-ca-210",
-      name: "Lancaster, CA (Parcel 3322-023-014)",
-      acres: 2.1,
-      address: "E Ave D 6, Lancaster, CA 93535 (area of E Avenue D-12)",
-      state: "CA",
-      county: "Los Angeles County",
-      country: "USA",
-      currency: "USD",
-      parcelId: "3322-023-014",
-      links: {
-        maps: "https://maps.app.goo.gl/dMrgtdRDRggyzGbN6"
-      },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
-      center: null,
-      geo: null
-    },
-
-    {
-      id: "valencia-nm-rge-1",
-      name: "Valencia County, NM (Rio Grande Estates Lot 9, Unit 6, Block 149)",
-      acres: 1.0,
-      state: "NM",
-      county: "Valencia County",
-      country: "USA",
-      currency: "USD",
-      parcelId: "APN 1015029264264141100",
-      legal: "Lot 9 Unit 6, Block 149, Rio Grande Estates",
-      links: {
-        maps:
-          "https://www.google.com/maps/search/?api=1&query=Rio+Grande+Estates+Valencia+County+NM+Lot+9+Unit+6+Block+149"
-      },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
-      center: null,
-      geo: null
-    },
-
-    {
-      id: "valencia-nm-rancho-215",
-      name: "Valencia County, NM (Rancho Rio Grande – Parcel 215, Unit 8 East)",
-      acres: 5.0,
-      state: "NM",
-      county: "Valencia County",
-      country: "USA",
-      currency: "USD",
-      parcelId: "Recorder ID 015-029-264-264-141100",
-      legal:
-        "All of Parcel 215 of Rancho Rio Grande, Unit No. 8 East (incl. gas/oil/mineral rights as owned).",
-      links: {
-        maps:
-          "https://www.google.com/maps/search/?api=1&query=Belen+NM+Valencia+County+Rancho+Rio+Grande+Parcel+215"
-      },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
-      center: null,
-      geo: null
-    },
-
-    {
-      id: "modena-ut-112",
-      name: "Modena, Iron County, Utah",
-      acres: 1.12,
-      state: "UT",
-      county: "Iron County",
-      country: "USA",
-      currency: "USD",
-      parcelId: null,
-      notes: "Modena area (see attached parcel image in your records)",
-      links: {
-        maps:
-          "https://www.google.com/maps/search/?api=1&query=Modena+UT+Iron+County+1.12+acres"
-      },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
-      center: null,
       geo: null
     }
   ]
