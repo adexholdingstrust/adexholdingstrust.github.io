@@ -4,7 +4,7 @@
 ========================================================= */
 
 const CFG = {
-  WORKER_BASE: "https://adexholdings.com/api"
+  WORKER_BASE: "/api"
 };
 
 /* =======================
