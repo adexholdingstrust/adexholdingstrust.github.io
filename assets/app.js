@@ -138,7 +138,15 @@ function safeImgWithFallbacks(imgEl, fallbacks) {
   imgEl.addEventListener("error", tryNext);
   imgEl.src = fallbacks[0];
 }
-
+/* =======================
+   Add Street View photo fallback for houses (Google Maps images)
+======================= */
+function googleStreetViewImage(query) {
+  const base = "https://maps.googleapis.com/maps/api/streetview";
+  const q = encodeURIComponent(query);
+  const key = CFG.GOOGLE_MAPS_KEY ? `&key=${encodeURIComponent(CFG.GOOGLE_MAPS_KEY)}` : "";
+  return `${base}?size=900x520&location=${q}&fov=80&heading=70&pitch=0${key}`;
+}
 /* =======================
    SAFE FETCH (ACCESS)
 ======================= */
@@ -485,6 +493,7 @@ function renderPropertiesPage(avail) {
       // Fallback chain (no key required):
       // 1) satellite static map  2) roadmap static  3) osm
       const fallbacks = [
+        googleStreetViewImage(q),
         googleStaticMap(q, "satellite"),
         googleStaticMap(q, "roadmap"),
         osmStaticFallback(q)
@@ -605,14 +614,15 @@ function renderLandsPage() {
   const applyFilter = () => {
     const country = controls?.countrySel?.value || "ALL";
     const county = controls?.countySel?.value || "ALL";
-    const minA = Number(controls?.acreMin?.value || "");
-    const maxA = Number(controls?.acreMax?.value || "");
+    const minA = controls?.acreMin?.value ? Number(controls.acreMin.value) : null;
+    const maxA = controls?.acreMax?.value ? Number(controls.acreMax.value) : null;
+
 
     const items = window.ADEX_DATA.lands.filter(l => {
       if (country !== "ALL" && l.country !== country) return false;
       if (county !== "ALL" && l.county !== county) return false;
-      if (Number.isFinite(minA) && l.acres != null && Number(l.acres) < minA) return false;
-      if (Number.isFinite(maxA) && l.acres != null && Number(l.acres) > maxA) return false;
+      if (minA != null && l.acres != null && l.acres < minA) return false;
+      if (maxA != null && l.acres != null && l.acres > maxA) return false;
       return true;
     });
 
@@ -706,7 +716,7 @@ function buildLandGeoJSON(lands) {
 
   lands.forEach(l => {
     // 1) Polygon overlay
-    if (l.geo && l.geo.type && l.geo.geometry) {
+    if (l.geo && l.geo.geometry) {
       feats.push({
         type: "Feature",
         properties: {
@@ -722,7 +732,7 @@ function buildLandGeoJSON(lands) {
       return;
     }
 
-    // 2) Point pin (requires center)
+    // 2) Explicit center point
     if (Array.isArray(l.center) && l.center.length === 2) {
       feats.push({
         type: "Feature",
@@ -734,9 +744,30 @@ function buildLandGeoJSON(lands) {
           acres: l.acres ?? null,
           parcelId: l.parcelId || ""
         },
-        geometry: { type: "Point", coordinates: l.center }
+        geometry: {
+          type: "Point",
+          coordinates: l.center
+        }
       });
+      return;
     }
+
+    // 3) Safe fallback point
+    feats.push({
+      type: "Feature",
+      properties: {
+        id: l.id,
+        name: l.name,
+        county: l.county || "",
+        state: l.state || "",
+        acres: l.acres ?? null,
+        parcelId: l.parcelId || ""
+      },
+      geometry: {
+        type: "Point",
+        coordinates: [-115.2, 36.2] // default fallback
+      }
+    });
   });
 
   return { type: "FeatureCollection", features: feats };
@@ -983,9 +1014,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // full public pages
   renderPropertiesPage(availability);
   renderLandsPage();
-
+   
   // interactive lands map if lands.html provides <div id="landsMap"></div>
-  initLandsInteractiveMap().catch(() => {});
+  initLandsInteractiveMap().catch(err => {
+  console.warn("Interactive lands map failed:", err);
+});
 
   await loadWhoAmI();
   await loadAudit();
