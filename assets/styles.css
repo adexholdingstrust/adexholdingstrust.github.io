@@ -1,42 +1,369 @@
-:root{--bg:#0f1115;--card:#171a21;--muted:#9aa3b2;--text:#eef2ff;--gold:#d9b15f;--line:rgba(255,255,255,.08);--ok:#3ddc97;--bad:#ff6b6b}
-*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
-a{color:inherit;text-decoration:none}.container{max-width:1100px;margin:0 auto;padding:24px}
-.nav{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 18px;border:1px solid var(--line);border-radius:16px;background:rgba(23,26,33,.65);backdrop-filter: blur(10px);position:sticky;top:16px;z-index:20}
-.brand{display:flex;gap:12px;align-items:center}.brand img{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:#111}
-.brand .title{font-weight:800;letter-spacing:.08em}.brand .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+/* =========================================================
+   ADEX HOLDINGS TRUST — assets/styles.css (UPDATED)
+   - Better land card separation + image handling
+   - Better map/embed sizing
+   - Cleaner filters (dropdowns / acre inputs)
+   - Adds propertyCard styles used by app.js
+========================================================= */
+
+:root{
+  --bg:#0f1115;
+  --card:#171a21;
+  --card2:#141823;
+  --muted:#9aa3b2;
+  --text:#eef2ff;
+  --gold:#d9b15f;
+  --line:rgba(255,255,255,.09);
+  --line2:rgba(255,255,255,.14);
+  --ok:#3ddc97;
+  --bad:#ff6b6b;
+
+  --shadow: 0 18px 42px rgba(0,0,0,.35);
+  --shadow2: 0 10px 26px rgba(0,0,0,.28);
+  --radius: 18px;
+  --radius2: 14px;
+
+  --focus: rgba(217,177,95,.55);
+}
+
+*{box-sizing:border-box}
+html,body{
+  margin:0;padding:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background: radial-gradient(1200px 700px at 20% -10%, rgba(217,177,95,.10), transparent 55%),
+              radial-gradient(900px 600px at 85% -15%, rgba(61,220,151,.08), transparent 55%),
+              var(--bg);
+  color:var(--text);
+}
+
+a{color:inherit;text-decoration:none}
+a:hover{opacity:.95}
+
+/* Layout */
+.container{max-width:1100px;margin:0 auto;padding:24px}
+
+/* Nav */
+.nav{
+  display:flex;gap:16px;align-items:center;justify-content:space-between;
+  padding:14px 18px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:rgba(23,26,33,.65);
+  backdrop-filter: blur(10px);
+  position:sticky;top:16px;z-index:20;
+  box-shadow: var(--shadow2);
+}
+.brand{display:flex;gap:12px;align-items:center;min-width:240px}
+.brand img{
+  width:44px;height:44px;border-radius:10px;
+  border:1px solid var(--line);
+  background:#111;
+}
+.brand .title{font-weight:900;letter-spacing:.08em}
+.brand .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
 .navlinks{display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-end}
-.navlinks a{padding:10px 12px;border-radius:12px;border:1px solid transparent;color:var(--muted);font-weight:600;font-size:14px}
-.navlinks a:hover{border-color:var(--line);color:var(--text);background:rgba(255,255,255,.03)}
+.navlinks a{
+  padding:10px 12px;border-radius:12px;border:1px solid transparent;
+  color:var(--muted);font-weight:700;font-size:14px;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.navlinks a:hover{
+  border-color:var(--line2);
+  color:var(--text);
+  background:rgba(255,255,255,.03);
+}
+
+/* Hero (index) */
 .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:center;margin-top:18px}
 @media (max-width:860px){.hero{grid-template-columns:1fr}.nav{position:static}}
-.card{border:1px solid var(--line);border-radius:18px;background:rgba(23,26,33,.7);padding:18px}
-.kicker{color:var(--gold);font-weight:800;letter-spacing:.12em;font-size:12px;text-transform:uppercase}
-.h1{font-size:40px;line-height:1.05;margin:10px 0 10px;font-weight:900}
-.lead{color:var(--muted);font-size:16px;line-height:1.5;margin:0}
-.heroLogo{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg, rgba(217,177,95,.10), rgba(255,255,255,.02));padding:20px}
+
+.card{
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  background:rgba(23,26,33,.72);
+  padding:18px;
+  box-shadow: var(--shadow2);
+}
+.kicker{color:var(--gold);font-weight:900;letter-spacing:.12em;font-size:12px;text-transform:uppercase}
+.h1{font-size:40px;line-height:1.05;margin:10px 0 10px;font-weight:950}
+.lead{color:var(--muted);font-size:16px;line-height:1.55;margin:0}
+
+.heroLogo{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:240px;border-radius: var(--radius);
+  border:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(217,177,95,.10), rgba(255,255,255,.02));
+  padding:20px;
+}
 .heroLogo img{width:min(320px,100%);height:auto}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
-@media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}@media (max-width:620px){.grid{grid-template-columns:1fr}}
-.tile{border:1px solid var(--line);border-radius:18px;padding:16px;background:rgba(23,26,33,.7);display:flex;flex-direction:column;gap:10px;min-height:160px}
-.tile h3{margin:0;font-size:18px}.meta{color:var(--muted);font-size:13px;line-height:1.4}
+
+/* Grid used by rentals + lands */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin-top:14px;
+}
+@media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:620px){.grid{grid-template-columns:1fr}}
+
+/* Small tile style used on simple rentals grid */
+.tile{
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  padding:16px;
+  background:rgba(23,26,33,.72);
+  display:flex;flex-direction:column;gap:10px;
+  min-height:160px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.22);
+}
+.tile h3{margin:0;font-size:18px}
+.meta{color:var(--muted);font-size:13px;line-height:1.4}
+
+/* Badges */
 .badgeRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
-.badge{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
-.badge.ok{color:var(--ok);border-color:rgba(61,220,151,.25);background:rgba(61,220,151,.06)}
-.badge.bad{color:var(--bad);border-color:rgba(255,107,107,.25);background:rgba(255,107,107,.06)}
+.badge{
+  font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 10px;border-radius:999px;border:1px solid var(--line);
+  color:var(--muted);
+}
+.badge.ok{color:var(--ok);border-color:rgba(61,220,151,.25);background:rgba(61,220,151,.08)}
+.badge.bad{color:var(--bad);border-color:rgba(255,107,107,.25);background:rgba(255,107,107,.08)}
+
+/* Buttons */
 .btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);font-weight:800;font-size:14px;cursor:pointer}
-.btn:hover{border-color:rgba(217,177,95,.35);background:rgba(217,177,95,.06)}
-.btn.primary{border-color:rgba(217,177,95,.35);background:rgba(217,177,95,.12)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 12px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(255,255,255,.03);
+  color:var(--text);
+  font-weight:900;font-size:14px;cursor:pointer;
+  transition: transform .05s ease, border-color .15s ease, background .15s ease, opacity .15s ease;
+}
+.btn:hover{border-color:rgba(217,177,95,.35);background:rgba(217,177,95,.08)}
+.btn:active{transform: translateY(1px)}
+.btn.primary{border-color:rgba(217,177,95,.35);background:rgba(217,177,95,.14)}
 .btn.disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
-.sectionTitle{margin:22px 0 8px;font-size:22px;font-weight:900}
+
+/* Dividers / footer */
+.sectionTitle{margin:22px 0 8px;font-size:22px;font-weight:950}
 .hr{height:1px;background:var(--line);margin:16px 0}
-.footer{color:var(--muted);font-size:13px;line-height:1.5;margin-top:22px;padding-bottom:24px}
+.footer{color:var(--muted);font-size:13px;line-height:1.55;margin-top:22px;padding-bottom:24px}
 .small{font-size:12px;color:var(--muted)}
-.notice{border-left:3px solid var(--gold);padding:10px 12px;border-radius:12px;background:rgba(217,177,95,.08);border:1px solid rgba(217,177,95,.18);color:var(--muted);font-size:13px;line-height:1.55}
+
+/* Toast/notice */
+.notice{
+  border-left:3px solid var(--gold);
+  padding:10px 12px;border-radius:12px;
+  background:rgba(217,177,95,.08);
+  border:1px solid rgba(217,177,95,.18);
+  color:var(--muted);
+  font-size:13px;line-height:1.55;
+  box-shadow: var(--shadow2);
+}
+
+/* Forms */
 .form{display:grid;gap:12px;margin-top:12px}
-label{font-weight:800;font-size:13px}
-input,textarea,select{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(15,17,21,.7);color:var(--text);outline:none}
+label{font-weight:900;font-size:13px}
+input,textarea,select{
+  width:100%;
+  padding:12px 12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:rgba(15,17,21,.72);
+  color:var(--text);
+  outline:none;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+input:focus,textarea:focus,select:focus{
+  border-color: rgba(217,177,95,.35);
+  box-shadow: 0 0 0 3px rgba(217,177,95,.10);
+  background: rgba(15,17,21,.86);
+}
 textarea{min-height:120px;resize:vertical}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (max-width:620px){.row2{grid-template-columns:1fr}}
-.code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;background:rgba(0,0,0,.25);border:1px solid var(--line);padding:10px 12px;border-radius:12px;color:var(--muted);overflow:auto}
+
+/* Code blocks */
+.code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  font-size:12px;background:rgba(0,0,0,.25);
+  border:1px solid var(--line);
+  padding:10px 12px;border-radius:12px;color:var(--muted);
+  overflow:auto;
+}
+
+/* =========================================================
+   NEW: Filter Bar (used by app.js ensureFilterBar)
+========================================================= */
+.filterBar{
+  border:1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  border-radius: var(--radius);
+  padding:12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.18);
+}
+.filterBar select,
+.filterBar input{
+  max-width: 260px;
+}
+@media (max-width:620px){
+  .filterBar select, .filterBar input{max-width:100%}
+}
+
+/* =========================================================
+   NEW: Property Cards (used by renderPropertiesPage/renderLandsPage)
+========================================================= */
+.propertyCard{
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(700px 240px at 15% 0%, rgba(217,177,95,.10), transparent 55%),
+    radial-gradient(600px 260px at 95% 15%, rgba(61,220,151,.07), transparent 55%),
+    rgba(23,26,33,.74);
+  overflow:hidden;
+  box-shadow: var(--shadow);
+  display:flex;
+  flex-direction:column;
+}
+
+.propertyCard .media{
+  position:relative;
+  width:100%;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  border-bottom:1px solid var(--line);
+}
+
+/* Prevent “broken image” look; give a placeholder background */
+.propertyCard .media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.10));
+}
+
+/* If image fails completely, keep layout clean */
+.propertyCard .media img[alt]{
+  color: transparent;
+}
+
+.propertyCard .body{
+  padding:14px 16px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.propertyCard h3{
+  margin:0;
+  font-size:18px;
+  letter-spacing:.01em;
+}
+
+.propertyCard .addr{
+  color: var(--text);
+  opacity:.95;
+  font-size:13px;
+  line-height:1.35;
+}
+
+.propertyCard .meta{
+  color: var(--muted);
+  font-size:12.5px;
+  line-height:1.35;
+}
+
+.propertyCard .body a{
+  color: var(--gold);
+  font-weight:800;
+  font-size:13px;
+}
+.propertyCard .body a:hover{
+  opacity:1;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.propertyCard p{
+  margin:0;
+  color: var(--muted);
+  font-size:13px;
+  line-height:1.5;
+}
+
+/* Map section inside cards */
+.propertyCard .map{
+  padding: 0 16px 16px;
+}
+.propertyCard iframe{
+  width:100%;
+  height:220px;
+  border:1px solid var(--line);
+  border-radius: var(--radius2);
+  background: rgba(0,0,0,.18);
+}
+
+/* Carousel buttons */
+.carousel button{
+  border:1px solid var(--line);
+  background: rgba(15,17,21,.55);
+  color: var(--text);
+  width:38px;height:38px;
+  border-radius: 12px;
+  cursor:pointer;
+  font-size:22px;
+  line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow: 0 8px 18px rgba(0,0,0,.25);
+}
+.carousel button:hover{
+  border-color: rgba(217,177,95,.35);
+  background: rgba(217,177,95,.12);
+}
+
+/* =========================================================
+   NEW: Lands grid separation / clarity
+   - makes lands feel distinct from rentals
+========================================================= */
+
+/* Apply more breathing room on lands page cards in the grid */
+#landsGrid.grid{
+  gap:18px;
+}
+
+/* Accent stripe to help visually separate land cards */
+#landsGrid .propertyCard{
+  position:relative;
+}
+#landsGrid .propertyCard::before{
+  content:"";
+  position:absolute;
+  left:0;top:0;right:0;
+  height:3px;
+  background: linear-gradient(90deg, rgba(217,177,95,.85), rgba(61,220,151,.55), rgba(255,255,255,.05));
+  opacity:.9;
+}
+
+/* Make land meta / parcel block easier to scan */
+#landsGrid .parcel{
+  border:1px dashed rgba(255,255,255,.10);
+  background: rgba(0,0,0,.10);
+  border-radius: 14px;
+  padding:10px 12px;
+  line-height:1.5;
+}
+
+/* Space links apart */
+#landsGrid .body a{
+  display:inline-block;
+  margin-top:6px;
+}
+
+/* =========================================================
+   Misc quality fixes
+========================================================= */
+img{max-width:100%}
+button, input, textarea, select{font: inherit}
+::selection{background: rgba(217,177,95,.25)}
