@@ -647,10 +647,8 @@ function renderLandsPage() {
         osmStaticFallback(q)
       ];
       safeImgWithFallbacks(img, fallbacks);
+      // keep src intact – browser handles lazy loading
 
-      // Lazy: move to data-src
-      img.setAttribute("data-src", img.src);
-      img.removeAttribute("src");
 
       const assessor = assessorLinkFor(l);
       const maps = l.links?.maps || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
