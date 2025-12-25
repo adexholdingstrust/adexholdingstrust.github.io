@@ -222,14 +222,14 @@ window.ADEX_DATA = {
 
     {
       id: "iron-ut-113",
-      name: "GARDEN VALLEY RANCHOS 5 LOT 1883, GARDEN VALLEY RANCHOS, UNIT 5",
+      name: "Garden Valley Ranchos Lot 1883 Unit 5, Beryl, UT 84714",
       acres: 1.13,
       state: "UT",
       county: "Iron County",
       country: "USA",
       currency: "USD",
       parcelId: "E-1699-0038-0000 ",
-      embedQuery: "Garden Valley Ranchos UT 84753",
+      embedQuery: "Beryl, UT 84714",
       center: [-113.2739, 37.8596],
       links: {
         maps: "https://www.google.com/maps?q=Garden+Valley+Ranchos+UT+84753"
@@ -240,7 +240,7 @@ window.ADEX_DATA = {
 
     {
       id: "modena-ut-112",
-      name: "GARDEN VALLEY RANCHOS 5 LOT: 3872 LOT 3872, GARDEN VALLEY RANCHOS, UNIT 5",
+      name: "Lot 3872 Garden Valley Ranchos #Unit 5, Modena, UT 84753 - Garden Valley Ranchos",
       acres: 1.12,
       state: "UT",
       county: "Iron County",
@@ -302,7 +302,7 @@ window.ADEX_DATA = {
       county: "Valencia County",
       country: "USA",
       currency: "USD",
-      parcelId: "Recorder ID 101-502-926-426-4141100",
+      parcelId: "101-502-926-426-4141100",
       embedQuery: "Rio Grande Estates Valencia County NM",
       center: [-106.7952, 34.8031],
       links: {
@@ -320,7 +320,7 @@ window.ADEX_DATA = {
       county: "Valencia County",
       country: "USA",
       currency: "USD",
-      parcelId: "Recorder ID 015-029-264-264-141100",
+      parcelId: "015-029-264-264-141100",
       embedQuery: "Rancho Rio Grande Belen NM",
       center: [-106.6894, 34.6582],
       links: {
