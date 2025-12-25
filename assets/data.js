@@ -10,7 +10,115 @@ window.ADEX_DATA = {
     phone: "+1-949-415-4633"
   },
 
-  rentals: [ /* (unchanged – omitted here for brevity) */ ],
+  /* ======================
+     RENTAL PROPERTIES (ALL)
+  ====================== */
+  rentals: [
+    {
+      id: "co-townhouse",
+      name: "Colorado Townhouse",
+      type: "Townhouse",
+      address: "12061 E Hoye Drive, Aurora, CO 80012",
+      city: "Aurora",
+      state: "CO",
+      country: "USA",
+      currency: "USD",
+      rent: { amount: null, period: "month" },
+      status: "rented",
+      details:
+        "Townhouse located in Aurora, Colorado. Currently occupied.",
+      embedQuery: "12061 E Hoye Drive, Aurora, CO 80012",
+      mapsLink:
+        "https://www.google.com/maps?q=12061+E+Hoye+Drive+Aurora+CO+80012",
+      streetViewEmbed: "https://www.google.com/maps?q=&layer=c&cbll=39.6988672,-104.8481339&cbp=11,0,0,0,0&output=svembed",
+      photos: []
+    },
+
+    {
+      id: "co-condo",
+      name: "Colorado Condo",
+      type: "Condo",
+      address: "13950 E Oxford Place, Aurora, CO 80014",
+      city: "Aurora",
+      state: "CO",
+      country: "USA",
+      currency: "USD",
+      rent: { amount: null, period: "month" },
+      status: "rented",
+      details:
+        "Condominium located in Aurora, Colorado. Currently occupied.",
+      embedQuery: "13950 E Oxford Place, Aurora, CO 80014",
+      mapsLink:
+        "https://www.google.com/maps?q=13950+E+Oxford+Place+Aurora+CO+80014",
+      streetViewEmbed:
+        "https://www.google.com/maps/embed/v1/streetview?key=YOUR_GOOGLE_MAPS_API_KEY&location=39.6404834,-104.8279822&heading=210&pitch=10&fov=90",
+      photos: []
+    },
+
+    {
+      id: "ca-sfh-fallbrook",
+      name: "Fallbrook Single-Family Home",
+      type: "Single Family",
+      address: "464 Calabrese St, Fallbrook, CA 92028",
+      city: "Fallbrook",
+      state: "CA",
+      country: "USA",
+      currency: "USD",
+      rent: { amount: null, period: "month" },
+      status: "rented",
+      details:
+        "Two-story single-family home located in Fallbrook, California.",
+      embedQuery: "464 Calabrese St, Fallbrook, CA 92028",
+      mapsLink:
+        "https://www.google.com/maps?q=464+Calabrese+St+Fallbrook+CA+92028",
+      streetViewEmbed:
+        "https://www.google.com/maps/place/464+Calabrese+St,+Fallbrook,+CA+92028/@33.3546007,-117.1518621,17z",
+      photos: []
+    },
+
+    {
+      id: "lagos-sterling-greenbay-apt7",
+      name: "Sterling Cooperative Estate – Apartment 7",
+      type: "Apartment",
+      address:
+        "Block E, Apartment 7, Sterling Cooperative Estate (GreenBay), Off Mobil Road, Ilaje, Lagos State, Nigeria",
+      city: "Ilaje",
+      state: "Lagos",
+      country: "Nigeria",
+      currency: "NGN",
+      rent: { amount: null, period: "year" },
+      status: "rented",
+      details:
+        "Apartment located within the Sterling Cooperative Estate (GreenBay)",
+      embedQuery:
+        "Sterling Cooperative Estate GreenBay",
+      mapsLink:
+        "https://www.google.com/maps?q=Sterling+Cooperative+Estate+GreenBay+Ilaje+Lagos",
+      streetViewEmbed: "https://www.google.com/maps/embed/v1/streetview?key=YOUR_GOOGLE_MAPS_API_KEY&location=6.4364709,3.5675633&heading=180&pitch=10&fov=90",
+      photos: []
+    },
+
+    {
+      id: "lagos-ibudo-wura-house63",
+      name: "Ibudo Wura – House 63",
+      type: "House",
+      address:
+        "Block 8, House 63, Ibudo Wura, Lagos State, Nigeria",
+      city: "Lagos",
+      state: "Lagos",
+      country: "Nigeria",
+      currency: "NGN",
+      rent: { amount: null, period: "year" },
+      status: "available",
+      details:
+        "Single-family residential house located in the Ibudo Wura community, Lagos.",
+      embedQuery: "Ibudo Wura Lagos Nigeria",
+      mapsLink:
+        "https://www.google.com/maps?q=Ibudo+Wura+Lagos+Nigeria",
+      streetViewEmbed: null,
+      photos: []
+    }
+  ],
 
   /* ======================
      LAND HOLDINGS (ALL 11)
@@ -113,37 +221,37 @@ window.ADEX_DATA = {
 
     {
       id: "iron-ut-113",
-      name: "Iron County, Utah (Garden Valley Ranchos)",
+      name: "GARDEN VALLEY RANCHOS 5 LOT 1883, GARDEN VALLEY RANCHOS, UNIT 5",
       acres: 1.13,
       state: "UT",
       county: "Iron County",
       country: "USA",
       currency: "USD",
-      parcelId: null,
+      parcelId: "E-1699-0038-0000 ",
       embedQuery: "Garden Valley Ranchos UT 84753",
       center: [-113.2739, 37.8596],
       links: {
         maps: "https://www.google.com/maps?q=Garden+Valley+Ranchos+UT+84753"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://eagleweb.ironcounty.net/eaglesoftware/eagleweb/viewDoc.jsp?node=DOC2230S488", zoning: null, assessedValue: null },
       geo: null
     },
 
     {
       id: "modena-ut-112",
-      name: "Modena, Iron County, Utah",
+      name: "GARDEN VALLEY RANCHOS 5 LOT: 3872 LOT 3872, GARDEN VALLEY RANCHOS, UNIT 5",
       acres: 1.12,
       state: "UT",
       county: "Iron County",
       country: "USA",
       currency: "USD",
-      parcelId: null,
+      parcelId: "E-1695-0014-0008-05",
       embedQuery: "Modena UT Iron County",
       center: [-113.8072, 37.8119],
       links: {
         maps: "https://www.google.com/maps?q=Modena+UT"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://eagleweb.ironcounty.net/eaglesoftware/eagleweb/viewDoc.jsp?node=DOC2171S225", zoning: null, assessedValue: null },
       geo: null
     },
 
