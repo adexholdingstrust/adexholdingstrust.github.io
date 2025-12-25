@@ -96,7 +96,7 @@ window.ADEX_DATA = {
       mapsLink:
           "https://www.google.com/maps?q=GreenBay+Estate+Ilaje+Lagos+Nigeria",
       streetViewEmbed:
-          "https://www.google.com/maps?q=&layer=c&cbll=6.4396552,3.5696296&cbp=11,90,0,0,0&output=svembed",
+          "https://www.google.com/maps?q=&layer=c&cbll=6.440007017584023,3.5697047413577865&cbp=11,90,0,0,0&output=svembed",
       photos: []
     },
 
@@ -154,7 +154,6 @@ window.ADEX_DATA = {
       country: "USA",
       currency: "USD",
       parcelId: "206-30-098",
-      legal: "Arizona Park Estates Unit IV Lot 98",
       embedQuery: "Arizona Park Estates Unit IV Apache County AZ",
       center: [-109.3645, 34.9146],
       links: {
