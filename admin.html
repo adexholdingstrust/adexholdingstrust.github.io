@@ -5,27 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Adex Holdings Trust | Admin</title>
   <meta name="robots" content="noindex,nofollow"/>
+
+  <!-- HARD BLOCK: prevent preload of assets before hostname validation -->
+  <script>
+    (function () {
+      const allowedHost = "admin.adexholdings.com";
+
+      if (location.hostname !== allowedHost) {
+        document.documentElement.innerHTML = `
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1"/>
+            <meta name="robots" content="noindex,nofollow">
+            <title>Access Restricted</title>
+            <style>
+              body {
+                margin: 0;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #f5f6f8;
+                font-family: Arial, Helvetica, sans-serif;
+                color: #333;
+              }
+              .box {
+                max-width: 560px;
+                background: #ffffff;
+                padding: 36px;
+                border-radius: 10px;
+                box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+                text-align: center;
+              }
+              h2 {
+                margin-top: 0;
+                margin-bottom: 12px;
+              }
+              p {
+                line-height: 1.6;
+                margin: 10px 0;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="box">
+              <h2>Access Restricted</h2>
+              <p>
+                This account has no access to this page.
+              </p>
+              <p>
+                Please use the appropriate link to access the required page or
+                contact <b>Adex Holdings, LLC</b> or <b>Adex Holdings Trust</b>.
+              </p>
+            </div>
+          </body>
+        `;
+        throw new Error("Unauthorized host");
+      }
+    })();
+  </script>
+
+  <!-- Assets load ONLY after hostname is validated -->
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
 </head>
 
 <body>
 
-<script>
-  if (location.hostname !== "admin.adexholdings.com") {
-    document.body.innerHTML = `
-      <h2>Restricted Access</h2>
-      <p>This admin interface is only available through the authorized admin portal.</p>
-    `;
-    throw new Error("Unauthorized host");
-  }
-</script>
-
 <div class="container">
 
   <div class="nav">
     <a class="brand" href="index.html" aria-label="Home">
-      <img src="assets/logo.png" alt="Adex Holdings Trust logo" />
+      <img src="assets/logo.png" alt="Adex Holdings Trust logo"/>
       <div>
         <div class="title">ADEX HOLDINGS TRUST</div>
         <div class="subtitle">Residential rentals & land holdings</div>
@@ -98,8 +149,10 @@
       <div>
         <div><b>Adex Holdings Trust</b></div>
         <div class="small">
-          Email: <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a>
-          • Phone: <a href="tel:+19494154633">949-415-4633</a>
+          Email:
+          <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a>
+          • Phone:
+          <a href="tel:+19494154633">949-415-4633</a>
         </div>
         <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
       </div>
@@ -110,7 +163,8 @@
           <a href="privacy.html#disclaimer">Disclaimer</a>
         </div>
         <div>
-          Information on this site is provided for general informational purposes and does not constitute legal or financial advice.
+          Information on this site is provided for general informational purposes
+          and does not constitute legal or financial advice.
         </div>
       </div>
     </div>
@@ -118,7 +172,8 @@
 
 </div>
 
-<div id="toast" class="notice" style="display:none;position:fixed;right:18px;bottom:18px;max-width:520px"></div>
+<div id="toast" class="notice"
+     style="display:none;position:fixed;right:18px;bottom:18px;max-width:520px"></div>
 
 <script src="assets/data.js"></script>
 <script src="assets/app.js"></script>
