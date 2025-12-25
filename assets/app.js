@@ -4,9 +4,9 @@
 ================================ */
 
 const CFG = {
-  WORKER_BASE: "",
-  TURNSTILE_SITE_KEY: "",
-  ADMIN_UI_PASSCODE: ""
+  WORKER_BASE: "https://adexholdings.com/api",
+  TURNSTILE_SITE_KEY: "0x4AAAAAAC186yCKmFT74NN1",
+  ADMIN_UI_PASSCODE: "AdexAdmin2025!"
 };
 
 /* ---------- Utilities ---------- */
