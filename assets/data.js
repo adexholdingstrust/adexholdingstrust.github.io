@@ -1,6 +1,8 @@
 /* =========================================================
-   ADEX HOLDINGS TRUST — data.js
-   VALIDATED + MERGED DATA MODEL
+   ADEX HOLDINGS TRUST — data.js (VALID)
+   - Rentals + Lands
+   - Currency + rent period
+   - Photos + Street View + GeoJSON placeholders
 ========================================================= */
 
 window.ADEX_DATA = {
@@ -13,13 +15,11 @@ window.ADEX_DATA = {
 
   /* ======================
      RENTAL PROPERTIES
-     - currency: "USD" | "NGN"
-     - rent: { amount: number, period: "month" | "year" } (optional)
-     - streetViewEmbed: google maps streetview embed URL (optional)
-     - photos: optional list of image urls (if you have your own)
-     - googlePlaceId: optional for Places Photos API (if you enable it)
+     Notes:
+      - rent: { amount, period: "month"|"year" }
+      - streetViewEmbed: Google embed URL (optional)
+      - photos: array of image URLs you control (optional)
   ====================== */
-
   rentals: [
     {
       id: "co-townhouse",
@@ -30,8 +30,8 @@ window.ADEX_DATA = {
       state: "CO",
       country: "USA",
       currency: "USD",
+      rent: { amount: null, period: "month" },
       status: "rented",
-      rent: { amount: 0, period: "month" }, // set when you want to show pricing
       details:
         "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
       mapsLink:
@@ -40,7 +40,6 @@ window.ADEX_DATA = {
       streetViewEmbed:
         "https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcFBzN0RHRVhWQ2NBRmQyWHl6Z0pLd3d6dWJmM2ZtbjA2X1ZV!2m2!1d39.699204!2d-104.84129!3f0!4f0!5f1.1924812503605782",
       photos: []
-      // googlePlaceId: "YOUR_PLACE_ID"
     },
 
     {
@@ -52,8 +51,8 @@ window.ADEX_DATA = {
       state: "CO",
       country: "USA",
       currency: "USD",
+      rent: { amount: null, period: "month" },
       status: "rented",
-      rent: { amount: 0, period: "month" },
       details:
         "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
       mapsLink:
@@ -62,7 +61,6 @@ window.ADEX_DATA = {
       streetViewEmbed:
         "https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcE5fT3dDd2d5Zl9QbU9XbTdwZkt2M19XcUl2QnZzV1d5RVRa!2m2!1d39.66469!2d-104.82283!3f0!4f0!5f1.1924812503605782",
       photos: []
-      // googlePlaceId: "YOUR_PLACE_ID"
     },
 
     {
@@ -74,8 +72,8 @@ window.ADEX_DATA = {
       state: "CA",
       country: "USA",
       currency: "USD",
+      rent: { amount: null, period: "month" },
       status: "rented",
-      rent: { amount: 0, period: "month" },
       details:
         "Two-story single-family home located in Fallbrook, California.",
       mapsLink:
@@ -84,7 +82,6 @@ window.ADEX_DATA = {
       streetViewEmbed:
         "https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1sCAoSLEFGMVFpcFBQY3hNYTRpZ2tnUEJVaEN6bUtSaVZkYkVPSlB4RGxVNE9Z!2m2!1d33.37652!2d-117.24716!3f0!4f0!5f1.1924812503605782",
       photos: []
-      // googlePlaceId: "YOUR_PLACE_ID"
     },
 
     {
@@ -97,16 +94,15 @@ window.ADEX_DATA = {
       state: "Lagos",
       country: "Nigeria",
       currency: "NGN",
+      rent: { amount: null, period: "year" },
       status: "rented",
-      rent: { amount: 0, period: "year" },
       details:
         "Apartment located in Sterling Cooperative Estate (GreenBay), Ilaje, Lagos. Secure residential cooperative estate.",
       mapsLink:
         "https://www.google.com/maps/search/?api=1&query=Sterling+Cooperative+Estate+GreenBay+Ilaje+Lagos",
       embedQuery: "Sterling Cooperative Estate GreenBay Ilaje Lagos Nigeria",
-      streetViewEmbed: "",
+      streetViewEmbed: null,
       photos: []
-      // googlePlaceId: "YOUR_PLACE_ID"
     },
 
     {
@@ -118,25 +114,25 @@ window.ADEX_DATA = {
       state: "Lagos",
       country: "Nigeria",
       currency: "NGN",
+      rent: { amount: null, period: "year" },
       status: "available",
-      rent: { amount: 0, period: "year" },
       details:
         "Single-family residential house located in the Ibudo Wura community, Lagos.",
       mapsLink:
         "https://www.google.com/maps/search/?api=1&query=Ibudo+Wura+Lagos+Nigeria",
       embedQuery: "Ibudo Wura Lagos Nigeria",
-      streetViewEmbed: "",
+      streetViewEmbed: null,
       photos: []
-      // googlePlaceId: "YOUR_PLACE_ID"
     }
   ],
 
   /* ======================
      LAND HOLDINGS
-     - currency: "USD" | "NGN" (optional)
-     - value: { amount: number, currency: "USD"|"NGN" } optional
+     Notes:
+      - geo: optional GeoJSON Feature (Polygon/MultiPolygon)
+      - center: optional [lng,lat] for Mapbox pins
+      - assessor: deep links + cached fields (optional)
   ====================== */
-
   lands: [
     {
       id: "pahrump-nv-232",
@@ -148,16 +144,23 @@ window.ADEX_DATA = {
       country: "USA",
       currency: "USD",
       parcelId: "045-243-39",
-      legal: "",
       links: {
-        maps: "https://www.google.com/maps/search/?api=1&query=7600+Arabian+Way+Pahrump+NV+89061"
-      }
+        maps:
+          "https://www.google.com/maps/search/?api=1&query=7600+Arabian+Way+Pahrump+NV+89061"
+      },
+      assessor: {
+        deepLink: null,
+        zoning: null,
+        assessedValue: null
+      },
+      center: null,
+      geo: null
     },
+
     {
       id: "apache-az-464",
       name: "Apache County, Arizona (Arizona Park Estates Unit IV)",
       acres: 4.64,
-      address: "",
       state: "AZ",
       county: "Apache County",
       country: "USA",
@@ -165,9 +168,18 @@ window.ADEX_DATA = {
       parcelId: "206-30-098",
       legal: "ARIZONA PARK ESTATES UNIT IV Lot 98 Unit 4",
       links: {
-        maps: "https://www.google.com/maps/search/?api=1&query=Apache+County+AZ+206-30-098"
-      }
+        maps:
+          "https://www.google.com/maps/search/?api=1&query=Apache+County+AZ+206-30-098"
+      },
+      assessor: {
+        deepLink: null,
+        zoning: null,
+        assessedValue: null
+      },
+      center: null,
+      geo: null
     },
+
     {
       id: "navajo-az-10",
       name: "Navajo County, Arizona",
@@ -178,16 +190,19 @@ window.ADEX_DATA = {
       country: "USA",
       currency: "USD",
       parcelId: "201-23-012",
-      legal: "",
       links: {
-        maps: "https://www.google.com/maps/search/?api=1&query=5201+Spencer+Ln+Heber+AZ+86025"
-      }
+        maps:
+          "https://www.google.com/maps/search/?api=1&query=5201+Spencer+Ln+Heber+AZ+86025"
+      },
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      center: null,
+      geo: null
     },
+
     {
       id: "elko-nv-10a-1",
       name: "Elko County, Nevada (Parcel 007-12Q-011)",
       acres: 10,
-      address: "",
       state: "NV",
       county: "Elko County",
       country: "USA",
@@ -196,14 +211,18 @@ window.ADEX_DATA = {
       legal: "T37N R58E MDB&M Sec 33; NW4SE4NW4",
       links: {
         parcelPdf: "https://elko-search.gsacorp.io/platmaps/Bk007/007-12Q.pdf",
-        maps: "https://www.google.com/maps/search/?api=1&query=Elko+County+NV+007-12Q-011"
-      }
+        maps:
+          "https://www.google.com/maps/search/?api=1&query=Elko+County+NV+007-12Q-011"
+      },
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      center: null,
+      geo: null
     },
+
     {
       id: "elko-nv-10a-2",
       name: "Elko County, Nevada (Parcel 010-81H-024)",
       acres: 10,
-      address: "",
       state: "NV",
       county: "Elko County",
       country: "USA",
@@ -212,25 +231,33 @@ window.ADEX_DATA = {
       legal: "T40N R70E MDB&M Sec 31; SW4NW4NE4",
       links: {
         parcelPdf: "https://elko-search.gsacorp.io/platmaps/Bk010/010-81H.pdf",
-        maps: "https://www.google.com/maps/search/?api=1&query=Elko+County+NV+010-81H-024"
-      }
+        maps:
+          "https://www.google.com/maps/search/?api=1&query=Elko+County+NV+010-81H-024"
+      },
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      center: null,
+      geo: null
     },
+
     {
       id: "iron-ut-113",
       name: "Iron County, Utah (Garden Valley Ranchos)",
       acres: 1.13,
-      address: "",
       state: "UT",
       county: "Iron County",
       country: "USA",
       currency: "USD",
-      parcelId: "",
-      legal: "",
+      parcelId: null,
       notes: "Garden Valley Ranchos, UT 84753",
       links: {
-        maps: "https://www.google.com/maps/search/?api=1&query=Garden+Valley+Ranchos+UT+84753"
-      }
+        maps:
+          "https://www.google.com/maps/search/?api=1&query=Garden+Valley+Ranchos+UT+84753"
+      },
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      center: null,
+      geo: null
     },
+
     {
       id: "lancaster-ca-253",
       name: "Lancaster, CA (Parcel 3344-011-068)",
@@ -241,11 +268,14 @@ window.ADEX_DATA = {
       country: "USA",
       currency: "USD",
       parcelId: "3344-011-068",
-      legal: "",
       links: {
         maps: "https://maps.app.goo.gl/zVqjSQW6rqFQSiB47"
-      }
+      },
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      center: null,
+      geo: null
     },
+
     {
       id: "lancaster-ca-210",
       name: "Lancaster, CA (Parcel 3322-023-014)",
@@ -256,16 +286,18 @@ window.ADEX_DATA = {
       country: "USA",
       currency: "USD",
       parcelId: "3322-023-014",
-      legal: "",
       links: {
         maps: "https://maps.app.goo.gl/dMrgtdRDRggyzGbN6"
-      }
+      },
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      center: null,
+      geo: null
     },
+
     {
       id: "valencia-nm-rge-1",
       name: "Valencia County, NM (Rio Grande Estates Lot 9, Unit 6, Block 149)",
       acres: 1.0,
-      address: "",
       state: "NM",
       county: "Valencia County",
       country: "USA",
@@ -275,13 +307,16 @@ window.ADEX_DATA = {
       links: {
         maps:
           "https://www.google.com/maps/search/?api=1&query=Rio+Grande+Estates+Valencia+County+NM+Lot+9+Unit+6+Block+149"
-      }
+      },
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      center: null,
+      geo: null
     },
+
     {
       id: "valencia-nm-rancho-215",
       name: "Valencia County, NM (Rancho Rio Grande – Parcel 215, Unit 8 East)",
       acres: 5.0,
-      address: "",
       state: "NM",
       county: "Valencia County",
       country: "USA",
@@ -291,24 +326,30 @@ window.ADEX_DATA = {
         "All of Parcel 215 of Rancho Rio Grande, Unit No. 8 East (incl. gas/oil/mineral rights as owned).",
       links: {
         maps:
-          "https://www.google.com/maps/search/?api=1&query=Belen+NM+Valencia+County+5+acres+Rancho+Rio+Grande+Parcel+215"
-      }
+          "https://www.google.com/maps/search/?api=1&query=Belen+NM+Valencia+County+Rancho+Rio+Grande+Parcel+215"
+      },
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      center: null,
+      geo: null
     },
+
     {
       id: "modena-ut-112",
       name: "Modena, Iron County, Utah",
       acres: 1.12,
-      address: "",
       state: "UT",
       county: "Iron County",
       country: "USA",
       currency: "USD",
-      parcelId: "",
-      legal: "",
+      parcelId: null,
       notes: "Modena area (see attached parcel image in your records)",
       links: {
-        maps: "https://www.google.com/maps/search/?api=1&query=Modena+UT+Iron+County+1.12+acres"
-      }
+        maps:
+          "https://www.google.com/maps/search/?api=1&query=Modena+UT+Iron+County+1.12+acres"
+      },
+      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      center: null,
+      geo: null
     }
   ]
 };
