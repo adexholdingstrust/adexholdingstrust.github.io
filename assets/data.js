@@ -23,7 +23,7 @@ window.ADEX_DATA = {
       state: "CO",
       country: "USA",
       currency: "USD",
-      rent: { amount: "$2,550", period: "month" },
+      rent: { amount: 2550, period: "month" },
       status: "rented",
       details:
         "Townhouse located in Aurora, Colorado. Currently occupied.",
@@ -43,7 +43,7 @@ window.ADEX_DATA = {
       state: "CO",
       country: "USA",
       currency: "USD",
-      rent: { amount: "$2,750", period: "month" },
+      rent: { amount: 2750, period: "month" },
       status: "rented",
       details:
         "Condominium located in Aurora, Colorado. Currently occupied.",
@@ -64,7 +64,7 @@ window.ADEX_DATA = {
       state: "CA",
       country: "USA",
       currency: "USD",
-      rent: { amount: "$5,000", period: "month" },
+      rent: { amount: 5000, period: "month" },
       status: "rented",
       details:
         "Two-story single-family home located in Fallbrook, California.",
@@ -87,7 +87,7 @@ window.ADEX_DATA = {
       state: "Lagos",
       country: "Nigeria",
       currency: "NGN",
-      rent: { amount: "$5,000", period: "year" },
+      rent: { amount: 3000000, period: "year" },
       status: "rented",
       details:
         "Apartment located within the Sterling Cooperative Estate (GreenBay)",
@@ -110,7 +110,7 @@ window.ADEX_DATA = {
       state: "Lagos",
       country: "Nigeria",
       currency: "NGN",
-      rent: { amount: "$5,000", period: "year" },
+      rent: { amount: 3000000, period: "year" },
       status: "available",
       details:
         "Single-family residential house located in the Ibudo Wura community, Lagos.",
