@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Land Holdings | Adex Holdings Trust</title>
-  <link rel="stylesheet" href="assets/css/style.css">
+
+  <!-- Core site styles -->
+  <link rel="stylesheet" href="assets/css/style.css" />
+
+  <!-- Mapbox GL (required for interactive parcel overlays & clustering) -->
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+    rel="stylesheet"
+  />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
 
@@ -12,50 +22,79 @@
   <nav>
     <a href="index.html">Home</a>
     <a href="properties.html">Rental Properties</a>
-    <a href="land.html">Land Holdings</a>
+    <a href="land.html" aria-current="page">Land Holdings</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
   </nav>
 </header>
 
-<section class="section">
+<main>
 
-  <h2>Nevada</h2>
-  <ul>
-    <li>Pahrump – 2.32 acres</li>
-    <li>Elko County – 10 acres</li>
-    <li>Elko County – 10 acres</li>
-  </ul>
+  <!-- ===========================
+       INTRO SECTION
+  ============================ -->
+  <section class="section">
+    <h2>Parcels & Acreage</h2>
+    <p class="muted">
+      Below is an overview of land parcels held by Adex Holdings Trust.
+      Interactive maps, parcel boundaries, and county assessor links are
+      provided where available.
+    </p>
+  </section>
 
-  <h2>Arizona</h2>
-  <ul>
-    <li>Apache County – 4.64 acres</li>
-    <li>Navajo County – 10 acres</li>
-  </ul>
+  <!-- ===========================
+       INTERACTIVE MAP
+       (Mapbox + clustering + parcels)
+  ============================ -->
+  <section class="section">
+    <div
+      id="landsMap"
+      style="
+        height: 520px;
+        border-radius: 18px;
+        overflow: hidden;
+        margin: 12px 0 24px;
+        background: #0f1115;
+      "
+      aria-label="Interactive map of land holdings"
+    ></div>
+  </section>
 
-  <h2>Utah</h2>
-  <ul>
-    <li>Iron County – 1.13 acres</li>
-    <li>Modena, Iron County – 1.12 acres</li>
-  </ul>
+  <!-- ===========================
+       DYNAMIC LAND LIST
+       (Rendered by app.js)
+  ============================ -->
+  <section class="section">
+    <!--
+      app.js will inject:
+      - filter controls (country / county / acreage)
+      - land cards
+      - maps + assessor links
+    -->
+    <div id="landsList" class="propertyGrid"></div>
+  </section>
 
-  <h2>California</h2>
-  <ul>
-    <li>Lancaster (LA County) – 2.53 acres</li>
-    <li>Lancaster (LA County) – 2.54 acres</li>
-  </ul>
-
-  <h2>New Mexico</h2>
-  <ul>
-    <li>Valencia County (Rio Grande Estates) – 1 acre</li>
-    <li>Valencia County (Belen) – 5 acres</li>
-  </ul>
-
-</section>
+</main>
 
 <footer>
-  <p>© Adex Holdings Trust</p>
+  <p>© <span id="year"></span> Adex Holdings Trust</p>
 </footer>
+
+<!-- ===========================
+     MAPBOX GL JS
+============================ -->
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+
+<!-- ===========================
+     DATA + APP LOGIC
+============================ -->
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+
+<script>
+  // Simple footer year helper
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
 
 </body>
 </html>
