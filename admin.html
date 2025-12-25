@@ -7,6 +7,7 @@
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
   
+  <meta name="robots" content="noindex,nofollow"/>
 </head>
 <body>
   <div class="container">
@@ -16,16 +17,17 @@
         <img src="assets/logo.png" alt="Adex Holdings Trust logo" />
         <div>
           <div class="title">ADEX HOLDINGS TRUST</div>
-          <div class="subtitle">Residential real estate & land holdings</div>
+          <div class="subtitle">Residential rentals & land holdings</div>
         </div>
       </a>
       <div class="navlinks">
-        <a href="index.html" >Home</a>
+        <a href="index.html" >About</a>
         <a href="properties.html" >Rental Properties</a>
         <a href="lands.html" >Lands</a>
         <a href="tenant-portal.html" >Tenant Portal</a>
-        <a href="privacy.html" >Privacy</a>
-        <a href="admin.html" style='color:var(--text);border-color:var(--line)'>Admin</a>
+        <a href="tenant-faq.html" >Tenant FAQ</a>
+        <a href="careers-vendors.html" >Careers / Vendors</a>
+        <a href="privacy.html" >Privacy & Legal</a>
       </div>
     </div>
     
@@ -33,49 +35,47 @@
   <div class="card" style="margin-top:18px">
     <div class="kicker">Admin</div>
     <div class="h1" style="font-size:30px">Availability toggle</div>
-    <p class="lead">
-      Set each rental to <b>Rented</b> or <b>Available</b>. Recommended: deploy the Cloudflare Worker so changes apply for all visitors.
-      If the Worker is not configured, changes are saved only in <b>this browser</b> (localStorage fallback).
-    </p>
 
-    <div class="hr"></div>
-
-    <div class="notice">
-      <b>Cloudflare Worker mode (recommended):</b> add your Worker URL into <span class="code">assets/app.js</span> (<span class="code">CFG.WORKER_BASE</span>).
-      Then paste your Admin Token below to save updates securely.
+    <div id="adminGate" class="notice" style="display:none">
+      <b>Restricted page.</b> Enter the admin passcode to continue.
+      <div class="row2" style="margin-top:12px">
+        <div><label for="adminPasscode">Passcode</label><input id="adminPasscode" placeholder="Enter passcode"/></div>
+        <div style="display:flex;align-items:flex-end"><button id="adminLoginBtn" class="btn primary" type="button">Unlock</button></div>
+      </div>
+      <div class="small">This is convenience only. Protect <b>/admin.html</b> with Cloudflare Access for real security.</div>
     </div>
 
-    <div class="row2" style="margin-top:12px">
-      <div>
-        <label for="adminToken">Admin Token (only needed for Worker mode)</label>
-        <input id="adminToken" placeholder="a9f82c1b7e4d0eac9d8cfe3a91b0e4a5c6f8d21e"/>
-        <div class="small">Tip: create a long random token (40+ chars). Never commit it to GitHub.</div>
+    <div id="adminWrap" style="display:none">
+      <p class="lead">Set each rental to <b>Rented</b> or <b>Available</b>. Use the Cloudflare Worker for shared status across all devices.</p>
+      <div class="hr"></div>
+      <div class="row2" style="margin-top:12px">
+        <div><label for="adminToken">Admin Token (Worker mode)</label><input id="adminToken" placeholder="Paste Bearer token here"/></div>
+        <div><label>Save mode</label><div class="code" id="adminMode">Auto</div></div>
       </div>
-      <div>
-        <label>Save mode</label>
-        <div class="code" id="adminMode">Auto</div>
-        <div class="small">If Worker is configured, mode becomes “Cloudflare Worker”.</div>
-      </div>
-    </div>
-
-    <div class="hr"></div>
-    <div id="adminList" class="form"></div>
-
-    <div class="btnRow" style="margin-top:12px">
-      <button id="saveBtn" class="btn primary" type="button">Save availability</button>
-      <a class="btn" href="properties.html">View rentals page</a>
+      <div class="hr"></div>
+      <div id="adminList" class="form"></div>
+      <div class="btnRow" style="margin-top:12px"><button id="saveBtn" class="btn primary" type="button">Save availability</button></div>
     </div>
   </div>
 
+    
     <div class="footer">
       <div class="hr"></div>
-      <div><b>Contact:</b> <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a> • <a href="tel:+19494154633">949-415-4633</a></div>
-      <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div>
+          <div><b>Adex Holdings Trust</b></div>
+          <div class="small">Email: <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a> • Phone: <a href="tel:+19494154633">949-415-4633</a></div>
+          <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
+        </div>
+        <div class="small" style="text-align:right;max-width:520px">
+          <div><a href="privacy.html">Privacy</a> • <a href="privacy.html#terms">Terms</a> • <a href="privacy.html#disclaimer">Disclaimer</a></div>
+          <div>Information on this site is provided for general informational purposes and does not constitute legal or financial advice.</div>
+        </div>
+      </div>
     </div>
+    
   </div>
-
   <div id="toast" class="notice" style="display:none;position:fixed;right:18px;bottom:18px;max-width:520px"></div>
-
   <script src="assets/data.js"></script>
   <script src="assets/app.js"></script>
 </body>

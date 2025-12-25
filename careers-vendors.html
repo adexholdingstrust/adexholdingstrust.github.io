@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Adex Holdings Trust | Tenant Portal</title>
+  <title>Adex Holdings Trust | Careers & Vendors</title>
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
   <script type="application/ld+json">
@@ -42,43 +42,39 @@
         <a href="index.html" >About</a>
         <a href="properties.html" >Rental Properties</a>
         <a href="lands.html" >Lands</a>
-        <a href="tenant-portal.html" style='color:var(--text);border-color:var(--line)'>Tenant Portal</a>
+        <a href="tenant-portal.html" >Tenant Portal</a>
         <a href="tenant-faq.html" >Tenant FAQ</a>
-        <a href="careers-vendors.html" >Careers / Vendors</a>
+        <a href="careers-vendors.html" style='color:var(--text);border-color:var(--line)'>Careers / Vendors</a>
         <a href="privacy.html" >Privacy & Legal</a>
       </div>
     </div>
     
     
   <div class="card" style="margin-top:18px">
-    <div class="kicker">Tenant Portal</div>
-    <div class="h1" style="font-size:30px">Maintenance & general requests</div>
-    <p class="lead">Submit your request below. For emergencies, see the Tenant FAQ.</p>
+    <div class="kicker">Careers / Vendors</div>
+    <div class="h1" style="font-size:30px">Work with Adex</div>
+    <p class="lead">We partner with reliable professionals for maintenance, turns, and property support. Vendors and candidates can reach us below.</p>
     <div class="hr"></div>
-    <form id="tenantForm" class="form" action="https://formspree.io/f/xpqagapg" method="POST">
-      <div class="row2">
-        <div><label for="fullName">Full name</label><input id="fullName" name="fullName" required placeholder="Your name"/></div>
-        <div><label for="email">Email</label><input id="email" name="email" type="email" required placeholder="you@example.com"/></div>
+    <div class="grid">
+      <div class="tile">
+        <div class="kicker">Vendors</div>
+        <h3>Service providers</h3>
+        <div class="meta">Include your license/insurance info, service areas, and response times.</div>
+        <div class="btnRow"><a class="btn primary" href="mailto:tenantservices@adexholdings.com?subject=Vendor%20Application">Email vendor info</a><a class="btn" href="tel:+19494154633">Call</a></div>
       </div>
-      <div class="row2">
-        <div><label for="phone">Phone</label><input id="phone" name="phone" placeholder="(###) ###-####"/></div>
-        <div><label for="propertySelect">Property</label>
-          <select id="propertySelect" name="property" required><option value="" disabled selected>Select a property</option></select>
-        </div>
+      <div class="tile">
+        <div class="kicker">Careers</div>
+        <h3>Opportunities</h3>
+        <div class="meta">Send your resume, availability, and the role you are seeking.</div>
+        <div class="btnRow"><a class="btn primary" href="mailto:tenantservices@adexholdings.com?subject=Career%20Inquiry">Email resume</a></div>
       </div>
-      <div><label for="topic">Topic</label>
-        <select id="topic" name="topic" required>
-          <option value="maintenance">Maintenance request</option>
-          <option value="general">General question</option>
-          <option value="leasing">Leasing / availability</option>
-          <option value="other">Other</option>
-        </select>
+      <div class="tile">
+        <div class="kicker">Land acquisitions</div>
+        <h3>Sell your land</h3>
+        <div class="meta">Include APN/Parcel ID, county, acreage, and your asking price.</div>
+        <div class="btnRow"><a class="btn primary" href="mailto:tenantservices@adexholdings.com?subject=Land%20for%20Sale%20Inquiry">Email details</a></div>
       </div>
-      <div><label for="message">Message</label><textarea id="message" name="message" required placeholder="Please include details, preferred contact times, and urgency."></textarea></div>
-      <div id="turnstile"></div>
-      <div class="notice">By submitting, you agree to our <a href="privacy.html">Privacy & Legal</a>.</div>
-      <button class="btn primary" type="submit">Submit request</button>
-    </form>
+    </div>
   </div>
 
     

@@ -1,21 +1,23 @@
-/* Adex Holdings Trust - Site JS
-   - Interlinked pages
-   - Rental availability driven by Cloudflare Worker (recommended) with fallback
-   - Simple visit logging (privacy-aware): sends page + referrer + user agent to Worker
-*/
 const CFG = {
-  // Set this to your Cloudflare Worker base URL after you deploy it, e.g.:
-  // WORKER_BASE: "https://adex-trust-security.<your-subdomain>.workers.dev"
-  WORKER_BASE: "https://adex-trust-security.tenantservices.workers.dev",
-  // If you use Turnstile in the Tenant Portal form, set your public site key here:
-  TURNSTILE_SITE_KEY: "0x4AAAAAACI86yCKmFT74NN1"
+  WORKER_BASE: "",
+  TURNSTILE_SITE_KEY: "",
+  ADMIN_UI_PASSCODE: ""
 };
 
 function qs(sel, root=document){ return root.querySelector(sel); }
 function qsa(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
-
-function toMapsLink(query){
-  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(query);
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+function toMapsLink(urlOrQuery){
+  if(!urlOrQuery) return "#";
+  if(String(urlOrQuery).startsWith("http")) return urlOrQuery;
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(urlOrQuery);
+}
+function mapsEmbedSrc(query){
+  return "https://www.google.com/maps?q=" + encodeURIComponent(query) + "&output=embed";
 }
 
 function getLocalAvailability(){
@@ -37,7 +39,6 @@ async function fetchAvailability(){
 }
 
 async function updateAvailability(updates, adminToken){
-  // updates: { [id]: "available" | "rented" }
   if(!CFG.WORKER_BASE){
     const cur = getLocalAvailability();
     setLocalAvailability({ ...cur, ...updates });
@@ -68,33 +69,18 @@ async function logVisit(){
         referrer: document.referrer || ""
       })
     });
-  }catch(e){ /* ignore */ }
+  }catch(e){}
 }
 
-function renderLands(){
-  const data = window.ADEX_DATA;
-  const host = qs("#landsGrid");
-  if(!host) return;
-  host.innerHTML = "";
-  data.lands.forEach(l => {
-    const maps = toMapsLink(`${l.name} ${l.acres} acres ${l.county} ${l.state}`);
-    const tile = document.createElement("div");
-    tile.className = "tile";
-    tile.innerHTML = `
-      <div class="kicker">Land holding</div>
-      <h3>${escapeHtml(l.name)}</h3>
-      <div class="meta"><b>${l.acres}</b> acres • ${escapeHtml(l.county)} • ${escapeHtml(l.state)}</div>
-      <div class="meta">${escapeHtml(l.notes||"")}</div>
-      <div class="btnRow">
-        <a class="btn primary" href="${maps}" target="_blank" rel="noopener">Open in Google Maps</a>
-      </div>
-      <div class="badgeRow">
-        <span class="badge">Parcel link</span>
-        <span class="badge">Rural</span>
-      </div>
-    `;
-    host.appendChild(tile);
-  });
+function toast(msg, isBad=false){
+  const t = qs("#toast");
+  if(!t) return alert(msg);
+  t.textContent = msg;
+  t.style.borderColor = isBad ? "rgba(255,107,107,.35)" : "rgba(61,220,151,.35)";
+  t.style.background = isBad ? "rgba(255,107,107,.08)" : "rgba(61,220,151,.08)";
+  t.style.display = "block";
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>{ t.style.display="none"; }, 3800);
 }
 
 function renderRentals(availability){
@@ -108,8 +94,7 @@ function renderRentals(availability){
     const isAvailable = effectiveStatus === "available";
     const badgeClass = isAvailable ? "ok" : "bad";
     const badgeText  = isAvailable ? "Available" : "Rented";
-
-    const maps = toMapsLink(p.mapQuery || `${p.name} ${p.state}`);
+    const maps = toMapsLink(p.mapsLink || p.address || p.name);
     const applyHref = `tenant-portal.html?property=${encodeURIComponent(p.id)}`;
 
     const tile = document.createElement("div");
@@ -117,32 +102,96 @@ function renderRentals(availability){
     tile.innerHTML = `
       <div class="kicker">Rental property</div>
       <h3>${escapeHtml(p.name)}</h3>
-      <div class="meta">${escapeHtml(p.type)} • ${escapeHtml(p.state)}</div>
+      <div class="meta"><b>${escapeHtml(p.type)}</b> • ${escapeHtml(p.address || "")}</div>
       <div class="meta">${escapeHtml(p.details||"")}</div>
+
+      <div style="border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(0,0,0,.15)">
+        <iframe title="Map" src="${mapsEmbedSrc(p.embedQuery || p.address || p.name)}" width="100%" height="170" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+
       <div class="badgeRow">
         <span class="badge ${badgeClass}">${badgeText}</span>
-        <span class="badge">${escapeHtml(p.type)}</span>
+        <span class="badge">${escapeHtml(p.state)}</span>
       </div>
       <div class="btnRow">
-        <a class="btn" href="${maps}" target="_blank" rel="noopener">View area on Maps</a>
-        ${isAvailable
-          ? `<a class="btn primary" href="${applyHref}">Inquire / Apply</a>`
-          : `<button class="btn primary disabled" disabled title="Currently rented">Currently Rented</button>`
-        }
+        <a class="btn" href="${maps}" target="_blank" rel="noopener">Open in Google Maps</a>
+        ${isAvailable ? `<a class="btn primary" href="${applyHref}">Inquire / Apply</a>` : `<button class="btn primary disabled" disabled>Currently Rented</button>`}
       </div>
-      <div class="small">Status can be updated by admin in <a href="admin.html">Admin</a>.</div>
+      <div class="small">Availability is managed by Adex Holdings Trust.</div>
     `;
     host.appendChild(tile);
   });
 }
 
-function renderAdmin(availability){
+function renderLands(){
   const data = window.ADEX_DATA;
+  const host = qs("#landsGrid");
+  if(!host) return;
+  host.innerHTML = "";
+
+  data.lands.forEach(l => {
+    const maps = toMapsLink(l.links?.maps || l.address || l.name);
+    const parcelPdf = l.links?.parcelPdf || "";
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    tile.innerHTML = `
+      <div class="kicker">Land holding</div>
+      <h3>${escapeHtml(l.name)}</h3>
+      <div class="meta"><b>${Number(l.acres).toFixed(2)}</b> acres • ${escapeHtml(l.county || "")} • ${escapeHtml(l.state || "")}</div>
+      ${l.address ? `<div class="meta">${escapeHtml(l.address)}</div>` : ""}
+      ${l.parcelId ? `<div class="meta"><b>Parcel / APN:</b> ${escapeHtml(l.parcelId)}</div>` : ""}
+      ${l.legal ? `<div class="meta"><b>Legal:</b> ${escapeHtml(l.legal)}</div>` : ""}
+      ${l.notes ? `<div class="meta">${escapeHtml(l.notes)}</div>` : ""}
+
+      <div style="border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(0,0,0,.15)">
+        <iframe title="Map" src="${mapsEmbedSrc(l.address || l.name)}" width="100%" height="170" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+
+      <div class="btnRow">
+        <a class="btn primary" href="${maps}" target="_blank" rel="noopener">Open in Google Maps</a>
+        ${parcelPdf ? `<a class="btn" href="${parcelPdf}" target="_blank" rel="noopener">Parcel PDF</a>` : ""}
+      </div>
+    `;
+    host.appendChild(tile);
+  });
+}
+
+function adminIsAuthed(){
+  if(!CFG.ADMIN_UI_PASSCODE) return true;
+  return sessionStorage.getItem("adexAdminAuthedV1") === "true";
+}
+function requireAdminGate(){
+  const gate = qs("#adminGate");
+  const wrap = qs("#adminWrap");
+  if(!wrap) return;
+
+  if(adminIsAuthed()){
+    if(gate) gate.style.display="none";
+    wrap.style.display="block";
+    return;
+  }
+
+  wrap.style.display="none";
+  if(gate) gate.style.display="block";
+
+  qs("#adminLoginBtn")?.addEventListener("click", () => {
+    const pass = (qs("#adminPasscode")?.value || "").trim();
+    if(!pass) return toast("Enter passcode", true);
+    if(pass !== CFG.ADMIN_UI_PASSCODE) return toast("Incorrect passcode", true);
+    sessionStorage.setItem("adexAdminAuthedV1","true");
+    toast("Admin unlocked ✓");
+    if(gate) gate.style.display="none";
+    wrap.style.display="block";
+  });
+}
+
+function renderAdmin(availability){
   const host = qs("#adminList");
   if(!host) return;
 
   const tokenInput = qs("#adminToken");
   const modeEl = qs("#adminMode");
+  const data = window.ADEX_DATA;
 
   function renderList(){
     host.innerHTML = "";
@@ -173,9 +222,8 @@ function renderAdmin(availability){
   renderList();
 
   qs("#saveBtn")?.addEventListener("click", async () => {
-    const selects = qsa(".statusSelect");
     const updates = {};
-    selects.forEach(s => { updates[s.dataset.id] = s.value; });
+    qsa(".statusSelect").forEach(s => { updates[s.dataset.id] = s.value; });
 
     const token = tokenInput?.value?.trim() || "";
     try{
@@ -194,22 +242,19 @@ function initTenantPortal(){
   const form = qs("#tenantForm");
   if(!form) return;
 
-  // Populate property dropdown from data
   const select = qs("#propertySelect");
   const data = window.ADEX_DATA;
   data.rentals.forEach(p=>{
     const opt = document.createElement("option");
     opt.value = p.id;
-    opt.textContent = p.name;
+    opt.textContent = `${p.name} — ${p.address || p.state}`;
     select.appendChild(opt);
   });
 
-  // Preselect from URL param
   const params = new URLSearchParams(location.search);
   const prop = params.get("property");
   if(prop) select.value = prop;
 
-  // Render Turnstile widget if configured
   const tsHost = qs("#turnstile");
   if(tsHost && CFG.TURNSTILE_SITE_KEY){
     tsHost.innerHTML = `<div class="cf-turnstile" data-sitekey="${CFG.TURNSTILE_SITE_KEY}"></div>`;
@@ -217,14 +262,9 @@ function initTenantPortal(){
     s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
     s.async = true; s.defer = true;
     document.head.appendChild(s);
-  }else if(tsHost){
-    tsHost.innerHTML = `<div class="notice"><b>Spam protection:</b> Enable Cloudflare Turnstile by setting <span class="code">TURNSTILE_SITE_KEY</span> in <span class="code">assets/app.js</span>.</div>`;
   }
 
-  // Formspree default action set in HTML
   form.addEventListener("submit", () => {
-    // Add helpful hidden fields
-    qs('input[name="page"]')?.remove();
     const page = document.createElement("input");
     page.type = "hidden";
     page.name = "page";
@@ -233,37 +273,13 @@ function initTenantPortal(){
   });
 }
 
-function escapeHtml(str){
-  return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function toast(msg, isBad=false){
-  const t = qs("#toast");
-  if(!t) return alert(msg);
-  t.textContent = msg;
-  t.style.borderColor = isBad ? "rgba(255,107,107,.35)" : "rgba(61,220,151,.35)";
-  t.style.background = isBad ? "rgba(255,107,107,.08)" : "rgba(61,220,151,.08)";
-  t.style.display = "block";
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(()=>{ t.style.display="none"; }, 3800);
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
-  // OPTIONAL: set these without editing JS by defining window.__ADEX_CFG in HTML
-  if(window.__ADEX_CFG){
-    Object.assign(CFG, window.__ADEX_CFG);
-  }
-
+  if(window.__ADEX_CFG){ Object.assign(CFG, window.__ADEX_CFG); }
   await logVisit();
-
   const availability = await fetchAvailability();
   renderLands();
   renderRentals(availability);
+  requireAdminGate();
   renderAdmin(availability);
   initTenantPortal();
 });

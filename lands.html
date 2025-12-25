@@ -6,6 +6,25 @@
   <title>Adex Holdings Trust | Lands</title>
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  "name": "Adex Holdings Trust",
+  "url": "https://adexholdings.com/",
+  "logo": "https://adexholdings.com/assets/logo.png",
+  "telephone": "+1-949-415-4633",
+  "email": "tenantservices@adexholdings.com",
+  "areaServed": [
+    "California",
+    "Colorado",
+    "Nevada",
+    "Arizona",
+    "Utah",
+    "New Mexico"
+  ]
+}
+</script>
   
 </head>
 <body>
@@ -16,16 +35,17 @@
         <img src="assets/logo.png" alt="Adex Holdings Trust logo" />
         <div>
           <div class="title">ADEX HOLDINGS TRUST</div>
-          <div class="subtitle">Residential real estate & land holdings</div>
+          <div class="subtitle">Residential rentals & land holdings</div>
         </div>
       </a>
       <div class="navlinks">
-        <a href="index.html" >Home</a>
+        <a href="index.html" >About</a>
         <a href="properties.html" >Rental Properties</a>
         <a href="lands.html" style='color:var(--text);border-color:var(--line)'>Lands</a>
         <a href="tenant-portal.html" >Tenant Portal</a>
-        <a href="privacy.html" >Privacy</a>
-        <a href="admin.html" >Admin</a>
+        <a href="tenant-faq.html" >Tenant FAQ</a>
+        <a href="careers-vendors.html" >Careers / Vendors</a>
+        <a href="privacy.html" >Privacy & Legal</a>
       </div>
     </div>
     
@@ -33,20 +53,29 @@
   <div class="card" style="margin-top:18px">
     <div class="kicker">Land Holdings</div>
     <div class="h1" style="font-size:30px">Parcels & acreage</div>
-    <p class="lead">Click “Open in Google Maps” for a quick parcel-area view. If you have Assessor/APN links later, you can add them next to each parcel.</p>
+    <p class="lead">Parcel details are shown below with quick map links. For parcels with county plat maps available, a Parcel PDF link is included.</p>
     <div class="hr"></div>
     <div id="landsGrid" class="grid"></div>
   </div>
 
+    
     <div class="footer">
       <div class="hr"></div>
-      <div><b>Contact:</b> <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a> • <a href="tel:+19494154633">949-415-4633</a></div>
-      <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div>
+          <div><b>Adex Holdings Trust</b></div>
+          <div class="small">Email: <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a> • Phone: <a href="tel:+19494154633">949-415-4633</a></div>
+          <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
+        </div>
+        <div class="small" style="text-align:right;max-width:520px">
+          <div><a href="privacy.html">Privacy</a> • <a href="privacy.html#terms">Terms</a> • <a href="privacy.html#disclaimer">Disclaimer</a></div>
+          <div>Information on this site is provided for general informational purposes and does not constitute legal or financial advice.</div>
+        </div>
+      </div>
     </div>
+    
   </div>
-
   <div id="toast" class="notice" style="display:none;position:fixed;right:18px;bottom:18px;max-width:520px"></div>
-
   <script src="assets/data.js"></script>
   <script src="assets/app.js"></script>
 </body>
