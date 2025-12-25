@@ -38,8 +38,42 @@ window.ADEX_DATA = {
       "details": "Currently occupied. When available, you can submit an inquiry from the Tenant Portal.",
       "mapsLink": "https://www.google.com/maps/search/?api=1&query=464%20Calabrese%20St%2C%20Fallbrook%2C%20CA%2092028",
       "embedQuery": "464 Calabrese St, Fallbrook, CA 92028"
-    }
-  ],
+    },
+  {
+  id: "lagos-sterling-greenbay-apt7",
+  name: "Sterling Cooperative Estate – Apt 7",
+  type: "Apartment",
+  address:
+    "Block E, Apartment 7, Sterling Cooperative Estate (GreenBay), Off Mobil Road, Ilaje, Lagos State, Nigeria 23401",
+  city: "Ilaje",
+  state: "Lagos",
+  country: "Nigeria",
+  status: "rented", // change to "available" when ready
+  details:
+    "Apartment located in Sterling Cooperative Estate (GreenBay), Ilaje, Lagos. Residential cooperative estate with secure access.",
+  mapsLink:
+    "https://www.google.com/maps/search/?api=1&query=Sterling+Cooperative+Estate+GreenBay+Ilaje+Lagos",
+  embedQuery:
+    "Sterling Cooperative Estate GreenBay Ilaje Lagos Nigeria"
+},
+{
+  id: "lagos-ibudo-wura-house63",
+  name: "Ibudo Wura – House 63",
+  type: "House",
+  address:
+    "Block 8, House 63, Ibudo Wura, Lagos State, Nigeria 23401",
+  city: "Lagos",
+  state: "Lagos",
+  country: "Nigeria",
+  status: "available",
+  details:
+    "Single-family residential house located in Ibudo Wura community, Lagos State.",
+  mapsLink:
+    "https://www.google.com/maps/search/?api=1&query=Ibudo+Wura+Lagos+Nigeria",
+  embedQuery:
+    "Ibudo Wura Lagos Nigeria"
+}
+],
   "lands": [
     {
       "id": "pahrump-nv-232",
