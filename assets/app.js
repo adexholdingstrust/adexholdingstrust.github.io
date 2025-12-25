@@ -46,7 +46,7 @@ function toast(msg, isBad = false) {
   window.__toastTimer = setTimeout(() => { t.style.display = "none"; }, 3800);
 }
 
-/* ---------- Availability (local fallback) ---------- */
+/* ---------- Availability (DEFAULTS + KV MERGE) ---------- */
 
 function getLocalAvailability() {
   try { return JSON.parse(localStorage.getItem("adexAvailabilityV1") || "{}"); }
@@ -58,36 +58,38 @@ function setLocalAvailability(obj) {
 }
 
 /**
- * Build defaults from ADEX_DATA so you never see a blank {} experience.
- * If KV is empty, rentals still show their base status from data.js.
+ * Build availability defaults from data.js
+ * This prevents the {} / blank state problem permanently.
  */
 function getDefaultAvailabilityFromData() {
   const out = {};
   const data = window.ADEX_DATA;
   if (!data?.rentals) return out;
+
   data.rentals.forEach(p => {
     if (!p?.id) return;
-    out[p.id] = (p.status || "rented");
+    out[p.id] = p.status || "rented";
   });
+
   return out;
 }
 
 async function fetchAvailability() {
-  // If no Worker base, use local storage merged with defaults
   const defaults = getDefaultAvailabilityFromData();
-  if (!CFG.WORKER_BASE) return { ...defaults, ...getLocalAvailability() };
+
+  if (!CFG.WORKER_BASE) {
+    return { ...defaults, ...getLocalAvailability() };
+  }
 
   try {
     const res = await fetch(`${CFG.WORKER_BASE}/availability`, { credentials: "omit" });
-    if (!res.ok) throw new Error(`availability fetch failed (${res.status})`);
-    const kv = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error("availability fetch failed");
 
-    // Merge: defaults -> kv -> local overrides (optional)
-    // (local overrides only used if you want it; harmless if empty)
+    const kv = await res.json().catch(() => ({}));
     const local = getLocalAvailability();
+
     return { ...defaults, ...(kv || {}), ...local };
   } catch {
-    // Offline / blocked: use defaults + local
     return { ...defaults, ...getLocalAvailability() };
   }
 }
@@ -106,38 +108,32 @@ async function updateAvailability(updates) {
   });
 
   const out = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(out?.error || `Update failed (${res.status})`);
+  if (!res.ok) throw new Error(out?.error || "Update failed");
   return out;
 }
 
-/* ---------- Audit + WhoAmI ---------- */
+/* ---------- Access / Audit ---------- */
 
 async function fetchWhoAmI() {
   if (!CFG.WORKER_BASE) return null;
   const res = await fetch(`${CFG.WORKER_BASE}/whoami`, { credentials: "omit" });
   const out = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(out?.error || `whoami failed (${res.status})`);
+  if (!res.ok) throw new Error(out?.error || "whoami failed");
   return out;
 }
 
 async function fetchAudit() {
-  if (!CFG.WORKER_BASE) return { ok: true, log: [] };
+  if (!CFG.WORKER_BASE) return { log: [] };
   const res = await fetch(`${CFG.WORKER_BASE}/admin/audit`, { credentials: "omit" });
   const out = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(out?.error || `audit failed (${res.status})`);
+  if (!res.ok) throw new Error(out?.error || "audit failed");
   return out;
 }
 
 function renderWhoAmI(who) {
   const badge = qs("#whoami");
   if (!badge) return;
-
-  if (!who?.email) {
-    badge.textContent = "Not authenticated";
-    return;
-  }
-
-  badge.textContent = `Logged in as ${who.email}`;
+  badge.textContent = who?.email ? `Logged in as ${who.email}` : "Not authenticated";
 }
 
 function applyMaintenanceUI(who) {
@@ -145,44 +141,33 @@ function applyMaintenanceUI(who) {
   const saveBtn = qs("#saveBtn");
 
   if (who?.maintenance === true) {
-    if (banner) banner.style.display = "block";
-    if (saveBtn) saveBtn.disabled = true;
+    banner && (banner.style.display = "block");
+    saveBtn && (saveBtn.disabled = true);
   } else {
-    if (banner) banner.style.display = "none";
-    if (saveBtn) saveBtn.disabled = false;
+    banner && (banner.style.display = "none");
+    saveBtn && (saveBtn.disabled = false);
   }
 }
 
-function renderAuditTable(auditResp) {
+function renderAuditTable(resp) {
   const tbody = qs("#auditTable tbody");
   if (!tbody) return;
 
-  const rows = Array.isArray(auditResp?.log) ? auditResp.log : [];
   tbody.innerHTML = "";
+  const rows = Array.isArray(resp?.log) ? resp.log : [];
 
   if (!rows.length) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td colspan="4" style="opacity:.8">
-        No audit entries yet. Make a change and click “Save availability”.
-      </td>
-    `;
-    tbody.appendChild(tr);
+    tbody.innerHTML = `<tr><td colspan="4" style="opacity:.7">No admin activity yet.</td></tr>`;
     return;
   }
 
   rows.forEach(e => {
-    const details =
-      (Array.isArray(e?.properties) && e.properties.length)
-        ? e.properties.join(", ")
-        : (e?.details || "");
-
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHtml(e?.ts || "")}</td>
-      <td>${escapeHtml(e?.email || "")}</td>
-      <td>${escapeHtml(e?.action || "")}</td>
-      <td>${escapeHtml(details)}</td>
+      <td>${escapeHtml(e.ts || "")}</td>
+      <td>${escapeHtml(e.email || "")}</td>
+      <td>${escapeHtml(e.action || "")}</td>
+      <td>${escapeHtml((e.properties || []).join(", "))}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -212,75 +197,21 @@ function renderRentals(availability) {
   if (!host) return;
   host.innerHTML = "";
 
-  const data = window.ADEX_DATA;
-  if (!data?.rentals?.length) return;
-
-  data.rentals.forEach(p => {
-    const status = availability?.[p.id] || p.status || "rented";
+  window.ADEX_DATA.rentals.forEach(p => {
+    const status = availability[p.id] || p.status || "rented";
     const isAvailable = status === "available";
 
-    const tile = document.createElement("div");
-    tile.className = "tile";
-    tile.innerHTML = `
-      <div class="kicker">Rental property</div>
-      <h3>${escapeHtml(p.name)}</h3>
-      <div class="meta"><b>${escapeHtml(p.type)}</b> • ${escapeHtml(p.address || "")}</div>
-
-      <iframe
-        title="Map"
-        src="${mapsEmbedSrc(p.address || p.name)}"
-        width="100%" height="170"
-        style="border:0;border-radius:12px"
-        loading="lazy"></iframe>
-
-      <div class="badgeRow">
-        <span class="badge ${isAvailable ? "ok" : "bad"}">
-          ${isAvailable ? "Available" : "Rented"}
-        </span>
+    host.insertAdjacentHTML("beforeend", `
+      <div class="tile">
+        <div class="kicker">Rental property</div>
+        <h3>${escapeHtml(p.name)}</h3>
+        <div class="meta"><b>${escapeHtml(p.type)}</b> • ${escapeHtml(p.address || "")}</div>
+        <iframe src="${mapsEmbedSrc(p.address || p.name)}" width="100%" height="170" style="border-radius:12px" loading="lazy"></iframe>
+        <div class="badgeRow">
+          <span class="badge ${isAvailable ? "ok" : "bad"}">${isAvailable ? "Available" : "Rented"}</span>
+        </div>
       </div>
-
-      <div class="btnRow">
-        <a class="btn" href="${toMapsLink(p.address || p.name)}" target="_blank" rel="noopener">Map</a>
-        ${isAvailable
-          ? `<a class="btn primary" href="tenant-portal.html?property=${encodeURIComponent(p.id)}">Inquire</a>`
-          : `<button class="btn primary disabled" disabled>Unavailable</button>`
-        }
-      </div>
-    `;
-    host.appendChild(tile);
-  });
-}
-
-/* ---------- Lands ---------- */
-
-function renderLands() {
-  const host = qs("#landsGrid");
-  if (!host) return;
-  host.innerHTML = "";
-
-  const data = window.ADEX_DATA;
-  if (!data?.lands?.length) return;
-
-  data.lands.forEach(l => {
-    const tile = document.createElement("div");
-    tile.className = "tile";
-    tile.innerHTML = `
-      <div class="kicker">Land</div>
-      <h3>${escapeHtml(l.name)}</h3>
-      <div class="meta">${escapeHtml(l.acres)} acres • ${escapeHtml(l.state || "")}</div>
-
-      <iframe
-        title="Map"
-        src="${mapsEmbedSrc(l.address || l.name)}"
-        width="100%" height="170"
-        style="border:0;border-radius:12px"
-        loading="lazy"></iframe>
-
-      <div class="btnRow">
-        <a class="btn primary" href="${toMapsLink(l.address || l.name)}" target="_blank" rel="noopener">Map</a>
-      </div>
-    `;
-    host.appendChild(tile);
+    `);
   });
 }
 
@@ -290,116 +221,57 @@ function renderAdmin(availabilityRef) {
   const host = qs("#adminList");
   if (!host) return;
 
-  const data = window.ADEX_DATA;
-  if (!data?.rentals?.length) return;
+  host.innerHTML = "";
 
-  function render() {
-    host.innerHTML = "";
-    data.rentals.forEach(p => {
-      const status = availabilityRef?.[p.id] || p.status || "rented";
-      const row = document.createElement("div");
-      row.className = "card";
-      row.innerHTML = `
+  window.ADEX_DATA.rentals.forEach(p => {
+    const status = availabilityRef[p.id] || p.status || "rented";
+    host.insertAdjacentHTML("beforeend", `
+      <div class="card">
         <div class="kicker">Rental</div>
         <b>${escapeHtml(p.name)}</b>
-        <select data-id="${escapeHtml(p.id)}" class="statusSelect">
+        <select class="statusSelect" data-id="${escapeHtml(p.id)}">
           <option value="rented" ${status === "rented" ? "selected" : ""}>Rented</option>
           <option value="available" ${status === "available" ? "selected" : ""}>Available</option>
         </select>
-      `;
-      host.appendChild(row);
-    });
-  }
-
-  render();
+      </div>
+    `);
+  });
 
   const saveBtn = qs("#saveBtn");
-  if (!saveBtn) return;
-
-  // Prevent multiple bindings if this runs more than once
-  if (saveBtn.dataset.bound === "true") return;
+  if (!saveBtn || saveBtn.dataset.bound) return;
   saveBtn.dataset.bound = "true";
 
   saveBtn.addEventListener("click", async () => {
     const updates = {};
-    qsa(".statusSelect").forEach(s => {
-      if (!s?.dataset?.id) return;
-      updates[s.dataset.id] = s.value;
-    });
+    qsa(".statusSelect").forEach(s => updates[s.dataset.id] = s.value);
 
     try {
-      const result = await updateAvailability(updates);
-      const availability = await fetchAvailability();
-      availabilityRef = availability; // keep reference fresh
-      renderAdmin(availabilityRef);    // re-render admin list
-
-      // refresh audit after save
-      try {
-        const audit = await fetchAudit();
-        renderAuditTable(audit);
-      } catch {}
-
-      toast(`Saved ✓ (${result?.mode || "ok"})`);
+      await updateAvailability(updates);
+      const fresh = await fetchAvailability();
+      renderAdmin(fresh);
+      renderAuditTable(await fetchAudit());
+      toast("Availability saved ✓");
     } catch (e) {
-      toast(`Save failed: ${e?.message || e}`, true);
+      toast(`Save failed: ${e.message}`, true);
     }
   });
-}
-
-/* ---------- Tenant Portal ---------- */
-
-function initTenantPortal() {
-  const form = qs("#tenantForm");
-  if (!form) return;
-
-  const select = qs("#propertySelect");
-  if (!select) return;
-
-  const data = window.ADEX_DATA;
-  if (!data?.rentals?.length) return;
-
-  data.rentals.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = `${p.name} — ${p.address || p.state || ""}`.trim();
-    select.appendChild(opt);
-  });
-
-  const params = new URLSearchParams(location.search);
-  const prop = params.get("property");
-  if (prop) select.value = prop;
 }
 
 /* ---------- Init ---------- */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // allow overrides if you ever choose to use window.__ADEX_CFG
-  if (window.__ADEX_CFG) Object.assign(CFG, window.__ADEX_CFG);
-
   await logVisit();
 
   const availability = await fetchAvailability();
-
-  renderLands();
   renderRentals(availability);
   renderAdmin(availability);
-  initTenantPortal();
 
-  // Admin-only UI pieces (safe to call on non-admin pages too)
   try {
     const who = await fetchWhoAmI();
     renderWhoAmI(who);
     applyMaintenanceUI(who);
+    renderAuditTable(await fetchAudit());
   } catch {
-    // If Access blocks /whoami, you’ll see it here
-    const badge = qs("#whoami");
-    if (badge) badge.textContent = "Identity unavailable";
-  }
-
-  try {
-    const audit = await fetchAudit();
-    renderAuditTable(audit);
-  } catch {
-    // ignore on pages without audit table
+    qs("#whoami") && (qs("#whoami").textContent = "Identity unavailable");
   }
 });
