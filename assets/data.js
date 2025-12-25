@@ -4,7 +4,7 @@
 
 window.ADEX_DATA = {
   trustName: "Adex Holdings Trust",
-  tagline: "Residential rentals & land holdings across the U.S. and Nigeria",
+  tagline: "Residential rentals & land holdings",
   contact: {
     email: "tenantservices@adexholdings.com",
     phone: "+1-949-415-4633"
@@ -179,7 +179,7 @@ window.ADEX_DATA = {
       links: {
         maps: "https://www.google.com/maps?q=5201+Spencer+Ln+Heber+AZ+86025"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://apps.navajocountyaz.gov/NavajoWebPayments/PropertyInformation", zoning: null, assessedValue: null },
       geo: null
     },
 
