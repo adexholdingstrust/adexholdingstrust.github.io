@@ -23,7 +23,7 @@ window.ADEX_DATA = {
       state: "CO",
       country: "USA",
       currency: "USD",
-      rent: { amount: null, period: "month" },
+      rent: { amount: "$2,550", period: "month" },
       status: "rented",
       details:
         "Townhouse located in Aurora, Colorado. Currently occupied.",
@@ -43,7 +43,7 @@ window.ADEX_DATA = {
       state: "CO",
       country: "USA",
       currency: "USD",
-      rent: { amount: null, period: "month" },
+      rent: { amount: "$2,750", period: "month" },
       status: "rented",
       details:
         "Condominium located in Aurora, Colorado. Currently occupied.",
@@ -51,7 +51,7 @@ window.ADEX_DATA = {
       mapsLink:
         "https://www.google.com/maps?q=13950+E+Oxford+Place+Aurora+CO+80014",
       streetViewEmbed:
-        "https://www.google.com/maps/embed/v1/streetview?key=YOUR_GOOGLE_MAPS_API_KEY&location=39.6404834,-104.8279822&heading=210&pitch=10&fov=90",
+          "https://www.google.com/maps?q=&layer=c&cbll=39.64060312656101,-104.82539119293874&cbp=11,210,0,10,90&output=svembed",
       photos: []
     },
 
@@ -64,15 +64,16 @@ window.ADEX_DATA = {
       state: "CA",
       country: "USA",
       currency: "USD",
-      rent: { amount: null, period: "month" },
+      rent: { amount: "$5,000", period: "month" },
       status: "rented",
       details:
         "Two-story single-family home located in Fallbrook, California.",
       embedQuery: "464 Calabrese St, Fallbrook, CA 92028",
       mapsLink:
         "https://www.google.com/maps?q=464+Calabrese+St+Fallbrook+CA+92028",
+      // Facing ~210 degrees
       streetViewEmbed:
-        "https://www.google.com/maps/place/464+Calabrese+St,+Fallbrook,+CA+92028/@33.3546007,-117.1518621,17z",
+        "https://www.google.com/maps?q=&layer=c&cbll=33.354784299024914,-117.14928182355165&cbp=11,210,0,0,0&output=svembed",
       photos: []
     },
 
@@ -86,15 +87,16 @@ window.ADEX_DATA = {
       state: "Lagos",
       country: "Nigeria",
       currency: "NGN",
-      rent: { amount: null, period: "year" },
+      rent: { amount: "$5,000", period: "year" },
       status: "rented",
       details:
         "Apartment located within the Sterling Cooperative Estate (GreenBay)",
       embedQuery:
-        "Sterling Cooperative Estate GreenBay",
+          "Sterling Cooperative Estate GreenBay Ilaje Lagos Nigeria",
       mapsLink:
-        "https://www.google.com/maps?q=Sterling+Cooperative+Estate+GreenBay+Ilaje+Lagos",
-      streetViewEmbed: "https://www.google.com/maps/embed/v1/streetview?key=YOUR_GOOGLE_MAPS_API_KEY&location=6.4364709,3.5675633&heading=180&pitch=10&fov=90",
+          "https://www.google.com/maps?q=GreenBay+Estate+Ilaje+Lagos+Nigeria",
+      streetViewEmbed:
+          "https://www.google.com/maps?q=&layer=c&cbll=6.4396552,3.5696296&cbp=11,90,0,0,0&output=svembed",
       photos: []
     },
 
@@ -108,7 +110,7 @@ window.ADEX_DATA = {
       state: "Lagos",
       country: "Nigeria",
       currency: "NGN",
-      rent: { amount: null, period: "year" },
+      rent: { amount: "$5,000", period: "year" },
       status: "available",
       details:
         "Single-family residential house located in the Ibudo Wura community, Lagos.",
