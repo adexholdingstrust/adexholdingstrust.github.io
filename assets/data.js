@@ -96,7 +96,7 @@ window.ADEX_DATA = {
       mapsLink:
           "https://www.google.com/maps?q=GreenBay+Estate+Ilaje+Lagos+Nigeria",
       streetViewEmbed:
-          "https://www.google.com/maps?q=&layer=c&cbll=6.440007017584023,3.5697047413577865&cbp=11,90,0,0,0&output=svembed",
+          "https://www.google.com/maps?q=&layer=c&cbll=6.439793970868632,3.5696925435548397&cbp=11,90,0,0,0&output=svembed",
       photos: []
     },
 
