@@ -33,7 +33,11 @@ window.ADEX_DATA = {
       mapsLink:
         "https://www.google.com/maps?q=12061+E+Hoye+Drive+Aurora+CO+80012",
       streetViewEmbed: "https://www.google.com/maps?q=&layer=c&cbll=39.6988672,-104.8481339&cbp=11,0,0,0,0&output=svembed",
-      photos: []
+      photos: [],
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -56,7 +60,11 @@ window.ADEX_DATA = {
         "https://www.google.com/maps?q=13950+E+Oxford+Place+Aurora+CO+80014",
       streetViewEmbed:
           "https://www.google.com/maps/embed?pb=!4v1766715350705!6m8!1m7!1s6Mbhl1428ypUr9dgFDX2jA!2m2!1d39.64103040953596!2d-104.8254105634934!3f175.28680071718463!4f7.954084946855772!5f0.40029571729599617&output=svembed",
-      photos: []
+      photos: [],
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -80,7 +88,11 @@ window.ADEX_DATA = {
       // Facing ~210 degrees
       streetViewEmbed:
         "https://www.google.com/maps/embed?pb=!4v1766785505734!6m8!1m7!1sxZ0A6vFbjnLbj9LDsCmupA!2m2!1d33.35443295883505!2d-117.1489938555766!3f303.42987!4f0!5f0.7820865974627469&output=svembed",
-      photos: []
+      photos: [],
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -105,7 +117,11 @@ window.ADEX_DATA = {
           "https://maps.app.goo.gl/h8Kza81BevSNPA1d7",
       streetViewEmbed:
           "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4269.247031157026!2d3.567563310848142!3d6.436470924141108!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf7e5ce493465%3A0x436e208846a77b99!2sSterling%20Cooperative%20Estate!5e1!3m2!1sen!2sus!4v1766785908479!5m2!1sen!2sus&output=svembed",
-      photos: []
+      photos: [],
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -130,8 +146,11 @@ window.ADEX_DATA = {
       streetViewEmbed: null,
       photos: [  "/assets/photos/ibudo-wura/front.jpg",
                  "/assets/photos/ibudo-wura/living-room.jpg",
-                 "/assets/photos/ibudo-wura/kitchen.jpg"]
-    }
+                 "/assets/photos/ibudo-wura/kitchen.jpg"],
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
   ],
 
   /* ======================
@@ -154,7 +173,11 @@ window.ADEX_DATA = {
         maps: "https://www.google.com/maps?q=7600+Arabian+Way+Pahrump+NV+89061"
       },
       assessor: { deepLink: "https://nyenv-assessor.devnetwedge.com/parcel/view/04524339/2026", zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -172,7 +195,11 @@ window.ADEX_DATA = {
         maps: "https://www.google.com/maps?q=Apache+County+AZ+206-30-098"
       },
       assessor: { deepLink: "https://eagleassessor.co.apache.az.us/assessor/taxweb/account.jsp?guest=true&accountNum=R0042800", zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -191,7 +218,11 @@ window.ADEX_DATA = {
         maps: "https://www.google.com/maps?q=5201+Spencer+Ln+Heber+AZ+86025"
       },
       assessor: { deepLink: "https://apps.navajocountyaz.gov/NavajoWebPayments/PropertyInformation", zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -210,7 +241,11 @@ window.ADEX_DATA = {
         maps: "https://www.google.com/maps?q=Elko+County+NV+007-12Q-011"
       },
       assessor: { deepLink: "https://elko-search.gsacorp.io/parcel/00712Q011", zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -229,7 +264,11 @@ window.ADEX_DATA = {
         maps: "https://www.google.com/maps?q=Elko+County+NV+010-81H-024"
       },
       assessor: { deepLink: "https://elko-search.gsacorp.io/parcel/01081H024", zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -247,7 +286,11 @@ window.ADEX_DATA = {
         maps: "https://www.google.com/maps?q=Garden+Valley+Ranchos+UT+84753"
       },
       assessor: { deepLink: "https://eagleweb.ironcounty.net/eaglesoftware/taxweb/account.jsp?accountNum=0503376", zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -265,7 +308,11 @@ window.ADEX_DATA = {
         maps: "https://www.google.com/maps?q=Modena+UT"
       },
       assessor: { deepLink: "https://eagleweb.ironcounty.net/eaglesoftware/taxweb/account.jsp?accountNum=0331246", zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -284,7 +331,11 @@ window.ADEX_DATA = {
         maps: "https://maps.app.goo.gl/zVqjSQW6rqFQSiB47"
       },
       assessor: { deepLink: "https://portal.assessor.lacounty.gov/parceldetail/3344011068", zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -303,7 +354,11 @@ window.ADEX_DATA = {
         maps: "https://maps.app.goo.gl/dMrgtdRDRggyzGbN6"
       },
       assessor: { deepLink: "https://portal.assessor.lacounty.gov/parceldetail/3322023014", zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -321,7 +376,11 @@ window.ADEX_DATA = {
         maps: "https://www.google.com/maps?q=Rio+Grande+Estates+Valencia+County+NM"
       },
       assessor: { deepLink: null, zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     },
 
     {
@@ -339,7 +398,11 @@ window.ADEX_DATA = {
         maps: "https://www.google.com/maps?q=Rancho+Rio+Grande+Belen+NM"
       },
       assessor: { deepLink: null, zoning: null, assessedValue: null },
-      geo: null
+      geo: null,
+      video: {
+        type: "youtube", // youtube | vimeo | mp4
+        url: "https://www.youtube.com/watch?v=XXXX"
+         }
     }
   ]
 };
