@@ -69,7 +69,74 @@
     <div class="h1">Key Performance Indicators</div>
     <div id="adminKPI"></div>
   </div>
+<!-- ADD: KPI DASHBOARD GRID (VISUAL UPGRADE ONLY) -->
+<div class="card" id="kpiDashboard">
 
+  <div class="kicker">Analytics</div>
+  <div class="h1">Overview Dashboard</div>
+
+  <div class="kpiGrid">
+
+    <div class="kpiCard">
+      <div class="kpiLabel">Total Events</div>
+      <div class="kpiValue" id="kpiTotalEvents">—</div>
+      <div class="kpiMeta">Last 30 days</div>
+      <canvas id="sparkTotalEvents" height="28"></canvas>
+    </div>
+
+    <div class="kpiCard">
+      <div class="kpiLabel">Property Views</div>
+      <div class="kpiValue" id="kpiPropertyViews">—</div>
+      <div class="kpiMeta">Rental + Land</div>
+      <canvas id="sparkPropertyViews" height="28"></canvas>
+    </div>
+
+    <div class="kpiCard warning">
+      <div class="kpiLabel">High Severity Events</div>
+      <div class="kpiValue" id="kpiHighSeverity">—</div>
+      <div class="kpiMeta">Severity ≥ threshold</div>
+      <canvas id="sparkHighSeverity" height="28"></canvas>
+    </div>
+
+    <div class="kpiCard">
+      <div class="kpiLabel">Unique Properties</div>
+      <div class="kpiValue" id="kpiUniqueProperties">—</div>
+      <div class="kpiMeta">Engaged listings</div>
+      <canvas id="sparkUniqueProperties" height="28"></canvas>
+    </div>
+
+  </div>
+
+  <div class="kpiFooter">
+    📩 Last alert sent:
+    <strong id="lastAlertTimestamp">Never</strong>
+  </div>
+
+</div>
+
+<!-- ADD: PROPERTY ENGAGEMENT RANKING -->
+<div class="card" id="propertyRanking">
+
+  <div class="kicker">Analytics</div>
+  <div class="h1">Property Engagement Ranking</div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Property</th>
+        <th>Views</th>
+        <th>High Severity</th>
+        <th>Engagement Score</th>
+        <th>Last Seen</th>
+      </tr>
+    </thead>
+    <tbody id="engagementRankingBody">
+      <!-- populated by app.js -->
+    </tbody>
+  </table>
+
+</div>
   <!-- NEW: EVENT HEATMAP -->
   <div class="card">
     <div class="kicker">Analytics</div>
