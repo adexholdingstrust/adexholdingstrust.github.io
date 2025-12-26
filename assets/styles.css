@@ -851,4 +851,73 @@ body.withSidebar .container {
     grid-template-columns: 1fr;
   }
 }
+.adminSidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 220px;
+  background: #0f172a;
+  border-right: 1px solid rgba(255,255,255,.08);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 10;
+}
+
+.adminSidebar a {
+  color: #cbd5f5;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.adminSidebar a:hover {
+  background: rgba(99,102,241,.15);
+  color: #fff;
+}
+.container {
+  margin-left: 240px;
+}
+.card {
+  border-left: 4px solid transparent;
+}
+
+.card:hover {
+  border-left-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99,102,241,.15);
+}
+.kpiCard {
+  background: linear-gradient(
+    145deg,
+    rgba(99,102,241,.15),
+    rgba(15,23,42,.9)
+  );
+}
+.heatmapControls select {
+  background: #020617;
+  color: #e5e7eb;
+  border: 1px solid rgba(255,255,255,.15);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.timelineItem {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.timelineItem .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 6px;
+}
+
+.severity-1 { background:#94a3b8 }
+.severity-3 { background:#facc15 }
+.severity-5 { background:#ef4444 }
 
