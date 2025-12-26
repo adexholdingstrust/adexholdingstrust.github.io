@@ -1366,6 +1366,35 @@ host.appendChild(wrap);
   });
 }
 /* =======================
+   EVENT REPLAY TIMELINE
+======================= */
+
+async function loadEventReplay() {
+  const host = document.getElementById("replayTimeline");
+  if (!host) return;
+
+  const res = await accessFetch("/admin/events?limit=25");
+  const out = await res.json();
+
+  host.innerHTML = "";
+
+  (out.events || []).forEach(e => {
+    const div = document.createElement("div");
+    div.className = "replayItem" + (e.severity >= 4 ? " high" : "");
+    div.innerHTML = `
+      <div class="replayTime">${e.ts}</div>
+      <div class="replayBody">
+        <b>${e.eventType}</b><br/>
+        ${e.data?.name || e.data?.parcelId || "—"}<br/>
+        <span style="opacity:.7">
+          ${[e.city, e.region, e.country].filter(Boolean).join(", ")}
+        </span>
+      </div>
+    `;
+    host.appendChild(div);
+  });
+}
+/* =======================
    ADMIN SIDEBAR
 ======================= */
 
@@ -1386,43 +1415,6 @@ function initAdminSidebar() {
 
   document.body.prepend(sidebar);
 }
-/* =======================
-   EVENT REPLAY TIMELINE
-======================= */
-
-function renderEventReplay(events) {
-  const host = qs("#eventReplay");
-  if (!host) return;
-
-  host.innerHTML = "";
-
-  if (!events.length) {
-    host.innerHTML = `<div class="muted">No events to replay.</div>`;
-    return;
-  }
-
-  events.forEach(e => {
-    const row = document.createElement("div");
-    row.className = "eventReplayRow";
-
-    row.innerHTML = `
-      <div class="time">${escapeHtml(e.ts)}</div>
-      <div class="type">${escapeHtml(e.eventType)}</div>
-      <div class="detail">
-        ${escapeHtml(e.data?.name || e.path || "—")}
-      </div>
-      <div class="sev">S${e.severity}</div>
-    `;
-
-    host.appendChild(row);
-  });
-}
-async function loadEventReplay() {
-  const res = await accessFetch("/admin/events?limit=200");
-  const out = await res.json();
-  renderEventReplay(out.events || []);
-}
-
 /* =======================
    INIT
 ======================= */
@@ -1448,7 +1440,9 @@ if (who?.isAdmin === true && onAdminPage) {
   if (qs("#adminHeatmap")) initAdminEventHeatmap();
   if (qs("#engagementRanking")) loadEngagementRanking();
   if (qs("#auditTable")) await loadAudit();
-  if (qs("#eventReplay")) await loadEventReplay();
+  if (document.getElementById("replayTimeline")) {
+  await loadEventReplay();
+}
 }
 
   if (!sessionStorage.getItem("pv:" + location.pathname)) {
