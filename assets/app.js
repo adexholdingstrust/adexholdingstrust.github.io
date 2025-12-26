@@ -68,7 +68,7 @@ function rentLabel(rent) {
   const amt = rent.amount == null ? "—" : rent.amount;
   return `${amt === "—" ? "Rent: —" : `Rent: ${amt}`}${period}`;
 }
-
+const __trackedViews = new Set();
 /* =======================
    LAZY LOADING
 ======================= */
@@ -165,7 +165,33 @@ async function accessFetch(path, opts = {}) {
 
   return res;
 }
+/* =======================
+   EVENT TRACKING (PRIVACY-SAFE)
+======================= */
 
+function trackEvent(eventType, data = {}) {
+  try {
+    fetch(`${CFG.WORKER_BASE}/track`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventType,
+        path: location.pathname,
+        referrer: document.referrer || null,
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        screen: {
+          w: window.screen.width,
+          h: window.screen.height
+        },
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        ...data
+      })
+    }).catch(() => {});
+  } catch {
+    // fail silently
+  }
+}
 /* =======================
    AVAILABILITY
 ======================= */
@@ -459,6 +485,41 @@ function renderRentals(avail) {
 }
 
 /* =======================
+   TENANT PORTAL (PROPERTY DROPDOWN)
+======================= */
+
+function initTenantPortalPropertyDropdown() {
+  const sel = qs("#propertySelect");
+  if (!sel) return; // Not on tenant portal page
+
+  const rentals = window.ADEX_DATA?.rentals || [];
+  if (!rentals.length) return;
+
+  const placeholder =
+    sel.querySelector("option[value='']")?.outerHTML ||
+    `<option value="" disabled selected>Select a property</option>`;
+
+  const sorted = [...rentals].sort((a, b) =>
+    String(a.name).localeCompare(String(b.name))
+  );
+
+  sel.innerHTML =
+    placeholder +
+    sorted
+      .map(p => {
+        const label = [
+          p.name,
+          p.address,
+          p.city,
+          p.state
+        ].filter(Boolean).join(" • ");
+
+        return `<option value="${escapeHtml(p.id)}">${escapeHtml(label)}</option>`;
+      })
+      .join("");
+}
+
+/* =======================
    PROPERTIES PAGE (FULL)
 ======================= */
 
@@ -484,6 +545,18 @@ function renderPropertiesPage(avail) {
     items.forEach(p => {
       const status = avail[p.id] || p.status || "rented";
       const available = status === "available";
+        const viewKey = `rental:${p.id}`;
+if (!__trackedViews.has(viewKey)) {
+  __trackedViews.add(viewKey);
+  trackEvent("view_rental", {
+    id: p.id,
+    name: p.name,
+    state: p.state,
+    country: p.country
+  });
+}
+
+
       const q = p.embedQuery || p.address || p.name;
 
       const heroImg = document.createElement("img");
@@ -516,7 +589,6 @@ function renderPropertiesPage(avail) {
         p.rent
           ? `${formatMoney(p.rent.amount, p.currency)}${p.rent.period === "year" ? "/yr" : "/mo"}`
           : "";
-
       const card = document.createElement("div");
       card.className = "propertyCard";
       card.innerHTML = `
@@ -656,6 +728,17 @@ const items = window.ADEX_DATA.lands.filter(l => {
     host.innerHTML = "";
 
     items.forEach(l => {
+       const viewKey = `land:${l.id}`;
+if (!__trackedViews.has(viewKey)) {
+  __trackedViews.add(viewKey);
+  trackEvent("view_land", {
+    id: l.id,
+    parcelId: l.parcelId,
+    county: l.county,
+    state: l.state,
+    acres: l.acres
+  });
+}
       const q = l.address || `${l.county || ""} ${l.state || ""}`.trim() || l.name;
 
       const img = document.createElement("img");
@@ -1024,7 +1107,11 @@ function renderAdmin(avail) {
 ======================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const availability = await fetchAvailability();
+   const availability = await fetchAvailability(); // ✅ ADD THIS LINE
+   const who = await loadWhoAmI();
+trackEvent("page_view", {
+  auth: !!who
+});
 
   // admin + simple public
   renderRentals(availability);
@@ -1033,14 +1120,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // full public pages
   renderPropertiesPage(availability);
   renderLandsPage();
-   
+   initTenantPortalPropertyDropdown(); // ✅ ADD THIS LINE
   // interactive lands map if lands.html provides <div id="landsMap"></div>
   initLandsInteractiveMap().catch(err => {
   console.warn("Interactive lands map failed:", err);
 });
 
-  await loadWhoAmI();
+  if (who?.isAdmin) {
   await loadAudit();
+}
 
   setupLazy();
 });
