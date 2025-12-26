@@ -1295,21 +1295,38 @@ function renderAdmin(avail) {
   host.innerHTML = "";
 
   window.ADEX_DATA.rentals.forEach(p => {
-    const sel = document.createElement("select");
-    sel.dataset.id = p.id;
-    sel.innerHTML = `
-      <option value="rented">Rented</option>
-      <option value="available">Available</option>
-    `;
-    sel.value = avail[p.id] || p.status || "rented";
+const sel = document.createElement("select");
+sel.dataset.id = p.id;
+sel.innerHTML = `
+  <option value="rented">Rented</option>
+  <option value="available">Available</option>
+`;
+sel.value = avail[p.id] || p.status || "rented";
 
-    const row = document.createElement("div");
-    row.className = "card";
-    row.innerHTML = `<b>${escapeHtml(p.name)}</b>`;
-    row.appendChild(sel);
-    host.appendChild(row);
-  });
+const wrap = document.createElement("div");
+wrap.className = "availabilityItem";
 
+const toggle = document.createElement("div");
+toggle.className = "toggleWrap";
+toggle.dataset.state = sel.value;
+
+const track = document.createElement("div");
+track.className = "toggleTrack";
+
+sel.addEventListener("change", () => {
+  toggle.dataset.state = sel.value;
+});
+
+toggle.appendChild(track);
+toggle.appendChild(sel);
+
+wrap.innerHTML = `<div class="name">${escapeHtml(p.name)}</div>`;
+wrap.appendChild(toggle);
+
+host.appendChild(wrap);
+});
+
+   
   if (btn.dataset.bound) return;
   btn.dataset.bound = "true";
 
