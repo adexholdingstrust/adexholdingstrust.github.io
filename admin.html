@@ -7,16 +7,13 @@
   <title>Adex Holdings Trust | Admin</title>
 
   <!-- HARD CONTEXT BLOCK -->
-  <script>
+ <script>
 (function () {
-  // Allow Cloudflare Access auth flow to complete
-  if (location.pathname.startsWith("/cdn-cgi/access")) {
-    return;
-  }
+  // Allow Cloudflare Access internals
+  if (location.pathname.startsWith("/cdn-cgi/access")) return;
 
-  // Enforce context ONLY on final admin page
+  // Enforce final location only
   if (
-    window.top !== window.self ||
     location.protocol !== "https:" ||
     location.hostname !== "adexholdings.com" ||
     location.pathname !== "/admin.html"
@@ -29,7 +26,6 @@
         <div>
           <h2>Access Restricted</h2>
           <p>This account has no access to this page.</p>
-          <p>Please use the appropriate link or contact Adex Holdings, LLC or Adex Holdings Trust.</p>
         </div>
       </body></html>
     `);
