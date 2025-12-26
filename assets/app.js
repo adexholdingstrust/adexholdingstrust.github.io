@@ -168,7 +168,9 @@ async function initAdminEventHeatmap() {
       minSeverity: currentSeverity
     });
     const res = await accessFetch(`/admin/heatmap?${qs}`);
-    return res.json();
+   const data = await res.json();
+   return data.features ? data : { type: "FeatureCollection", features: [] };
+
   };
 
   const controls = document.createElement("div");
@@ -202,6 +204,12 @@ async function initAdminEventHeatmap() {
 
   map.on("load", async () => {
     const geo = await fetchGeo();
+     if (!geo.features.length) {
+  el.insertAdjacentHTML(
+    "beforebegin",
+    `<div class="small muted">No events recorded for this time range.</div>`
+  );
+}
 
     map.addSource("events", {
       type: "geojson",
@@ -338,7 +346,13 @@ async function loadWhoAmI() {
     return null;
   }
 }
+
 async function loadAdminUIHelpers() {
+   if (!document.querySelector("#adminControls") &&
+    !document.querySelector("#adminKPI") &&
+    !document.querySelector("#eventsTable")) {
+  return;
+}
   try {
     const res = await accessFetch("/admin/ui.js");
     if (!res.ok) return;
@@ -1316,6 +1330,11 @@ track.className = "toggleTrack";
 sel.addEventListener("change", () => {
   toggle.dataset.state = sel.value;
 });
+     toggle.addEventListener("click", () => {
+  sel.value = sel.value === "available" ? "rented" : "available";
+  toggle.dataset.state = sel.value;
+});
+
 
 toggle.appendChild(track);
 toggle.appendChild(sel);
@@ -1355,32 +1374,31 @@ document.addEventListener("DOMContentLoaded", async () => {
   const availability = await fetchAvailability();
   const who = await loadWhoAmI();
 
-if (who) {
+const onAdminPage =
+  location.pathname === "/admin.html" ||
+  !!document.querySelector("#eventsTable") ||
+  !!document.querySelector("#adminKPI") ||
+  !!document.querySelector("#adminHeatmap");
+
+if (who?.isAdmin === true && onAdminPage) {
   loadAdminUIHelpers();
 
-  if (qs("#adminKPI")) {
-    initAdminKPI();
-  }
-
+  if (qs("#adminKPI")) initAdminKPI();
   initAdminCSVButton();
-
-  if (qs("#adminHeatmap")) {
-    initAdminEventHeatmap();
-  }
-
-  if (qs("#engagementRanking")) {
-    loadEngagementRanking();
-  }
-
-  if (qs("#auditTable")) {
-    await loadAudit();
-  }
+  if (qs("#adminHeatmap")) initAdminEventHeatmap();
+  if (qs("#engagementRanking")) loadEngagementRanking();
+  if (qs("#auditTable")) await loadAudit();
 }
 
+  if (!sessionStorage.getItem("pv:" + location.pathname)) {
+  sessionStorage.setItem("pv:" + location.pathname, "1");
   trackEvent("page_view", { auth: !!who });
+}
 
   renderRentals(availability);
+  if (who?.isAdmin === true) {
   renderAdmin(availability);
+}
   renderPropertiesPage(availability);
   renderLandsPage();
   initTenantPortalPropertyDropdown();
