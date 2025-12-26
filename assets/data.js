@@ -79,7 +79,7 @@ window.ADEX_DATA = {
         "https://www.google.com/maps?q=464+Calabrese+St+Fallbrook+CA+92028",
       // Facing ~210 degrees
       streetViewEmbed:
-        "https://www.google.com/maps?q=&layer=c&cbll=33.354784299024914,-117.14928182355165&cbp=11,210,0,0,0&output=svembed",
+        "https://www.google.com/maps/embed?pb=!4v1766785505734!6m8!1m7!1sxZ0A6vFbjnLbj9LDsCmupA!2m2!1d33.35443295883505!2d-117.1489938555766!3f303.42987!4f0!5f0.7820865974627469&output=svembed",
       photos: []
     },
 
@@ -104,7 +104,7 @@ window.ADEX_DATA = {
       mapsLink:
           "https://maps.app.goo.gl/h8Kza81BevSNPA1d7",
       streetViewEmbed:
-          "https://www.google.com/maps?q=&layer=c&cbll=6.439793970868632,3.5696925435548397&cbp=11,90,0,0,0&output=svembed",
+          "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d8538.440518847878!2d3.56963!3d6.439655!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf71da5cfa169%3A0x4aceda00320eb247!2sGreenBay%20Estate%2C%20Ilaje.!5e1!3m2!1sen!2sus!4v1766785771525!5m2!1sen!2sus&output=svembed",
       photos: []
     },
 
