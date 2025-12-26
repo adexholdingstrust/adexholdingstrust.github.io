@@ -1041,3 +1041,12 @@ body.withSidebar .container {
 .replayBody {
   font-size: 14px;
 }
+.propertyCard {
+  position: relative;
+}
+
+.propertyOverlayLink {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
