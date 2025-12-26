@@ -619,7 +619,102 @@ function injectSchemaJsonLd(items, type) {
 
   document.head.appendChild(script);
 }
+/* =======================
+   SEO + OPENGRAPH (PROPERTY DETAIL)
+======================= */
 
+function setPropertySEO(p) {
+  if (!p) return;
+
+  const baseUrl = location.origin;
+  const url = `${baseUrl}/property.html?id=${encodeURIComponent(p.id)}`;
+
+  const title = `${p.name} | ${p.city || ""} ${p.state || ""} | Adex Holdings Trust`;
+  const description =
+    p.summary ||
+    p.details ||
+    `Rental property located in ${p.city || ""}, ${p.state || ""}.`;
+
+  // Pick best image for previews
+  const image =
+    (p.photos && p.photos[0]) ||
+    googleStreetViewImage(p.embedQuery || p.address || p.name);
+
+  /* ---------- <title> ---------- */
+  document.title = title;
+
+  /* ---------- helpers ---------- */
+  const upsertMeta = (attr, key, value) => {
+    if (!value) return;
+    let el = document.head.querySelector(`meta[${attr}="${key}"]`);
+    if (!el) {
+      el = document.createElement("meta");
+      el.setAttribute(attr, key);
+      document.head.appendChild(el);
+    }
+    el.setAttribute("content", value);
+  };
+
+  /* ---------- BASIC SEO ---------- */
+  upsertMeta("name", "description", description);
+
+  let canonical = document.head.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement("link");
+    canonical.rel = "canonical";
+    document.head.appendChild(canonical);
+  }
+  canonical.href = url;
+
+  /* ---------- OPENGRAPH ---------- */
+  upsertMeta("property", "og:type", "article");
+  upsertMeta("property", "og:title", title);
+  upsertMeta("property", "og:description", description);
+  upsertMeta("property", "og:image", image);
+  upsertMeta("property", "og:url", url);
+
+  /* ---------- TWITTER ---------- */
+  upsertMeta("name", "twitter:card", "summary_large_image");
+  upsertMeta("name", "twitter:title", title);
+  upsertMeta("name", "twitter:description", description);
+  upsertMeta("name", "twitter:image", image);
+
+  /* ---------- JSON-LD ---------- */
+  const old = document.getElementById("property-schema");
+  if (old) old.remove();
+
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Residence",
+    name: p.name,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: p.address,
+      addressLocality: p.city,
+      addressRegion: p.state,
+      addressCountry: p.country
+    },
+    image: image,
+    url: url,
+    offers: p.rent
+      ? {
+          "@type": "Offer",
+          price: p.rent.amount,
+          priceCurrency: p.currency,
+          availability:
+            p.status === "available"
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock"
+        }
+      : undefined
+  };
+
+  const script = document.createElement("script");
+  script.type = "application/ld+json";
+  script.id = "property-schema";
+  script.textContent = JSON.stringify(schema, null, 2);
+  document.head.appendChild(script);
+}
 /* =======================
    PHOTO CAROUSEL (DATA-DRIVEN)
 ======================= */
@@ -917,7 +1012,7 @@ function renderPropertyDetailPage(avail) {
     host.innerHTML = "<p>Property not found.</p>";
     return;
   }
-
+  setPropertySEO(p);
   const status = avail[p.id] || p.status || "rented";
   const available = status === "available";
 
