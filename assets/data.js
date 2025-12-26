@@ -128,7 +128,9 @@ window.ADEX_DATA = {
       mapsLink:
         "https://www.google.com/maps?q=Ibudo+Wura+Lagos+Nigeria",
       streetViewEmbed: null,
-      photos: []
+      photos: [  "/assets/photos/ibudo-wura/front.jpg",
+                 "/assets/photos/ibudo-wura/living-room.jpg",
+                 "/assets/photos/ibudo-wura/kitchen.jpg"]
     }
   ],
 
