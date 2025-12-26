@@ -69,6 +69,67 @@ function rentLabel(rent) {
   return `${amt === "—" ? "Rent: —" : `Rent: ${amt}`}${period}`;
 }
 const __trackedViews = new Set();
+
+function initPropertyEditor() {
+  const sel = qs("#editorPropertySelect");
+  if (!sel) return;
+
+  const rentals = window.ADEX_DATA?.rentals || [];
+  sel.innerHTML = rentals
+    .map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`)
+    .join("");
+
+  sel.addEventListener("change", () => loadPropertyIntoEditor(sel.value));
+  loadPropertyIntoEditor(sel.value);
+}
+
+function loadPropertyIntoEditor(id) {
+  const p = window.ADEX_DATA.rentals.find(x => x.id === id);
+  if (!p) return;
+
+  qs("#editorSummary").value = p.summary || "";
+  qs("#editorDetails").value = p.details || "";
+  qs("#editorPhotos").value = (p.photos || []).join("\n");
+  qs("#editorVideoType").value = p.video?.type || "";
+  qs("#editorVideoUrl").value = p.video?.url || "";
+}
+async function bindPropertyEditorSave() {
+  const btn = qs("#savePropertyContent");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    const id = qs("#editorPropertySelect").value;
+
+    const payload = {
+      id,
+      summary: qs("#editorSummary").value.trim(),
+      details: qs("#editorDetails").value.trim(),
+      photos: qs("#editorPhotos").value
+        .split("\n")
+        .map(x => x.trim())
+        .filter(Boolean),
+      video: qs("#editorVideoType").value
+        ? {
+            type: qs("#editorVideoType").value,
+            url: qs("#editorVideoUrl").value.trim()
+          }
+        : null
+    };
+
+    try {
+      await accessFetch("/admin/property/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      notify("Property content saved ✓");
+    } catch (e) {
+      notify("Failed to save property content", true);
+    }
+  });
+}
+
 /* =======================
    LAZY LOADING
 ======================= */
@@ -281,22 +342,34 @@ async function accessFetch(path, opts = {}) {
 
 function trackEvent(eventType, data = {}) {
   try {
-    fetch(`${CFG.WORKER_BASE}/track`, {
+    const payload = JSON.stringify({
+      eventType,
+      path: location.pathname,
+      referrer: document.referrer || null,
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      screen: { w: window.screen.width, h: window.screen.height },
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ...data
+    });
+
+    const url = `${CFG.WORKER_BASE}/track`;
+
+    // Reliable for navigation + unload
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(
+        url,
+        new Blob([payload], { type: "application/json" })
+      );
+      return;
+    }
+
+    // Fallback
+    fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        eventType,
-        path: location.pathname,
-        referrer: document.referrer || null,
-        userAgent: navigator.userAgent,
-        language: navigator.language,
-        screen: {
-          w: window.screen.width,
-          h: window.screen.height
-        },
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        ...data
-      })
+      body: payload,
+      keepalive: true
     }).catch(() => {});
   } catch {
     // fail silently
@@ -403,7 +476,49 @@ function renderAudit(rows) {
     body.appendChild(tr);
   });
 }
+/* =======================
+   EVENT REPLAY TIMELINE
+======================= */
 
+async function loadEventReplay() {
+  const host = qs("#replayTimeline");
+  if (!host) return;
+
+  const res = await accessFetch("/admin/events?limit=200");
+  const out = await res.json();
+
+  renderEventReplay(out.events || []);
+}
+
+function renderEventReplay(events) {
+  const host = qs("#replayTimeline");
+  if (!host) return;
+
+  host.innerHTML = "";
+
+  if (!events.length) {
+    host.innerHTML = `<div class="muted">No events to replay.</div>`;
+    return;
+  }
+
+  events.forEach(e => {
+    const row = document.createElement("div");
+    row.className = "replayItem" + (e.severity >= 4 ? " high" : "");
+
+    row.innerHTML = `
+      <div class="replayTime">${escapeHtml(e.ts)}</div>
+      <div class="replayBody">
+        <b>${escapeHtml(e.eventType)}</b><br/>
+        ${escapeHtml(e.data?.name || e.data?.parcelId || e.path || "—")}<br/>
+        <span style="opacity:.7">
+          ${[e.city, e.region, e.country].filter(Boolean).join(", ")}
+        </span>
+      </div>
+    `;
+
+    host.appendChild(row);
+  });
+}
 /* =======================
    ADMIN KPI SUMMARY
    - Last 7 days
@@ -1023,12 +1138,12 @@ function renderPropertyDetailPage(avail) {
     <h1>${escapeHtml(p.name)}</h1>
 
     ${carousel ? `<div class="propertyGallery">${carousel}</div>` : ""}
-
+    ${renderPropertyVideo(p)}
     <div class="meta">
       ${escapeHtml(p.type)} • ${escapeHtml(p.city || "")}, ${escapeHtml(p.state || "")}
     </div>
 
-    <p>${escapeHtml(p.details || "")}</p>
+    <p>${escapeHtml(p.details || p.summary || "")}</p>
 
     ${
       p.rent
@@ -1059,6 +1174,55 @@ function renderPropertyDetailPage(avail) {
     state: p.state,
     country: p.country
   });
+}
+
+/* =======================
+   Video Rendering
+======================= */
+function renderPropertyVideo(p) {
+  if (!p.video || !p.video.url) return "";
+
+  if (p.video.type === "youtube") {
+    const id = p.video.url.split("v=")[1]?.split("&")[0];
+    if (!id) return "";
+    return `
+      <div class="map" style="margin-top:16px;">
+        <iframe
+          loading="lazy"
+          data-src="https://www.youtube.com/embed/${id}"
+          allowfullscreen
+        ></iframe>
+        <div class="small">Property video</div>
+      </div>
+    `;
+  }
+
+  if (p.video.type === "vimeo") {
+    const id = p.video.url.split("/").pop();
+    return `
+      <div class="map" style="margin-top:16px;">
+        <iframe
+          loading="lazy"
+          data-src="https://player.vimeo.com/video/${id}"
+          allowfullscreen
+        ></iframe>
+        <div class="small">Property video</div>
+      </div>
+    `;
+  }
+
+  if (p.video.type === "mp4") {
+    return `
+      <div style="margin-top:16px;">
+        <video controls style="width:100%;border-radius:12px;">
+          <source src="${escapeHtml(p.video.url)}" type="video/mp4">
+        </video>
+        <div class="small">Property video</div>
+      </div>
+    `;
+  }
+
+  return "";
 }
 /* =======================
    LANDS PAGE (FULL)
@@ -1542,35 +1706,6 @@ host.appendChild(wrap);
   });
 }
 /* =======================
-   EVENT REPLAY TIMELINE
-======================= */
-
-async function loadEventReplay() {
-  const host = document.getElementById("replayTimeline");
-  if (!host) return;
-
-  const res = await accessFetch("/admin/events?limit=25");
-  const out = await res.json();
-
-  host.innerHTML = "";
-
-  (out.events || []).forEach(e => {
-    const div = document.createElement("div");
-    div.className = "replayItem" + (e.severity >= 4 ? " high" : "");
-    div.innerHTML = `
-      <div class="replayTime">${e.ts}</div>
-      <div class="replayBody">
-        <b>${e.eventType}</b><br/>
-        ${e.data?.name || e.data?.parcelId || "—"}<br/>
-        <span style="opacity:.7">
-          ${[e.city, e.region, e.country].filter(Boolean).join(", ")}
-        </span>
-      </div>
-    `;
-    host.appendChild(div);
-  });
-}
-/* =======================
    ADMIN SIDEBAR
 ======================= */
 
@@ -1599,37 +1734,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   const availability = await fetchAvailability();
   const who = await loadWhoAmI();
 
-const onAdminPage =
-  location.pathname === "/admin.html" ||
-  !!document.querySelector("#eventsTable") ||
-  !!document.querySelector("#adminKPI") ||
-  !!document.querySelector("#adminHeatmap");
+  const onAdminPage =
+    location.pathname === "/admin.html" ||
+    !!document.querySelector("#eventsTable") ||
+    !!document.querySelector("#adminKPI") ||
+    !!document.querySelector("#adminHeatmap");
 
-if (who?.isAdmin === true && onAdminPage) {
-  document.body.classList.add("admin");
+  if (who?.isAdmin === true && onAdminPage) {
+    document.body.classList.add("admin");
 
-  initAdminSidebar();
-  loadAdminUIHelpers();
+    initAdminSidebar();
+    loadAdminUIHelpers();
 
-  if (qs("#adminKPI")) initAdminKPI();
-  initAdminCSVButton();
-  if (qs("#adminHeatmap")) initAdminEventHeatmap();
-  if (qs("#engagementRanking")) loadEngagementRanking();
-  if (qs("#auditTable")) await loadAudit();
-  if (document.getElementById("replayTimeline")) {
-  await loadEventReplay();
-}
-}
+    if (qs("#adminKPI")) initAdminKPI();
+    initAdminCSVButton();
+    if (qs("#adminHeatmap")) initAdminEventHeatmap();
+    if (qs("#engagementRanking")) loadEngagementRanking();
+    if (qs("#auditTable")) await loadAudit();
+    if (document.getElementById("replayTimeline")) await loadEventReplay();
+
+    initPropertyEditor();
+    bindPropertyEditorSave();
+  }
 
   if (!sessionStorage.getItem("pv:" + location.pathname)) {
-  sessionStorage.setItem("pv:" + location.pathname, "1");
-  trackEvent("page_view", { auth: !!who });
-}
+    sessionStorage.setItem("pv:" + location.pathname, "1");
+    trackEvent("page_view", { auth: !!who });
+  }
 
   renderRentals(availability);
-  if (who?.isAdmin === true) {
-  renderAdmin(availability);
-}
+  if (who?.isAdmin === true) renderAdmin(availability);
+
   renderPropertyDetailPage(availability);
   renderPropertiesPage(availability);
   renderLandsPage();
