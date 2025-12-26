@@ -743,4 +743,112 @@ body.withSidebar .container {
     padding: 12px;
   }
 }
+/* =========================================================
+   ADMIN — COMPACT RENTAL AVAILABILITY TOGGLES
+   (ADD-ONLY, SAFE)
+========================================================= */
+
+/* Make availability card more compact */
+.card.compactAvailability {
+  padding: 14px;
+}
+
+.card.compactAvailability .h1 {
+  font-size: 26px;
+  margin-bottom: 6px;
+}
+
+.card.compactAvailability .kicker {
+  margin-bottom: 4px;
+}
+
+/* Grid for availability items */
+.availabilityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* Individual availability item */
+.availabilityItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(0,0,0,.18);
+}
+
+/* Property name */
+.availabilityItem .name {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+/* Toggle wrapper */
+.toggleWrap {
+  position: relative;
+  width: 46px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* Hide original select visually (JS still uses it) */
+.toggleWrap select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* Toggle track */
+.toggleTrack {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255,255,255,.15);
+  border: 1px solid var(--line);
+  position: relative;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+/* Toggle knob */
+.toggleTrack::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .15s ease;
+}
+
+/* AVAILABLE state */
+.toggleWrap[data-state="available"] .toggleTrack {
+  background: rgba(61,220,151,.25);
+  border-color: rgba(61,220,151,.45);
+}
+.toggleWrap[data-state="available"] .toggleTrack::after {
+  transform: translateX(22px);
+}
+
+/* RENTED state */
+.toggleWrap[data-state="rented"] .toggleTrack {
+  background: rgba(255,107,107,.18);
+  border-color: rgba(255,107,107,.35);
+}
+
+/* Mobile tightening */
+@media (max-width: 620px) {
+  .availabilityGrid {
+    grid-template-columns: 1fr;
+  }
+}
 
