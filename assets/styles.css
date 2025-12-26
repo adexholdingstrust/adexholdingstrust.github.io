@@ -1050,3 +1050,23 @@ body.withSidebar .container {
   inset: 0;
   z-index: 3;
 }
+.propertyGallery {
+  margin: 16px 0 20px;
+}
+
+.propertyGallery img {
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
+.carousel button {
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 22px;
+  cursor: pointer;
+}
