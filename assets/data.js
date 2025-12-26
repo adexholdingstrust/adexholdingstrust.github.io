@@ -104,7 +104,7 @@ window.ADEX_DATA = {
       mapsLink:
           "https://maps.app.goo.gl/h8Kza81BevSNPA1d7",
       streetViewEmbed:
-          "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d8538.440518847878!2d3.56963!3d6.439655!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf71da5cfa169%3A0x4aceda00320eb247!2sGreenBay%20Estate%2C%20Ilaje.!5e1!3m2!1sen!2sus!4v1766785771525!5m2!1sen!2sus&output=svembed",
+          "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4269.247031157026!2d3.567563310848142!3d6.436470924141108!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf7e5ce493465%3A0x436e208846a77b99!2sSterling%20Cooperative%20Estate!5e1!3m2!1sen!2sus!4v1766785908479!5m2!1sen!2sus&output=svembed",
       photos: []
     },
 
