@@ -1009,4 +1009,35 @@ body.withSidebar .container {
     margin-left: 0;
   }
 }
+/* ===============================
+   EVENT REPLAY
+=============================== */
 
+.replayTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.replayItem {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  border-left: 3px solid #3ddc97;
+}
+
+.replayItem.high {
+  border-left-color: #ff6b6b;
+}
+
+.replayTime {
+  font-size: 12px;
+  opacity: .75;
+}
+
+.replayBody {
+  font-size: 14px;
+}
