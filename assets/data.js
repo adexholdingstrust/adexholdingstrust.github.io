@@ -25,8 +25,10 @@ window.ADEX_DATA = {
       currency: "USD",
       rent: { amount: 2550, period: "month" },
       status: "rented",
-      details:
-        "Townhouse located in Aurora, Colorado. Currently occupied.",
+      summary:
+    "Modern townhouse located in a quiet Aurora neighborhood with convenient access to shopping, schools, and major roads.",
+     details:
+    "This townhouse is located in Aurora, Colorado and offers a comfortable residential layout in a well-established community. The property provides easy access to nearby retail centers, schools, and commuter routes. Currently occupied.",
       embedQuery: "12061 E Hoye Drive, Aurora, CO 80012",
       mapsLink:
         "https://www.google.com/maps?q=12061+E+Hoye+Drive+Aurora+CO+80012",
@@ -45,8 +47,10 @@ window.ADEX_DATA = {
       currency: "USD",
       rent: { amount: 2750, period: "month" },
       status: "rented",
+      summary:
+        "Well-maintained condominium in Aurora offering easy access to local amenities and major highways.",
       details:
-        "Condominium located in Aurora, Colorado. Currently occupied.",
+        "This condominium is located in Aurora, Colorado, within a convenient residential area. The property is close to shopping, dining, and major transportation corridors, making it ideal for working professionals or small families. Currently occupied.",
       embedQuery: "13950 E Oxford Place, Aurora, CO 80014",
       mapsLink:
         "https://www.google.com/maps?q=13950+E+Oxford+Place+Aurora+CO+80014",
@@ -66,8 +70,10 @@ window.ADEX_DATA = {
       currency: "USD",
       rent: { amount: 5000, period: "month" },
       status: "rented",
+      summary:
+        "Spacious two-story single-family home in Fallbrook, California, with a quiet suburban feel.",
       details:
-        "Two-story single-family home located in Fallbrook, California.",
+        "This two-story single-family residence is located in Fallbrook, California, known for its relaxed lifestyle and scenic surroundings. The property offers ample living space and is situated in a residential neighborhood that balances privacy with accessibility. Currently occupied.",
       embedQuery: "464 Calabrese St, Fallbrook, CA 92028",
       mapsLink:
         "https://www.google.com/maps?q=464+Calabrese+St+Fallbrook+CA+92028",
@@ -89,8 +95,10 @@ window.ADEX_DATA = {
       currency: "NGN",
       rent: { amount: 3000000, period: "year" },
       status: "rented",
+      summary:
+           "Apartment located within the secure and well-planned Sterling Cooperative Estate in Lagos.",
       details:
-        "Apartment located within the Sterling Cooperative Estate (GreenBay)",
+           "This apartment is located within the Sterling Cooperative Estate (GreenBay) in Ilaje, Lagos State. The estate offers a structured residential environment with controlled access and community amenities. The property is suitable for long-term residential use and is currently occupied.",
       embedQuery:
           "Sterling Cooperative Estate GreenBay Ilaje Lagos Nigeria",
       mapsLink:
@@ -111,9 +119,11 @@ window.ADEX_DATA = {
       country: "Nigeria",
       currency: "NGN",
       rent: { amount: 3000000, period: "year" },
-      status: "available",
+      status: "rented",
+      summary:
+           "Comfortable single-family home located within the Ibudo Wura residential community in Lagos.",
       details:
-        "Single-family residential house located in the Ibudo Wura community, Lagos.",
+           "This single-family residential house is located in the Ibudo Wura community in Lagos State. The neighborhood offers a quiet residential environment suitable for families or long-term tenants seeking stability and accessibility within Lagos. The property is currently available for rent.",
       embedQuery: "Ibudo Wura Lagos Nigeria",
       mapsLink:
         "https://www.google.com/maps?q=Ibudo+Wura+Lagos+Nigeria",
