@@ -35,12 +35,17 @@
 
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
+
+  <!-- NEW: Mapbox (heatmap) -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 </head>
 
 <body>
 
 <div class="container">
 
+  <!-- NAV -->
   <div class="nav">
     <div class="brand">
       <img src="assets/logo.png" alt="Adex Holdings Trust logo"/>
@@ -56,7 +61,47 @@
     🚨 Maintenance Mode Active — Admin actions are disabled.
   </div>
 
-  <!-- AVAILABILITY -->
+  <!-- NEW: KPI SUMMARY -->
+  <div class="card">
+    <div class="kicker">Analytics</div>
+    <div class="h1">Key Performance Indicators</div>
+    <div id="adminKPI"></div>
+  </div>
+
+  <!-- NEW: EVENT HEATMAP -->
+  <div class="card">
+    <div class="kicker">Analytics</div>
+    <div class="h1">Event Heatmap</div>
+    <div id="adminHeatmap" style="height:420px;border-radius:12px;overflow:hidden;"></div>
+  </div>
+
+  <!-- NEW: SEVERITY TUNING DASHBOARD -->
+  <div class="card">
+    <div class="kicker">Alerts</div>
+    <div class="h1">Severity Tuning</div>
+
+    <div class="form">
+      <label>
+        Minimum severity to trigger alerts
+        <select id="severityThreshold">
+          <option value="1">All events</option>
+          <option value="3">Severity ≥ 3</option>
+          <option value="4">Severity ≥ 4</option>
+          <option value="5">Severity ≥ 5 (High value only)</option>
+        </select>
+      </label>
+
+      <div class="small" style="opacity:.75;margin-top:6px;">
+        This controls email alerts and high-priority monitoring.
+      </div>
+
+      <div class="btnRow" style="margin-top:10px;">
+        <button id="saveSeverityBtn" class="btn primary">Save severity threshold</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXISTING: AVAILABILITY (UNCHANGED) -->
   <div class="card">
     <div class="kicker">Admin</div>
     <div class="h1">Rental Availability</div>
@@ -66,7 +111,7 @@
     </div>
   </div>
 
-  <!-- AUDIT -->
+  <!-- EXISTING: AUDIT (UNCHANGED) -->
   <div class="card">
     <div class="kicker">Audit</div>
     <div class="h1">Admin Activity</div>
@@ -83,10 +128,14 @@
     </table>
   </div>
 
-  <!-- EVENTS -->
+  <!-- EXISTING + EXTENDED: EVENTS -->
   <div class="card">
     <div class="kicker">Analytics</div>
     <div class="h1">Tracked Events</div>
+
+    <!-- NEW: filter + CSV controls injected by /admin/ui.js -->
+    <div id="adminControls"></div>
+
     <table class="table" id="eventsTable">
       <thead>
         <tr>
@@ -94,6 +143,7 @@
           <th>Type</th>
           <th>Property</th>
           <th>Location</th>
+          <th>Severity</th>
           <th>IP / ASN</th>
         </tr>
       </thead>
@@ -104,12 +154,13 @@
 </div>
 
 <script src="assets/data.js"></script>
+
 <script>
 (async function () {
   const api = "https://adexholdings.com/api";
 
   /* ---------- IDENTITY ---------- */
-  const whoRes = await fetch(api + "/whoami");
+  const whoRes = await fetch(api + "/whoami", { credentials: "include" });
   if (!whoRes.ok) {
     document.body.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial">
@@ -131,7 +182,7 @@
   }
 
   /* ---------- AUDIT LOG ---------- */
-  const auditRes = await fetch(api + "/admin/audit");
+  const auditRes = await fetch(api + "/admin/audit", { credentials: "include" });
   const auditJson = await auditRes.json();
   const auditBody = document.querySelector("#auditTable tbody");
 
@@ -147,7 +198,7 @@
   });
 
   /* ---------- EVENTS ---------- */
-  const eventsRes = await fetch(api + "/admin/events");
+  const eventsRes = await fetch(api + "/admin/events", { credentials: "include" });
   const eventsJson = await eventsRes.json();
   const eventsBody = document.querySelector("#eventsTable tbody");
 
@@ -158,6 +209,7 @@
       <td>${e.eventType}</td>
       <td>${e.data?.name || e.data?.parcelId || "—"}</td>
       <td>${[e.city, e.region, e.country].filter(Boolean).join(", ")}</td>
+      <td>${e.severity ?? "—"}</td>
       <td>${e.ip} (${e.asnOrg || "Unknown"})</td>
     `;
     eventsBody.appendChild(tr);
