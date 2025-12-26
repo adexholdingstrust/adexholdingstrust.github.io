@@ -768,7 +768,6 @@ function initTenantPortalPropertyDropdown() {
 function renderPropertiesPage(avail) {
   const host = qs("#propertyList") || qs("#propertiesList") || qs("#properties");
   if (!host || !window.ADEX_DATA?.rentals) return;
-
   host.innerHTML = "";
 
   const controls = ensureFilterBar(host.id ? `#${host.id}` : "#propertyList", window.ADEX_DATA.rentals, "rentals");
@@ -899,7 +898,73 @@ if (!__trackedViews.has(viewKey)) {
 
   applyFilter();
 }
+/* =======================
+   PROPERTY DETAIL PAGE
+======================= */
 
+function renderPropertyDetailPage(avail) {
+  const host = qs("#propertyDetail");
+  if (!host || !window.ADEX_DATA?.rentals) return;
+
+  const id = new URLSearchParams(location.search).get("id");
+  if (!id) {
+    host.innerHTML = "<p>Property not found.</p>";
+    return;
+  }
+
+  const p = window.ADEX_DATA.rentals.find(x => x.id === id);
+  if (!p) {
+    host.innerHTML = "<p>Property not found.</p>";
+    return;
+  }
+
+  const status = avail[p.id] || p.status || "rented";
+  const available = status === "available";
+
+  const carousel = buildCarouselHtml(p.photos, p.name);
+  const q = p.embedQuery || p.address || p.name;
+
+  host.innerHTML = `
+    <h1>${escapeHtml(p.name)}</h1>
+
+    ${carousel ? `<div class="propertyGallery">${carousel}</div>` : ""}
+
+    <div class="meta">
+      ${escapeHtml(p.type)} • ${escapeHtml(p.city || "")}, ${escapeHtml(p.state || "")}
+    </div>
+
+    <p>${escapeHtml(p.details || "")}</p>
+
+    ${
+      p.rent
+        ? `<div class="rent">
+            Rent: ${escapeHtml(formatMoney(p.rent.amount, p.currency))}
+            ${p.rent.period === "year" ? "/yr" : "/mo"}
+          </div>`
+        : ""
+    }
+
+    <span class="badge ${available ? "ok" : "bad"}">
+      ${available ? "Available" : "Rented"}
+    </span>
+
+    <div class="map" style="margin-top:16px;">
+      <iframe loading="lazy"
+        data-src="${escapeHtml(mapEmbedSrc(q))}">
+      </iframe>
+    </div>
+  `;
+
+  setupLazy();
+  wireCarousels(host);
+
+  trackEvent("view_property_detail", {
+    id: p.id,
+    name: p.name,
+    state: p.state,
+    country: p.country
+  });
+}
 /* =======================
    LANDS PAGE (FULL)
    - Restores land cards
@@ -1470,6 +1535,7 @@ if (who?.isAdmin === true && onAdminPage) {
   if (who?.isAdmin === true) {
   renderAdmin(availability);
 }
+  renderPropertyDetailPage(availability);
   renderPropertiesPage(availability);
   renderLandsPage();
   initTenantPortalPropertyDropdown();
