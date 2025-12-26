@@ -8,30 +8,36 @@
 
   <!-- HARD CONTEXT BLOCK -->
   <script>
-    (function () {
-      if (
-        window.top !== window.self ||
-        location.protocol !== "https:" ||
-        location.hostname !== "adexholdings.com" ||
-        location.pathname !== "/admin.html"
-      ) {
-        document.open();
-        document.write(`
-          <!doctype html>
-          <html><head><title>Access Restricted</title></head>
-          <body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial">
-            <div>
-              <h2>Access Restricted</h2>
-              <p>This account has no access to this page.</p>
-              <p>Please use the appropriate link or contact Adex Holdings, LLC or Adex Holdings Trust.</p>
-            </div>
-          </body></html>
-        `);
-        document.close();
-        throw new Error("Blocked context");
-      }
-    })();
-  </script>
+(function () {
+  // Allow Cloudflare Access auth flow to complete
+  if (location.pathname.startsWith("/cdn-cgi/access")) {
+    return;
+  }
+
+  // Enforce context ONLY on final admin page
+  if (
+    window.top !== window.self ||
+    location.protocol !== "https:" ||
+    location.hostname !== "adexholdings.com" ||
+    location.pathname !== "/admin.html"
+  ) {
+    document.open();
+    document.write(`
+      <!doctype html>
+      <html><head><title>Access Restricted</title></head>
+      <body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial">
+        <div>
+          <h2>Access Restricted</h2>
+          <p>This account has no access to this page.</p>
+          <p>Please use the appropriate link or contact Adex Holdings, LLC or Adex Holdings Trust.</p>
+        </div>
+      </body></html>
+    `);
+    document.close();
+    throw new Error("Blocked context");
+  }
+})();
+</script>
 
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
