@@ -94,7 +94,7 @@ window.ADEX_DATA = {
       embedQuery:
           "Sterling Cooperative Estate GreenBay Ilaje Lagos Nigeria",
       mapsLink:
-          "https://www.google.com/maps?q=GreenBay+Estate+Ilaje+Lagos+Nigeria",
+          "https://maps.app.goo.gl/h8Kza81BevSNPA1d7",
       streetViewEmbed:
           "https://www.google.com/maps?q=&layer=c&cbll=6.439793970868632,3.5696925435548397&cbp=11,90,0,0,0&output=svembed",
       photos: []
