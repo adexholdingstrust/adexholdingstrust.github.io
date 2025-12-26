@@ -10,6 +10,7 @@
   <script>
     (function () {
       if (
+        window.top !== window.self ||
         location.protocol !== "https:" ||
         location.hostname !== "adexholdings.com" ||
         location.pathname !== "/admin.html"
@@ -55,6 +56,7 @@
     🚨 Maintenance Mode Active — Admin actions are disabled.
   </div>
 
+  <!-- AVAILABILITY -->
   <div class="card">
     <div class="kicker">Admin</div>
     <div class="h1">Rental Availability</div>
@@ -64,6 +66,7 @@
     </div>
   </div>
 
+  <!-- AUDIT -->
   <div class="card">
     <div class="kicker">Audit</div>
     <div class="h1">Admin Activity</div>
@@ -80,6 +83,24 @@
     </table>
   </div>
 
+  <!-- EVENTS -->
+  <div class="card">
+    <div class="kicker">Analytics</div>
+    <div class="h1">Tracked Events</div>
+    <table class="table" id="eventsTable">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Type</th>
+          <th>Property</th>
+          <th>Location</th>
+          <th>IP / ASN</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
 </div>
 
 <script src="assets/data.js"></script>
@@ -87,20 +108,34 @@
 (async function () {
   const api = "https://adexholdings.com/api";
 
-  // Identity
-  const who = await fetch(api + "/whoami").then(r => r.json());
+  /* ---------- IDENTITY ---------- */
+  const whoRes = await fetch(api + "/whoami");
+  if (!whoRes.ok) {
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial">
+        <div>
+          <h2>Access Denied</h2>
+          <p>You do not have permission to access this page.</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const who = await whoRes.json();
   document.getElementById("whoami").textContent = `Logged in as ${who.email}`;
 
-  // Maintenance lock
   if (who.maintenance === true) {
     document.getElementById("maintenanceBanner").style.display = "block";
     document.getElementById("saveBtn").disabled = true;
   }
 
-  // Audit log
-  const audit = await fetch(api + "/admin/audit").then(r => r.json());
-  const tbody = document.querySelector("#auditTable tbody");
-  audit.log.forEach(e => {
+  /* ---------- AUDIT LOG ---------- */
+  const auditRes = await fetch(api + "/admin/audit");
+  const auditJson = await auditRes.json();
+  const auditBody = document.querySelector("#auditTable tbody");
+
+  auditJson.log.forEach(e => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${e.ts}</td>
@@ -108,7 +143,24 @@
       <td>${e.action}</td>
       <td>${e.details || ""}</td>
     `;
-    tbody.appendChild(tr);
+    auditBody.appendChild(tr);
+  });
+
+  /* ---------- EVENTS ---------- */
+  const eventsRes = await fetch(api + "/admin/events");
+  const eventsJson = await eventsRes.json();
+  const eventsBody = document.querySelector("#eventsTable tbody");
+
+  eventsJson.events.forEach(e => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${e.ts}</td>
+      <td>${e.eventType}</td>
+      <td>${e.data?.name || e.data?.parcelId || "—"}</td>
+      <td>${[e.city, e.region, e.country].filter(Boolean).join(", ")}</td>
+      <td>${e.ip} (${e.asnOrg || "Unknown"})</td>
+    `;
+    eventsBody.appendChild(tr);
   });
 })();
 </script>
