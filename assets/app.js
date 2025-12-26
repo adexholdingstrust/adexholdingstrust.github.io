@@ -797,6 +797,7 @@ if (!__trackedViews.has(viewKey)) {
     country: p.country
   });
 }
+      const detailUrl = `/property.html?id=${encodeURIComponent(p.id)}`;
 
 
       const q = p.embedQuery || p.address || p.name;
@@ -832,11 +833,24 @@ if (!__trackedViews.has(viewKey)) {
           ? `${formatMoney(p.rent.amount, p.currency)}${p.rent.period === "year" ? "/yr" : "/mo"}`
           : "";
       const card = document.createElement("div");
+       card.addEventListener("click", () => {
+  trackEvent("view_property_detail", {
+    id: p.id,
+    name: p.name,
+    state: p.state,
+    country: p.country
+  });
+});
       card.className = "propertyCard";
       card.innerHTML = `
-        <div class="media"></div>
-        <div class="body">
-          <h3>${escapeHtml(p.name)}</h3>
+        <!-- CLICKABLE OVERLAY -->
+     <a class="propertyOverlayLink"
+     href="${detailUrl}"
+     aria-label="View ${escapeHtml(p.name)}"></a>
+
+     <div class="media"></div>
+     <div class="body">
+       <h3>${escapeHtml(p.name)}</h3>
           <div class="meta">${escapeHtml(p.type)} • ${escapeHtml(p.state || "—")} • ${escapeHtml(p.country || "—")}</div>
           <div class="addr">${escapeHtml(p.address || "")}</div>
 
@@ -846,7 +860,9 @@ if (!__trackedViews.has(viewKey)) {
             ${available ? "Available" : "Rented"}
           </span>
 
-          <p style="margin-top:10px;">${escapeHtml(p.details || "")}</p>
+         ${available && p.summary
+              ? `<p style="margin-top:10px;">${escapeHtml(p.summary)}</p>`
+              : ""}
 
           <a href="${escapeHtml(p.mapsLink || "#")}" target="_blank" rel="noopener">
             View on Google Maps
