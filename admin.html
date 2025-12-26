@@ -43,7 +43,7 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 </head>
 
-<body>
+<body class="admin">
 
 <div class="container">
 
@@ -64,7 +64,7 @@
   </div>
 
   <!-- NEW: KPI SUMMARY -->
-  <div class="card">
+  <div class="card" id="dashboard">
     <div class="kicker">Analytics</div>
     <div class="h1">Key Performance Indicators</div>
     <div id="adminKPI"></div>
@@ -138,12 +138,20 @@
 
 </div>
   <!-- NEW: EVENT HEATMAP -->
-  <div class="card">
+  <div class="card" id="heatmap">
     <div class="kicker">Analytics</div>
     <div class="h1">Event Heatmap</div>
     <div id="adminHeatmap" style="height:420px;border-radius:12px;overflow:hidden;"></div>
   </div>
+<!-- NEW: EVENT REPLAY TIMELINE -->
+<div class="card" id="eventReplayCard">
+  <div class="kicker">Analytics</div>
+  <div class="h1">Event Replay</div>
 
+  <div id="eventReplay" class="eventReplay">
+    <!-- populated by app.js -->
+  </div>
+</div>
   <!-- NEW: SEVERITY TUNING DASHBOARD -->
   <div class="card">
     <div class="kicker">Alerts</div>
@@ -171,7 +179,7 @@
   </div>
 
   <!-- EXISTING: AVAILABILITY (UNCHANGED) -->
- <div class="card compactAvailability">
+ <div class="card compactAvailability" id="availability">
   <div class="kicker">Admin</div>
   <div class="h1">Rental Availability</div>
 
@@ -185,7 +193,7 @@
 
 
   <!-- EXISTING: AUDIT (UNCHANGED) -->
-  <div class="card">
+  <div class="card" id="audit">
     <div class="kicker">Audit</div>
     <div class="h1">Admin Activity</div>
     <table class="table" id="auditTable">
@@ -202,7 +210,7 @@
   </div>
 
   <!-- EXISTING + EXTENDED: EVENTS -->
-  <div class="card">
+  <div class="card" id="events">
     <div class="kicker">Analytics</div>
     <div class="h1">Tracked Events</div>
 
@@ -228,67 +236,6 @@
 
 <script src="assets/data.js"></script>
 
-<script>
-(async function () {
-  const api = "https://adexholdings.com/api";
-
-  /* ---------- IDENTITY ---------- */
-  const whoRes = await fetch(api + "/whoami", { credentials: "include" });
-  if (!whoRes.ok) {
-    document.body.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial">
-        <div>
-          <h2>Access Denied</h2>
-          <p>You do not have permission to access this page.</p>
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  const who = await whoRes.json();
-  document.getElementById("whoami").textContent = `Logged in as ${who.email}`;
-
-  if (who.maintenance === true) {
-    document.getElementById("maintenanceBanner").style.display = "block";
-    document.getElementById("saveBtn").disabled = true;
-  }
-
-  /* ---------- AUDIT LOG ---------- */
-  const auditRes = await fetch(api + "/admin/audit", { credentials: "include" });
-  const auditJson = await auditRes.json();
-  const auditBody = document.querySelector("#auditTable tbody");
-
-  auditJson.log.forEach(e => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${e.ts}</td>
-      <td>${e.email}</td>
-      <td>${e.action}</td>
-      <td>${e.details || ""}</td>
-    `;
-    auditBody.appendChild(tr);
-  });
-
-  /* ---------- EVENTS ---------- */
-  const eventsRes = await fetch(api + "/admin/events", { credentials: "include" });
-  const eventsJson = await eventsRes.json();
-  const eventsBody = document.querySelector("#eventsTable tbody");
-
-  eventsJson.events.forEach(e => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${e.ts}</td>
-      <td>${e.eventType}</td>
-      <td>${e.data?.name || e.data?.parcelId || "—"}</td>
-      <td>${[e.city, e.region, e.country].filter(Boolean).join(", ")}</td>
-      <td>${e.severity ?? "—"}</td>
-      <td>${e.ip} (${e.asnOrg || "Unknown"})</td>
-    `;
-    eventsBody.appendChild(tr);
-  });
-})();
-</script>
 
 <script src="assets/app.js"></script>
 
