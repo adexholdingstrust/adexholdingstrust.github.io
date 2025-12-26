@@ -1,5 +1,5 @@
 /* =========================================================
-   ADEX HOLDINGS TRUST — data.js (RESTORED + FIXED)
+   ADEX HOLDINGS TRUST — data.js (RESTORED + FIXED) https://www.google.com/maps?q=&layer=c&cbll=39.64060312656101,-104.82539119293874&cbp=11,210,0,10,90&output=svembed
 ========================================================= */
 
 window.ADEX_DATA = {
@@ -51,7 +51,7 @@ window.ADEX_DATA = {
       mapsLink:
         "https://www.google.com/maps?q=13950+E+Oxford+Place+Aurora+CO+80014",
       streetViewEmbed:
-          "https://www.google.com/maps?q=&layer=c&cbll=39.64060312656101,-104.82539119293874&cbp=11,210,0,10,90&output=svembed",
+          "https://www.google.com/maps/embed?pb=!4v1766715350705!6m8!1m7!1s6Mbhl1428ypUr9dgFDX2jA!2m2!1d39.64103040953596!2d-104.8254105634934!3f175.28680071718463!4f7.954084946855772!5f0.40029571729599617&output=svembed",
       photos: []
     },
 
