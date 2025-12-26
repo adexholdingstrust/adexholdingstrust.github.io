@@ -199,6 +199,53 @@
  <div class="card compactAvailability" id="availability">
   <div class="kicker">Admin</div>
   <div class="h1">Rental Availability</div>
+  <div class="card" id="propertyEditor">
+  <div class="kicker">Admin</div>
+  <div class="h1">Property Content Editor</div>
+
+  <div class="form">
+    <label>
+      Property
+      <select id="editorPropertySelect"></select>
+    </label>
+
+    <label>
+      Summary (short description)
+      <textarea id="editorSummary"></textarea>
+    </label>
+
+    <label>
+      Details (full description)
+      <textarea id="editorDetails"></textarea>
+    </label>
+
+    <label>
+      Photo URLs (one per line)
+      <textarea id="editorPhotos"></textarea>
+    </label>
+
+    <label>
+      Video Type
+      <select id="editorVideoType">
+        <option value="">None</option>
+        <option value="youtube">YouTube</option>
+        <option value="vimeo">Vimeo</option>
+        <option value="mp4">Direct MP4</option>
+      </select>
+    </label>
+
+    <label>
+      Video URL
+      <input id="editorVideoUrl" placeholder="https://…" />
+    </label>
+
+    <div class="btnRow">
+      <button id="savePropertyContent" class="btn primary">
+        Save Property Content
+      </button>
+    </div>
+  </div>
+</div>
 
   <!-- NEW: compact grid wrapper -->
   <div id="adminList" class="availabilityGrid"></div>
