@@ -1365,6 +1365,63 @@ host.appendChild(wrap);
     }
   });
 }
+/* =======================
+   ADMIN SIDEBAR
+======================= */
+
+function initAdminSidebar() {
+  if (!document.body.classList.contains("admin")) return;
+  if (document.querySelector(".adminSidebar")) return;
+
+  const sidebar = document.createElement("nav");
+  sidebar.className = "adminSidebar";
+  sidebar.innerHTML = `
+    <div class="adminBrand">Adex Admin</div>
+    <a href="/admin.html">Dashboard</a>
+    <a href="/admin.html#events">Events</a>
+    <a href="/admin.html#heatmap">Heatmap</a>
+    <a href="/admin.html#audit">Audit Log</a>
+    <a href="/admin.html#availability">Availability</a>
+  `;
+
+  document.body.prepend(sidebar);
+}
+/* =======================
+   EVENT REPLAY TIMELINE
+======================= */
+
+function renderEventReplay(events) {
+  const host = qs("#eventReplay");
+  if (!host) return;
+
+  host.innerHTML = "";
+
+  if (!events.length) {
+    host.innerHTML = `<div class="muted">No events to replay.</div>`;
+    return;
+  }
+
+  events.forEach(e => {
+    const row = document.createElement("div");
+    row.className = "eventReplayRow";
+
+    row.innerHTML = `
+      <div class="time">${escapeHtml(e.ts)}</div>
+      <div class="type">${escapeHtml(e.eventType)}</div>
+      <div class="detail">
+        ${escapeHtml(e.data?.name || e.path || "—")}
+      </div>
+      <div class="sev">S${e.severity}</div>
+    `;
+
+    host.appendChild(row);
+  });
+}
+async function loadEventReplay() {
+  const res = await accessFetch("/admin/events?limit=200");
+  const out = await res.json();
+  renderEventReplay(out.events || []);
+}
 
 /* =======================
    INIT
@@ -1381,6 +1438,9 @@ const onAdminPage =
   !!document.querySelector("#adminHeatmap");
 
 if (who?.isAdmin === true && onAdminPage) {
+  document.body.classList.add("admin");
+
+  initAdminSidebar();
   loadAdminUIHelpers();
 
   if (qs("#adminKPI")) initAdminKPI();
@@ -1388,6 +1448,7 @@ if (who?.isAdmin === true && onAdminPage) {
   if (qs("#adminHeatmap")) initAdminEventHeatmap();
   if (qs("#engagementRanking")) loadEngagementRanking();
   if (qs("#auditTable")) await loadAudit();
+  if (qs("#eventReplay")) await loadEventReplay();
 }
 
   if (!sessionStorage.getItem("pv:" + location.pathname)) {
