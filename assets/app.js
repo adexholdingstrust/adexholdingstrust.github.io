@@ -138,6 +138,41 @@ function safeImgWithFallbacks(imgEl, fallbacks) {
   imgEl.addEventListener("error", tryNext);
   imgEl.src = fallbacks[0];
 }
+async function initAdminEventHeatmap() {
+  const el = qs("#adminHeatmap");
+  if (!el || !CFG.MAPBOX_TOKEN || !window.mapboxgl) return;
+
+  mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
+
+  const res = await accessFetch("/admin/heatmap");
+  const geo = await res.json();
+
+  const map = new mapboxgl.Map({
+    container: el,
+    style: CFG.MAPBOX_STYLE_STREETS,
+    center: [-98, 38],
+    zoom: 3
+  });
+
+  map.on("load", () => {
+    map.addSource("events", {
+      type: "geojson",
+      data: geo
+    });
+
+    map.addLayer({
+      id: "event-heat",
+      type: "heatmap",
+      source: "events",
+      paint: {
+        "heatmap-weight": ["get", "weight"],
+        "heatmap-intensity": 1,
+        "heatmap-radius": 20,
+        "heatmap-opacity": 0.8
+      }
+    });
+  });
+}
 /* =======================
    Add Street View photo fallback for houses (Google Maps images)
 ======================= */
@@ -236,7 +271,18 @@ async function loadWhoAmI() {
     return null;
   }
 }
-
+async function loadAdminUIHelpers() {
+  try {
+    const res = await accessFetch("/admin/ui.js");
+    if (!res.ok) return;
+    const js = await res.text();
+    const s = document.createElement("script");
+    s.textContent = js;
+    document.body.appendChild(s);
+  } catch {
+    // fail silently
+  }
+}
 /* =======================
    AUDIT LOG
 ======================= */
@@ -483,7 +529,25 @@ function renderRentals(avail) {
     host.appendChild(div);
   });
 }
+async function loadEngagementRanking() {
+  const host = qs("#engagementRanking");
+  if (!host) return;
 
+  const res = await accessFetch("/admin/engagement");
+  const out = await res.json();
+
+  host.innerHTML = out.ranking
+    .map(
+      r => `
+      <div class="card">
+        <b>${escapeHtml(r.name)}</b><br/>
+        Views: ${r.views}<br/>
+        Score: ${r.score}
+      </div>
+    `
+    )
+    .join("");
+}
 /* =======================
    TENANT PORTAL (PROPERTY DROPDOWN)
 ======================= */
@@ -1107,28 +1171,36 @@ function renderAdmin(avail) {
 ======================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-   const availability = await fetchAvailability(); // ✅ ADD THIS LINE
-   const who = await loadWhoAmI();
-trackEvent("page_view", {
-  auth: !!who
-});
+  const availability = await fetchAvailability();
+  const who = await loadWhoAmI();
 
-  // admin + simple public
+ if (who) {
+  loadAdminUIHelpers();
+
+  if (qs("#adminHeatmap")) {
+    initAdminEventHeatmap();
+  }
+
+  if (qs("#engagementRanking")) {
+    loadEngagementRanking();
+  }
+
+  if (qs("#auditTable")) {
+    await loadAudit();
+  }
+}
+
+  trackEvent("page_view", { auth: !!who });
+
   renderRentals(availability);
   renderAdmin(availability);
-
-  // full public pages
   renderPropertiesPage(availability);
   renderLandsPage();
-   initTenantPortalPropertyDropdown(); // ✅ ADD THIS LINE
-  // interactive lands map if lands.html provides <div id="landsMap"></div>
-  initLandsInteractiveMap().catch(err => {
-  console.warn("Interactive lands map failed:", err);
-});
+  initTenantPortalPropertyDropdown();
 
-  if (who?.isAdmin) {
-  await loadAudit();
-}
+  initLandsInteractiveMap().catch(err =>
+    console.warn("Interactive lands map failed:", err)
+  );
 
   setupLazy();
 });
