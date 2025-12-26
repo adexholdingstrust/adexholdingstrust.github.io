@@ -138,23 +138,71 @@ function safeImgWithFallbacks(imgEl, fallbacks) {
   imgEl.addEventListener("error", tryNext);
   imgEl.src = fallbacks[0];
 }
+function buildHeatmapQuery(params = {}) {
+  const q = new URLSearchParams();
+
+  if (params.days) {
+    const since = new Date(Date.now() - params.days * 86400000).toISOString();
+    q.set("since", since);
+  }
+
+  if (params.minSeverity) {
+    q.set("minSeverity", params.minSeverity);
+  }
+
+  return q.toString();
+}
 async function initAdminEventHeatmap() {
   const el = qs("#adminHeatmap");
   if (!el || !CFG.MAPBOX_TOKEN || !window.mapboxgl) return;
 
   mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
 
-  const res = await accessFetch("/admin/heatmap");
-  const geo = await res.json();
+  let currentDays = 7;
+  let currentSeverity = 1;
+  let map, sourceReady = false;
 
-  const map = new mapboxgl.Map({
+  const fetchGeo = async () => {
+    const qs = buildHeatmapQuery({
+      days: currentDays,
+      minSeverity: currentSeverity
+    });
+    const res = await accessFetch(`/admin/heatmap?${qs}`);
+    return res.json();
+  };
+
+  const controls = document.createElement("div");
+  controls.className = "heatmapControls";
+  controls.style.cssText =
+    "display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;";
+
+  controls.innerHTML = `
+    <select id="heatDays">
+      <option value="7">Last 7 days</option>
+      <option value="30">Last 30 days</option>
+      <option value="">All time</option>
+    </select>
+
+    <select id="heatSeverity">
+      <option value="1">All severity</option>
+      <option value="3">Severity ≥ 3</option>
+      <option value="4">Severity ≥ 4</option>
+      <option value="5">Severity ≥ 5</option>
+    </select>
+  `;
+
+  el.parentElement.insertBefore(controls, el);
+
+  map = new mapboxgl.Map({
     container: el,
     style: CFG.MAPBOX_STYLE_STREETS,
     center: [-98, 38],
     zoom: 3
   });
 
-  map.on("load", () => {
+  map.on("load", async () => {
+    const geo = await fetchGeo();
+
     map.addSource("events", {
       type: "geojson",
       data: geo
@@ -168,11 +216,30 @@ async function initAdminEventHeatmap() {
         "heatmap-weight": ["get", "weight"],
         "heatmap-intensity": 1,
         "heatmap-radius": 20,
-        "heatmap-opacity": 0.8
+        "heatmap-opacity": 0.85
       }
     });
+
+    sourceReady = true;
+  });
+
+  const reload = async () => {
+    if (!sourceReady) return;
+    const geo = await fetchGeo();
+    map.getSource("events").setData(geo);
+  };
+
+  controls.addEventListener("change", e => {
+    if (e.target.id === "heatDays") {
+      currentDays = e.target.value ? Number(e.target.value) : null;
+    }
+    if (e.target.id === "heatSeverity") {
+      currentSeverity = Number(e.target.value);
+    }
+    reload();
   });
 }
+
 /* =======================
    Add Street View photo fallback for houses (Google Maps images)
 ======================= */
@@ -323,6 +390,103 @@ function renderAudit(rows) {
   });
 }
 
+/* =======================
+   ADMIN KPI SUMMARY
+   - Last 7 days
+   - Last 30 days
+======================= */
+
+async function loadAdminKPI(days) {
+  const res = await accessFetch(`/admin/kpi?days=${days}`);
+  if (!res.ok) throw new Error("KPI fetch failed");
+  return res.json();
+}
+
+function renderAdminKPICards(data7, data30) {
+  const host = qs("#adminKPI");
+  if (!host) return;
+
+  host.innerHTML = `
+    <div class="kpiGrid">
+      <div class="kpiCard">
+        <h4>Last 7 Days</h4>
+        <div><b>Total Events:</b> ${data7.totalEvents}</div>
+        <div><b>Property Views:</b> ${data7.views}</div>
+        <div><b>High Severity:</b> ${data7.highSeverity}</div>
+        <div><b>Unique Properties:</b> ${data7.uniqueProperties}</div>
+      </div>
+
+      <div class="kpiCard">
+        <h4>Last 30 Days</h4>
+        <div><b>Total Events:</b> ${data30.totalEvents}</div>
+        <div><b>Property Views:</b> ${data30.views}</div>
+        <div><b>High Severity:</b> ${data30.highSeverity}</div>
+        <div><b>Unique Properties:</b> ${data30.uniqueProperties}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function initAdminKPI() {
+  try {
+    const [kpi7, kpi30] = await Promise.all([
+      loadAdminKPI(7),
+      loadAdminKPI(30)
+    ]);
+
+    renderAdminKPICards(kpi7, kpi30);
+  } catch (err) {
+    console.warn("Admin KPI failed:", err);
+  }
+}
+/* =======================
+   ADMIN CSV EXPORT
+======================= */
+
+function buildAdminCSVUrl() {
+  const params = new URLSearchParams(location.search);
+  params.set("format", "csv");
+  return `${CFG.WORKER_BASE}/admin/events?${params.toString()}`;
+}
+
+function initAdminCSVButton() {
+  const host =
+    qs("#adminKPI") ||
+    qs("#adminControls") ||
+    qs("#adminList");
+
+  if (!host) return;
+
+  // Prevent duplicates
+  if (qs("#adminCsvBtn")) return;
+
+  const btn = document.createElement("a");
+  btn.id = "adminCsvBtn";
+  btn.textContent = "Download CSV";
+  btn.href = buildAdminCSVUrl();
+  btn.target = "_blank";
+  btn.rel = "noopener";
+
+  btn.style.cssText = `
+    display:inline-block;
+    padding:8px 12px;
+    border:1px solid #333;
+    border-radius:6px;
+    font-size:14px;
+    font-weight:500;
+    text-decoration:none;
+    background:#fff;
+    cursor:pointer;
+  `;
+
+  // Keep URL in sync with filters
+  btn.addEventListener("click", () => {
+    btn.href = buildAdminCSVUrl();
+  });
+
+  // Insert logically near KPIs or admin controls
+  host.appendChild(btn);
+}
 /* =======================
    FILTER UI (PUBLIC)
 ======================= */
@@ -1174,8 +1338,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const availability = await fetchAvailability();
   const who = await loadWhoAmI();
 
- if (who) {
+if (who) {
   loadAdminUIHelpers();
+
+  if (qs("#adminKPI")) {
+    initAdminKPI();
+  }
+
+  initAdminCSVButton();
 
   if (qs("#adminHeatmap")) {
     initAdminEventHeatmap();
