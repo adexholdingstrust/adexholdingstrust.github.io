@@ -472,7 +472,11 @@ function trackEvent(eventType, data = {}) {
       ...data
     });
 
-    const url = `${CFG.WORKER_BASE}/track`;
+    const isAdmin = document.body.classList.contains("admin");
+    const url = isAdmin
+        ? `${CFG.WORKER_BASE}/track`
+        : `${CFG.WORKER_BASE}/track-public`;
+
 
     // Reliable for navigation + unload
     if (navigator.sendBeacon) {
