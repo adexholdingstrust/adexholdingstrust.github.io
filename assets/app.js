@@ -140,6 +140,61 @@ function makeBtnLink(label, href) {
     </a>
   `;
 }
+function initLandDetailMap(l) {
+  const el = qs("#landMap");
+  if (!el || !CFG.MAPBOX_TOKEN || !window.mapboxgl || !l.geo) return;
+
+  mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
+
+  const map = new mapboxgl.Map({
+    container: el,
+    style: CFG.MAPBOX_STYLE_SAT,
+    center: l.center || [-115, 36],
+    zoom: 13
+  });
+
+  map.on("load", () => {
+    map.addSource("parcel", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: [{
+          type: "Feature",
+          geometry: l.geo.geometry,
+          properties: {}
+        }]
+      }
+    });
+
+    map.addLayer({
+      id: "parcel-fill",
+      type: "fill",
+      source: "parcel",
+      paint: { "fill-opacity": 0.25 }
+    });
+
+    map.addLayer({
+      id: "parcel-outline",
+      type: "line",
+      source: "parcel",
+      paint: { "line-width": 2 }
+    });
+
+    // Fit bounds
+    const extractCoords = geom => {
+  if (geom.type === "Polygon") return geom.coordinates.flat();
+  if (geom.type === "MultiPolygon") return geom.coordinates.flat(2);
+  return [];
+};
+
+const coords = extractCoords(l.geo.geometry);
+    const bounds = coords.reduce(
+      (b, c) => b.extend(c),
+      new mapboxgl.LngLatBounds(coords[0], coords[0])
+    );
+    map.fitBounds(bounds, { padding: 40 });
+  });
+}
 /* =======================
    LAZY LOADING
 ======================= */
@@ -1265,18 +1320,76 @@ if (subtitleEl) {
   /* ---------- TITLE ---------- */
   const titleEl = qs("#landTitle");
   if (titleEl) titleEl.textContent = l.name || "Land Parcel";
+/* ---------- MEDIA (GALLERY → MAPBOX → EMBED FALLBACK) ---------- */
+const mapEl = qs("#landMap");
+if (mapEl) {
+  mapEl.innerHTML = ""; // reset once
 
-  /* ---------- FACTS ---------- */
-  const factsEl = qs("#landFacts");
-  if (factsEl) {
-    factsEl.innerHTML = `
-      <div><b>Acreage:</b> ${escapeHtml(String(l.acres ?? "—"))}</div>
-      <div><b>Parcel ID:</b> ${escapeHtml(l.parcelId || "—")}</div>
-      <div><b>County:</b> ${escapeHtml(l.county || "—")}</div>
-      <div><b>State:</b> ${escapeHtml(l.state || "—")}</div>
-      <div><b>Country:</b> ${escapeHtml(l.country || "—")}</div>
+  // 1) Photo gallery (highest priority)
+  if (Array.isArray(l.photos) && l.photos.length) {
+    mapEl.innerHTML = buildCarouselHtml(l.photos, l.name);
+    wireCarousels(mapEl);
+    setupLazy();
+  }
+
+  // 2) Mapbox parcel overlay (only if no photos)
+  else if (l.geo && CFG.MAPBOX_TOKEN && window.mapboxgl) {
+    initLandDetailMap(l);
+  }
+
+  // 3) Google Maps iframe fallback
+  else {
+    const q = l.address || `${l.county} ${l.state}`.trim();
+    mapEl.innerHTML = `
+      <iframe
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        src="${mapEmbedSrc(q)}"
+        style="width:100%;height:100%;border:0;border-radius:16px;"
+        aria-label="Parcel map"
+      ></iframe>
     `;
   }
+}
+
+  /* ---------- FACTS ---------- */
+const factsEl = qs("#landFacts");
+if (factsEl) {
+const zoningArr = l.assessor?.zoning
+  ? Array.isArray(l.assessor.zoning)
+    ? l.assessor.zoning
+    : [l.assessor.zoning]
+  : [];
+
+const zoning = zoningArr
+  .map(z =>
+    `<span class="badge ok" style="margin-right:6px">${escapeHtml(z)}</span>`
+  )
+  .join("");
+   
+const landUseArr = l.assessor?.landUse
+  ? Array.isArray(l.assessor.landUse)
+    ? l.assessor.landUse
+    : [l.assessor.landUse]
+  : [];
+
+const landUse = landUseArr
+  .map(u =>
+    `<span class="badge" style="margin-right:6px">${escapeHtml(u)}</span>`
+  )
+  .join("");
+
+  factsEl.innerHTML = `
+    <div><b>Acreage:</b> ${escapeHtml(String(l.acres ?? "—"))}</div>
+    <div><b>Parcel ID:</b> ${escapeHtml(l.parcelId || "—")}</div>
+    <div><b>County:</b> ${escapeHtml(l.county || "—")}</div>
+    <div><b>State:</b> ${escapeHtml(l.state || "—")}</div>
+    <div><b>Country:</b> ${escapeHtml(l.country || "—")}</div>
+
+    ${zoning ? `<div><b>Zoning:</b><br/>${zoning}</div>` : ""}
+    ${landUse ? `<div><b>Land Use:</b><br/>${landUse}</div>` : ""}
+  `;
+}
 /* ---------- DESCRIPTION ---------- */
 const descEl = qs("#landDescription");
 if (descEl) {
@@ -1299,22 +1412,6 @@ if (descEl) {
       ${makeBtnLink("County Assessor", assessor)}
     `;
   }
-
-/* ---------- MAP / MEDIA ---------- */
-const mapEl = qs("#landMap");
-if (mapEl) {
-  const q = l.address || `${l.county} ${l.state}`.trim();
-
-  mapEl.innerHTML = `
-    <iframe
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade"
-      src="${mapEmbedSrc(q)}"
-      style="width:100%;height:100%;border:0;border-radius:16px;"
-      aria-label="Parcel map"
-    ></iframe>
-  `;
-}
 
   /* ---------- TRACK ---------- */
   const viewKey = `land_view:${l.id}`;
