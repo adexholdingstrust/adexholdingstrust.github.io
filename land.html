@@ -1,100 +1,166 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Land Holdings | Adex Holdings Trust</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Land Parcel | Adex Holdings Trust</title>
 
-  <!-- Core site styles -->
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="icon" href="assets/logo.png"/>
+  <link rel="stylesheet" href="assets/styles.css"/>
 
-  <!-- Mapbox GL (required for interactive parcel overlays & clustering) -->
+  <!-- Mapbox (optional, safe to include even if token missing) -->
   <link
     href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
     rel="stylesheet"
   />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
+
 <body>
+<div class="container">
 
-<header>
-  <h1>Land Holdings</h1>
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="properties.html">Rental Properties</a>
-    <a href="land.html" aria-current="page">Land Holdings</a>
-    <a href="about.html">About</a>
-    <a href="contact.html">Contact</a>
-  </nav>
-</header>
+  <!-- =========================
+       NAV (MATCHES lands.html)
+  ========================== -->
+  <div class="nav">
+    <a class="brand" href="index.html" aria-label="Home">
+      <img src="assets/logo.png" alt="Adex Holdings Trust logo" />
+      <div>
+        <div class="title">ADEX HOLDINGS TRUST</div>
+        <div class="subtitle">Residential rentals & land holdings</div>
+      </div>
+    </a>
 
-<main>
+    <div class="navlinks">
+      <a href="index.html">About</a>
+      <a href="properties.html">Rental Properties</a>
+      <a href="lands.html" style="color:var(--text);border-color:var(--line)">Lands</a>
+      <a href="tenant-portal.html">Tenant Portal</a>
+      <a href="tenant-faq.html">Tenant FAQ</a>
+      <a href="careers-vendors.html">Careers / Vendors</a>
+      <a href="privacy.html">Privacy & Legal</a>
+    </div>
+  </div>
 
-  <!-- ===========================
-       INTRO SECTION
-  ============================ -->
-  <section class="section">
-    <h2>Parcels & Acreage</h2>
-    <p class="muted">
-      Below is an overview of land parcels held by Adex Holdings Trust.
-      Interactive maps, parcel boundaries, and county assessor links are
-      provided where available.
-    </p>
-  </section>
+  <!-- =========================
+       LAND DETAIL CARD
+  ========================== -->
+  <div class="card" style="margin-top:18px">
 
-  <!-- ===========================
-       INTERACTIVE MAP
-       (Mapbox + clustering + parcels)
-  ============================ -->
-  <section class="section">
+    <!-- Back link (EXACT UX parity with property.html) -->
+    <a href="lands.html" class="back-link">← Back to Land Holdings</a>
+
+    <!-- Title injected by app.js -->
+    <div id="landTitle" class="h1" style="margin-top:10px">
+      Land Parcel
+    </div>
+
+    <!-- Subtitle / location -->
+    <div id="landSubtitle" class="small muted" style="margin-top:6px">
+      Parcel details loading…
+    </div>
+
+    <!-- =========================
+         MEDIA SECTION
+         (Map OR Placeholder)
+    ========================== -->
     <div
-      id="landsMap"
+      id="landMap"
       style="
-        height: 520px;
-        border-radius: 18px;
-        overflow: hidden;
-        margin: 12px 0 24px;
-        background: #0f1115;
+        margin-top:20px;
+        height:420px;
+        border-radius:16px;
+        overflow:hidden;
+        background:#0f1115;
       "
-      aria-label="Interactive map of land holdings"
-    ></div>
-  </section>
+      aria-label="Parcel map"
+    >
+      <!-- app.js may inject Mapbox here -->
+    </div>
 
-  <!-- ===========================
-       DYNAMIC LAND LIST
-       (Rendered by app.js)
-  ============================ -->
-  <section class="section">
-    <!--
-      app.js will inject:
-      - filter controls (country / county / acreage)
-      - land cards
-      - maps + assessor links
-    -->
-    <div id="landsList" class="propertyGrid"></div>
-  </section>
+    <!-- =========================
+         PARCEL DETAILS GRID
+    ========================== -->
+    <div
+      id="landFacts"
+      style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+        gap:18px;
+        margin-top:26px;
+      "
+    >
+      <!-- app.js injects facts -->
+    </div>
 
-</main>
+    <!-- =========================
+         DESCRIPTION
+    ========================== -->
+    <div style="margin-top:28px">
+      <div class="h2">Parcel Information</div>
+      <p id="landDescription" class="lead">
+        Parcel description loading…
+      </p>
+    </div>
 
-<footer>
-  <p>© <span id="year"></span> Adex Holdings Trust</p>
-</footer>
+    <!-- =========================
+         LINKS / ACTIONS
+    ========================== -->
+    <div
+      id="landLinks"
+      style="
+        display:flex;
+        gap:14px;
+        flex-wrap:wrap;
+        margin-top:22px;
+      "
+    >
+      <!-- app.js injects assessor, PDF, map links -->
+    </div>
 
-<!-- ===========================
-     MAPBOX GL JS
-============================ -->
+    <div class="hr" style="margin-top:32px"></div>
+  </div>
+
+  <!-- =========================
+       FOOTER (UNCHANGED)
+  ========================== -->
+  <div class="footer">
+    <div class="hr"></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div>
+        <div><b>Adex Holdings Trust</b></div>
+        <div class="small">
+          Email:
+          <a href="mailto:tenantservices@adexholdings.com">
+            tenantservices@adexholdings.com
+          </a>
+          • Phone:
+          <a href="tel:+19494154633">949-415-4633</a>
+        </div>
+        <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
+      </div>
+
+      <div class="small" style="text-align:right;max-width:520px">
+        <div>
+          <a href="privacy.html">Privacy</a> •
+          <a href="privacy.html#terms">Terms</a> •
+          <a href="privacy.html#disclaimer">Disclaimer</a>
+        </div>
+        <div>
+          Information on this site is provided for general informational purposes
+          and does not constitute legal or financial advice.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =========================
+     SCRIPTS
+========================== -->
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-
-<!-- ===========================
-     DATA + APP LOGIC
-============================ -->
 <script src="assets/data.js"></script>
 <script src="assets/app.js"></script>
-
-<script>
-  // Simple footer year helper
-  document.getElementById("year").textContent = new Date().getFullYear();
-</script>
 
 </body>
 </html>
