@@ -438,14 +438,18 @@ function googleStreetViewImage(query) {
 ======================= */
 
 async function accessFetch(path, opts = {}) {
+  const { silent = false, ...fetchOpts } = opts;
+
   const res = await fetch(`${CFG.WORKER_BASE}${path}`, {
     credentials: "include",
     redirect: "manual",
-    ...opts
+    ...fetchOpts
   });
 
   if (accessRedirected(res)) {
-    notify("Session expired. Please refresh and sign in again.", true);
+    if (!silent) {
+      notify("Session expired. Please refresh and sign in again.", true);
+    }
     throw new Error("Access redirect");
   }
 
@@ -496,7 +500,7 @@ function trackEvent(eventType, data = {}) {
 
 async function fetchAvailability() {
   try {
-    const res = await accessFetch("/availability");
+    const res = await accessFetch("/availability", { silent: true });
     if (!res.ok) throw new Error("availability fetch failed");
     return await res.json();
   } catch {
