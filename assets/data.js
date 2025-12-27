@@ -232,7 +232,7 @@ window.ADEX_DATA = {
       geo: null,
       video: {
         type: "youtube", // youtube | vimeo | mp4
-        url: "https://www.youtube.com/watch?v=XXXX"
+        url: "https://www.youtube.com/watch?v=DGA5_yQVZy4"
          }
     },
 
