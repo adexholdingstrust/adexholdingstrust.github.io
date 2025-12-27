@@ -2045,13 +2045,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
   }
 
-   
-  if (accessRedirected(res)) {
-  if (!silent && document.body.classList.contains("admin")) {
-    notify("Session expired. Please refresh and sign in again.", true);
-  }
-  throw new Error("Access redirect");
-   }
+const availability = isAdminPage ? await fetchAvailability() : {};
+ const isAdminPage =
+  location.pathname === "/admin.html" ||
+  document.querySelector("#adminControls") ||
+  document.querySelector("#adminKPI") ||
+  document.querySelector("#eventsTable");
+
+const who = isAdminPage ? await loadWhoAmI() : null;
 
 
   const onAdminPage =
