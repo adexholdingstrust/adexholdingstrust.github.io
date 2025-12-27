@@ -200,9 +200,25 @@ window.ADEX_DATA = {
       mapsLink:
         "https://www.google.com/maps?q=Ibudo+Wura+Lagos+Nigeria",
       streetViewEmbed: null,
-      photos: [  "/assets/photos/ibudo/ibudo1.jpg",
-                 "/assets/photos/ibudo/ibudo2.jpg",
-                 "/assets/photos/ibudo/ibudo3.jpg"],
+      photos: ["/assets/photos/Ibudo/Ibudo1.png",
+		"/assets/photos/Ibudo/Ibudo2.png",
+		"/assets/photos/Ibudo/Ibudo3.png",
+		"/assets/photos/Ibudo/Ibudo4.png",
+		"/assets/photos/Ibudo/Ibudo5png",
+		"/assets/photos/Ibudo/Ibudo6.png",
+		"/assets/photos/Ibudo/Ibudo7.png",
+		"/assets/photos/Ibudo/Ibudo8.png",
+		"/assets/photos/Ibudo/Ibudo9.png",
+		"/assets/photos/Ibudo/Ibudo10.png",
+		"/assets/photos/Ibudo/Ibudo11.png",
+		"/assets/photos/Ibudo/Ibudo12.png",
+		"/assets/photos/Ibudo/Ibudo13.png",
+		"/assets/photos/Ibudo/Ibudo14.png",
+		"/assets/photos/Ibudo/Ibudo15.png",
+		"/assets/photos/Ibudo/Ibudo16.png",
+		"/assets/photos/Ibudo/Ibudo17.png",
+		"/assets/photos/Ibudo/Ibudo18.png",
+		"/assets/photos/Ibudo/Ibudo19.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=WgVJ7kAi4j8"
