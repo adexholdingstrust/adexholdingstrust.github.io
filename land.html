@@ -8,7 +8,7 @@
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
 
-  <!-- Mapbox (optional, safe to include even if token missing) -->
+  <!-- Mapbox (safe to include) -->
   <link
     href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
     rel="stylesheet"
@@ -19,7 +19,7 @@
 <div class="container">
 
   <!-- =========================
-       NAV (MATCHES lands.html)
+       NAV
   ========================== -->
   <div class="nav">
     <a class="brand" href="index.html" aria-label="Home">
@@ -42,86 +42,15 @@
   </div>
 
   <!-- =========================
-       LAND DETAIL CARD
+       LAND DETAIL (JS-DRIVEN)
   ========================== -->
   <div class="card" style="margin-top:18px">
-
-    <!-- Back link (EXACT UX parity with property.html) -->
     <a href="lands.html" class="back-link">← Back to Land Holdings</a>
-
-    <!-- Title injected by app.js -->
-    <div id="landTitle" class="h1" style="margin-top:10px">
-      Land Parcel
-    </div>
-
-    <!-- Subtitle / location -->
-    <div id="landSubtitle" class="small muted" style="margin-top:6px">
-      Parcel details loading…
-    </div>
-
-    <!-- =========================
-         MEDIA SECTION
-         (Map OR Placeholder)
-    ========================== -->
-    <div
-      id="landMap"
-      style="
-        margin-top:20px;
-        height:420px;
-        border-radius:16px;
-        overflow:hidden;
-        background:#0f1115;
-      "
-      aria-label="Parcel map"
-    >
-      <!-- app.js may inject Mapbox here -->
-    </div>
-
-    <!-- =========================
-         PARCEL DETAILS GRID
-    ========================== -->
-    <div
-      id="landFacts"
-      style="
-        display:grid;
-        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-        gap:18px;
-        margin-top:26px;
-      "
-    >
-      <!-- app.js injects facts -->
-    </div>
-
-    <!-- =========================
-         DESCRIPTION
-    ========================== -->
-    <div style="margin-top:28px">
-      <div class="h2">Parcel Information</div>
-      <p id="landDescription" class="lead">
-        Parcel description loading…
-      </p>
-    </div>
-
-    <!-- =========================
-         LINKS / ACTIONS
-    ========================== -->
-    <div
-      id="landLinks"
-      style="
-        display:flex;
-        gap:14px;
-        flex-wrap:wrap;
-        margin-top:22px;
-      "
-    >
-      <!-- app.js injects assessor, PDF, map links -->
-    </div>
-
-    <div class="hr" style="margin-top:32px"></div>
+    <div id="landDetail"></div>
   </div>
 
   <!-- =========================
-       FOOTER (UNCHANGED)
+       FOOTER
   ========================== -->
   <div class="footer">
     <div class="hr"></div>
