@@ -447,11 +447,15 @@ async function accessFetch(path, opts = {}) {
   });
 
   if (accessRedirected(res)) {
-    if (!silent) {
-      notify("Session expired. Please refresh and sign in again.", true);
-    }
-    throw new Error("Access redirect");
+  // Only show session error on admin pages
+  if (
+    !silent &&
+    document.body.classList.contains("admin")
+  ) {
+    notify("Session expired. Please refresh and sign in again.", true);
   }
+  throw new Error("Access redirect");
+}
 
   return res;
 }
@@ -2042,8 +2046,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
    
-  const availability = await fetchAvailability();
-  const who = await loadWhoAmI();
+  if (accessRedirected(res)) {
+  if (!silent && document.body.classList.contains("admin")) {
+    notify("Session expired. Please refresh and sign in again.", true);
+  }
+  throw new Error("Access redirect");
+   }
+
 
   const onAdminPage =
     location.pathname === "/admin.html" ||
