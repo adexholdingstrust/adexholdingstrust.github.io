@@ -11,7 +11,7 @@ const CFG = {
   GOOGLE_PLACES_KEY: "",   // e.g. "AIza..."
 
   // Optional (only needed for interactive parcel overlays + clustering map)
-  MAPBOX_TOKEN: "pk.eyJ1IjoiYWRleGhvbGRpbmdzIiwiYSI6ImNtam53NTFqcTF4dW4zY3E1dWhpdzR1c3oifQ.GLimWOFwEHyAuIwaotv_5g",        // e.g. "pk.eyJ..."
+  MAPBOX_TOKEN: "pk.eyJ1IjoiYWRleGhvbGRpbmdzIiwiYSI6ImNtam9wbjB6ajNiMXIzZHEycnlldWxwOWsifQ.4rq3yW5gE02kJwBz8Ecsww",        // e.g. "pk.eyJ..."
   MAPBOX_STYLE_STREETS: "mapbox://styles/mapbox/streets-v12",
   MAPBOX_STYLE_SAT: "mapbox://styles/mapbox/satellite-streets-v12",
   MAPBOX_STYLE_TERRAIN: "mapbox://styles/mapbox/outdoors-v12"
