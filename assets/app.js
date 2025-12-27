@@ -7,8 +7,8 @@ const CFG = {
   WORKER_BASE: "/api",
 
   // Optional (only needed if you want Google Places Photos, Static Maps with key, etc.)
-  GOOGLE_MAPS_KEY: "",     // e.g. "AIza..."
-  GOOGLE_PLACES_KEY: "",   // e.g. "AIza..."
+  GOOGLE_MAPS_KEY: "AIzaSyCspQQOImwBp3gsquUvEIi_DYoDSXeL04g",     // e.g. "AIza..."
+  GOOGLE_PLACES_KEY: "AIzaSyCspQQOImwBp3gsquUvEIi_DYoDSXeL04g",   // e.g. "AIza..."
 
   // Optional (only needed for interactive parcel overlays + clustering map)
   MAPBOX_TOKEN: "pk.eyJ1IjoiYWRleGhvbGRpbmdzIiwiYSI6ImNtam9wbjB6ajNiMXIzZHEycnlldWxwOWsifQ.4rq3yW5gE02kJwBz8Ecsww",        // e.g. "pk.eyJ..."
