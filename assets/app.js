@@ -996,16 +996,7 @@ function renderPropertiesPage(avail) {
     items.forEach(p => {
       const status = avail[p.id] || p.status || "rented";
       const available = status === "available";
-        const viewKey = `rental:${p.id}`;
-if (!__trackedViews.has(viewKey)) {
-  __trackedViews.add(viewKey);
-  trackEvent("view_rental", {
-    id: p.id,
-    name: p.name,
-    state: p.state,
-    country: p.country
-  });
-}
+
       const detailUrl = `/property.html?id=${encodeURIComponent(p.id)}`;
 
 
@@ -1042,8 +1033,8 @@ if (!__trackedViews.has(viewKey)) {
           ? `${formatMoney(p.rent.amount, p.currency)}${p.rent.period === "year" ? "/yr" : "/mo"}`
           : "";
       const card = document.createElement("div");
-       card.addEventListener("click", () => {
-  trackEvent("view_property_detail", {
+      card.addEventListener("click", () => {
+  trackEvent("property_click", {
     id: p.id,
     name: p.name,
     state: p.state,
@@ -1167,7 +1158,9 @@ function renderPropertyDetailPage(avail) {
 
   setupLazy();
   wireCarousels(host);
-
+const viewKey = `property_view:${p.id}`;
+if (!sessionStorage.getItem(viewKey)) {
+  sessionStorage.setItem(viewKey, "1");
   trackEvent("view_property_detail", {
     id: p.id,
     name: p.name,
@@ -1310,17 +1303,6 @@ const items = window.ADEX_DATA.lands.filter(l => {
     host.innerHTML = "";
 
     items.forEach(l => {
-       const viewKey = `land:${l.id}`;
-if (!__trackedViews.has(viewKey)) {
-  __trackedViews.add(viewKey);
-  trackEvent("view_land", {
-    id: l.id,
-    parcelId: l.parcelId,
-    county: l.county,
-    state: l.state,
-    acres: l.acres
-  });
-}
       const q = l.address || `${l.county || ""} ${l.state || ""}`.trim() || l.name;
 
       const img = document.createElement("img");
@@ -1342,6 +1324,16 @@ if (!__trackedViews.has(viewKey)) {
       const card = document.createElement("div");
       card.className = "propertyCard";
       card.innerHTML = `
+            // 🔹 ADD THIS RIGHT HERE
+      card.addEventListener("click", () => {
+        trackEvent("land_click", {
+          id: l.id,
+          parcelId: l.parcelId,
+          county: l.county,
+          state: l.state,
+          acres: l.acres
+        });
+      });
         <div class="media"></div>
         <div class="body">
           <h3>${escapeHtml(l.name)}</h3>
@@ -1372,7 +1364,6 @@ if (!__trackedViews.has(viewKey)) {
           <div style="opacity:.75;font-size:12px;margin-top:6px;">Map</div>
         </div>
       `;
-
       const media = qs(".media", card);
       media.appendChild(img);
 
