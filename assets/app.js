@@ -579,10 +579,7 @@ function buildAdminCSVUrl() {
 }
 
 function initAdminCSVButton() {
-  const host =
-    qs("#adminKPI") ||
-    qs("#adminControls") ||
-    qs("#adminList");
+const host = qs("#adminControls") || qs("#adminKPI");
 
   if (!host) return;
 
@@ -925,9 +922,21 @@ function wireCarousels(scope = document) {
    RENTALS (ADMIN + SIMPLE PUBLIC)
 ======================= */
 
-function renderRentals(avail) {
+  function renderRentals(avail) {
   const host = qs("#rentalsGrid");
-  if (!host || !window.ADEX_DATA?.rentals) return;
+
+  // Do NOT render simple rentals if full properties page exists
+  if (
+    !host ||
+    qs("#propertyList") ||
+    qs("#propertiesList") ||
+    qs("#properties")
+  ) {
+    return;
+  }
+
+  if (!window.ADEX_DATA?.rentals) return;
+
 
   host.innerHTML = "";
 
@@ -1025,7 +1034,6 @@ function renderPropertiesPage(avail) {
     const country = controls?.countrySel?.value || "ALL";
     const items = window.ADEX_DATA.rentals.filter(p => (country === "ALL" ? true : p.country === country));
     draw(items);
-    injectSchemaJsonLd(items, "rentals");
     setupLazy();
     wireCarousels(host);
   };
@@ -1073,14 +1081,7 @@ function renderPropertiesPage(avail) {
           ? `${formatMoney(p.rent.amount, p.currency)}${p.rent.period === "year" ? "/yr" : "/mo"}`
           : "";
       const card = document.createElement("div");
-      card.addEventListener("click", () => {
-  trackEvent("property_click", {
-    id: p.id,
-    name: p.name,
-    state: p.state,
-    country: p.country
-  });
-});
+     
       card.className = "propertyCard";
       card.innerHTML = `
         <!-- CLICKABLE OVERLAY -->
@@ -1117,7 +1118,19 @@ function renderPropertiesPage(avail) {
           <div style="opacity:.75;font-size:12px;margin-top:6px;">Map</div>
         </div>
       `;
+      const overlay = card.querySelector(".propertyOverlayLink");
+if (overlay) {
+ overlay.addEventListener("click", e => {
+  if (e.defaultPrevented) return;
 
+  trackEvent("property_click", {
+    id: p.id,
+    name: p.name,
+    state: p.state,
+    country: p.country
+  });
+});
+}
       // media area
       const media = qs(".media", card);
       if (carousel) {
@@ -1136,6 +1149,8 @@ function renderPropertiesPage(avail) {
   if (controls?.countrySel) {
     controls.countrySel.addEventListener("change", applyFilter);
   }
+// Inject schema ONCE for SEO (initial render only)
+injectSchemaJsonLd(window.ADEX_DATA.rentals, "rentals");
 
   applyFilter();
 }
@@ -1208,7 +1223,7 @@ if (!sessionStorage.getItem(viewKey)) {
     country: p.country
   });
 }
-
+}
 /* =======================
    LAND DETAIL PAGE
 ======================= */
@@ -1400,7 +1415,7 @@ const items = window.ADEX_DATA.lands.filter(l => {
 
 
     draw(items);
-    injectSchemaJsonLd(items, "lands");
+
     setupLazy();
   };
 
@@ -1435,46 +1450,37 @@ card.innerHTML = `
   <a class="propertyOverlayLink"
      href="${detailUrl}"
      aria-label="View ${escapeHtml(l.name)}"></a>
-            // 🔹 ADD THIS RIGHT HERE
-      card.addEventListener("click", () => {
-        trackEvent("land_click", {
-          id: l.id,
-          parcelId: l.parcelId,
-          county: l.county,
-          state: l.state,
-          acres: l.acres
-        });
-      });
-        <div class="media"></div>
-        <div class="body">
-          <h3>${escapeHtml(l.name)}</h3>
-          <div class="meta">${escapeHtml(String(l.acres ?? "—"))} acres • ${escapeHtml(l.state || "—")} • ${escapeHtml(l.county || "—")} • ${escapeHtml(l.country || "—")}</div>
 
-          ${l.address ? `<div class="addr">${escapeHtml(l.address)}</div>` : ""}
+  <div class="media"></div>
+  <div class="body">
+    <h3>${escapeHtml(l.name)}</h3>
+    <div class="meta">
+      ${escapeHtml(String(l.acres ?? "—"))} acres •
+      ${escapeHtml(l.state || "—")} •
+      ${escapeHtml(l.county || "—")} •
+      ${escapeHtml(l.country || "—")}
+    </div>
 
-          <div class="parcel" style="margin-top:10px;">
-            <strong>Parcel ID:</strong> ${escapeHtml(l.parcelId || "—")}<br/>
-            <strong>County:</strong> ${escapeHtml(l.county || "—")}<br/>
-            ${l.legal ? `<strong>Legal:</strong> ${escapeHtml(l.legal)}<br/>` : ""}
-          </div>
+    ${l.address ? `<div class="addr">${escapeHtml(l.address)}</div>` : ""}
 
-          <div style="margin-top:10px;">
-            ${
-              l.links?.parcelPdf
-                ? `<a href="${escapeHtml(l.links.parcelPdf)}" target="_blank" rel="noopener">Parcel Map (PDF)</a><br/>`
-                : ""
-            }
-            <a href="${escapeHtml(maps)}" target="_blank" rel="noopener">View on Google Maps</a><br/>
-            <a href="${escapeHtml(assessor)}" target="_blank" rel="noopener">County Assessor / Parcel Lookup</a>
-          </div>
-        </div>
-
-        <div class="map" style="margin-top:12px;">
-          <iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-            data-src="${escapeHtml(mapEmbedSrc(q))}"></iframe>
-          <div style="opacity:.75;font-size:12px;margin-top:6px;">Map</div>
-        </div>
-      `;
+    <div class="parcel" style="margin-top:10px;">
+      <strong>Parcel ID:</strong> ${escapeHtml(l.parcelId || "—")}<br/>
+      <strong>County:</strong> ${escapeHtml(l.county || "—")}
+    </div>
+  </div>
+`;
+const overlay = card.querySelector(".propertyOverlayLink");
+if (overlay) {
+  overlay.addEventListener("click", () => {
+    trackEvent("land_click", {
+      id: l.id,
+      parcelId: l.parcelId,
+      county: l.county,
+      state: l.state,
+      acres: l.acres
+    });
+  });
+}
       const media = qs(".media", card);
       media.appendChild(img);
 
@@ -1486,7 +1492,8 @@ card.innerHTML = `
   if (controls?.countySel) controls.countySel.addEventListener("change", applyFilter);
   if (controls?.acreMin) controls.acreMin.addEventListener("input", applyFilter);
   if (controls?.acreMax) controls.acreMax.addEventListener("input", applyFilter);
-
+  // Inject schema ONCE for SEO (initial render only)
+   injectSchemaJsonLd(window.ADEX_DATA.lands, "lands");
   applyFilter();
 }
 
@@ -1538,22 +1545,9 @@ function buildLandGeoJSON(lands) {
       return;
     }
 
-    // 3) Safe fallback point
-    feats.push({
-      type: "Feature",
-      properties: {
-        id: l.id,
-        name: l.name,
-        county: l.county || "",
-        state: l.state || "",
-        acres: l.acres ?? null,
-        parcelId: l.parcelId || ""
-      },
-      geometry: {
-        type: "Point",
-        coordinates: [-115.2, 36.2] // default fallback
-      }
-    });
+// 3) No usable geo — skip this land
+return; // exits this iteration only (forEach)
+
   });
 
   return { type: "FeatureCollection", features: feats };
@@ -1800,7 +1794,10 @@ host.appendChild(wrap);
       notify("Availability saved ✓");
       const fresh = await fetchAvailability();
       renderAdmin(fresh);
+      if (!document.body.classList.contains("admin")) {
       renderRentals(fresh);
+         }
+
       await loadAudit();
     } catch (e) {
       notify(e.message || "Save failed", true);
@@ -1864,7 +1861,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     trackEvent("page_view", { auth: !!who });
   }
 
+  // Render public rentals ONLY on public pages
+if (!document.body.classList.contains("admin")) {
   renderRentals(availability);
+}
   if (who?.isAdmin === true) renderAdmin(availability);
 
   renderPropertyDetailPage(availability);
