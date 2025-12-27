@@ -38,7 +38,7 @@ window.ADEX_DATA = {
 		"/assets/photos/hoye/hoye2.png",
 		"/assets/photos/hoye/hoye3.png",
 		"/assets/photos/hoye/hoye4.png",
-		"/assets/photos/hoye/hoye5png",
+		"/assets/photos/hoye/hoye5.png",
 		"/assets/photos/hoye/hoye6.png",
 		"/assets/photos/hoye/hoye7.png",
 		"/assets/photos/hoye/hoye8.png",
@@ -181,7 +181,7 @@ window.ADEX_DATA = {
 		"/assets/photos/calabrese/calabrese2.png",
 		"/assets/photos/calabrese/calabrese3.png",
 		"/assets/photos/calabrese/calabrese4.png",
-		"/assets/photos/calabrese/calabrese5png",
+		"/assets/photos/calabrese/calabrese5.png",
 		"/assets/photos/calabrese/calabrese6.png",
 		"/assets/photos/calabrese/calabrese7.png",
 		"/assets/photos/calabrese/calabrese8.png",
@@ -254,7 +254,7 @@ window.ADEX_DATA = {
 		"/assets/photos/sterling/sterling2.png",
 		"/assets/photos/sterling/sterling3.png",
 		"/assets/photos/sterling/sterling4.png",
-		"/assets/photos/sterling/sterling5png",
+		"/assets/photos/sterling/sterling5.png",
 		"/assets/photos/sterling/sterling6.png",
 		"/assets/photos/sterling/sterling7.png",
 		"/assets/photos/sterling/sterling8.png",
@@ -294,7 +294,7 @@ window.ADEX_DATA = {
 		"/assets/photos/sterling/sterling42.png",
 		"/assets/photos/sterling/sterling43.png",
 		"/assets/photos/sterling/sterling44.png",
-		"/assets/photos/sterling/sterling45.png",
+		"/assets/photos/sterling/sterling45.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=wXEWUcKPMg0"
@@ -325,7 +325,7 @@ window.ADEX_DATA = {
 		"/assets/photos/Ibudo/Ibudo2.png",
 		"/assets/photos/Ibudo/Ibudo3.png",
 		"/assets/photos/Ibudo/Ibudo4.png",
-		"/assets/photos/Ibudo/Ibudo5png",
+		"/assets/photos/Ibudo/Ibudo5.png",
 		"/assets/photos/Ibudo/Ibudo6.png",
 		"/assets/photos/Ibudo/Ibudo7.png",
 		"/assets/photos/Ibudo/Ibudo8.png",
@@ -398,12 +398,12 @@ window.ADEX_DATA = {
 		"/assets/photos/pahrump/pahrump2.png",
 		"/assets/photos/pahrump/pahrump3.png",
 		"/assets/photos/pahrump/pahrump4.png",
-		"/assets/photos/pahrump/pahrump5png",
+		"/assets/photos/pahrump/pahrump5.png",
 		"/assets/photos/pahrump/pahrump6.png",
 		"/assets/photos/pahrump/pahrump7.png",
 		"/assets/photos/pahrump/pahrump8.png",
 		"/assets/photos/pahrump/pahrump9.png",
-		"/assets/photos/pahrump/pahrump10.png",],
+		"/assets/photos/pahrump/pahrump10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=DGA5_yQVZy4"
@@ -430,12 +430,12 @@ window.ADEX_DATA = {
 		"/assets/photos/apache/apache2.png",
 		"/assets/photos/apache/apache3.png",
 		"/assets/photos/apache/apache4.png",
-		"/assets/photos/apache/apache5png",
+		"/assets/photos/apache/apache5.png",
 		"/assets/photos/apache/apache6.png",
 		"/assets/photos/apache/apache7.png",
 		"/assets/photos/apache/apache8.png",
 		"/assets/photos/apache/apache9.png",
-		"/assets/photos/apache/apache10.png",],
+		"/assets/photos/apache/apache10.png"],
 		
       video: {
         type: "youtube", // youtube | vimeo | mp4
@@ -464,12 +464,12 @@ window.ADEX_DATA = {
 		"/assets/photos/navajo/navajo2.png",
 		"/assets/photos/navajo/navajo3.png",
 		"/assets/photos/navajo/navajo4.png",
-		"/assets/photos/navajo/navajo5png",
+		"/assets/photos/navajo/navajo5.png",
 		"/assets/photos/navajo/navajo6.png",
 		"/assets/photos/navajo/navajo7.png",
 		"/assets/photos/navajo/navajo8.png",
 		"/assets/photos/navajo/navajo9.png",
-		"/assets/photos/navajo/navajo10.png",],
+		"/assets/photos/navajo/navajo10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
@@ -497,12 +497,12 @@ window.ADEX_DATA = {
 		"/assets/photos/elko/elko2.png",
 		"/assets/photos/elko/elko3.png",
 		"/assets/photos/elko/elko4.png",
-		"/assets/photos/elko/elko5png",
+		"/assets/photos/elko/elko5.png",
 		"/assets/photos/elko/elko6.png",
 		"/assets/photos/elko/elko7.png",
 		"/assets/photos/elko/elko8.png",
 		"/assets/photos/elko/elko9.png",
-		"/assets/photos/elko/elko10.png",],
+		"/assets/photos/elko/elko10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
@@ -530,12 +530,12 @@ window.ADEX_DATA = {
 		"/assets/photos/elko/elko2.png",
 		"/assets/photos/elko/elko3.png",
 		"/assets/photos/elko/elko4.png",
-		"/assets/photos/elko/elko5png",
+		"/assets/photos/elko/elko5.png",
 		"/assets/photos/elko/elko6.png",
 		"/assets/photos/elko/elko7.png",
 		"/assets/photos/elko/elko8.png",
 		"/assets/photos/elko/elko9.png",
-		"/assets/photos/elko/elko10.png",],
+		"/assets/photos/elko/elko10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
@@ -562,12 +562,12 @@ window.ADEX_DATA = {
 		"/assets/photos/beryl/beryl2.png",
 		"/assets/photos/beryl/beryl3.png",
 		"/assets/photos/beryl/beryl4.png",
-		"/assets/photos/beryl/beryl5png",
+		"/assets/photos/beryl/beryl5.png",
 		"/assets/photos/beryl/beryl6.png",
 		"/assets/photos/beryl/beryl7.png",
 		"/assets/photos/beryl/beryl8.png",
 		"/assets/photos/beryl/beryl9.png",
-		"/assets/photos/beryl/beryl10.png",],
+		"/assets/photos/beryl/beryl10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
@@ -594,12 +594,12 @@ window.ADEX_DATA = {
 		"/assets/photos/modena/modena2.png",
 		"/assets/photos/modena/modena3.png",
 		"/assets/photos/modena/modena4.png",
-		"/assets/photos/modena/modena5png",
+		"/assets/photos/modena/modena5.png",
 		"/assets/photos/modena/modena6.png",
 		"/assets/photos/modena/modena7.png",
 		"/assets/photos/modena/modena8.png",
 		"/assets/photos/modena/modena9.png",
-		"/assets/photos/modena/modena10.png",],
+		"/assets/photos/modena/modena10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
@@ -627,12 +627,12 @@ window.ADEX_DATA = {
 		"/assets/photos/lancaster/lancaster2.png",
 		"/assets/photos/lancaster/lancaster3.png",
 		"/assets/photos/lancaster/lancaster4.png",
-		"/assets/photos/lancaster/lancaster5png",
+		"/assets/photos/lancaster/lancaster5.png",
 		"/assets/photos/lancaster/lancaster6.png",
 		"/assets/photos/lancaster/lancaster7.png",
 		"/assets/photos/lancaster/lancaster8.png",
 		"/assets/photos/lancaster/lancaster9.png",
-		"/assets/photos/lancaster/lancaster10.png",],
+		"/assets/photos/lancaster/lancaster10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
@@ -660,12 +660,12 @@ window.ADEX_DATA = {
 	 	"/assets/photos/lancaster/lancaster2.png",
 		"/assets/photos/lancaster/lancaster3.png",
 		"/assets/photos/lancaster/lancaster4.png",
-		"/assets/photos/lancaster/lancaster5png",
+		"/assets/photos/lancaster/lancaster5.png",
 		"/assets/photos/lancaster/lancaster6.png",
 		"/assets/photos/lancaster/lancaster7.png",
 		"/assets/photos/lancaster/lancaster8.png",
 		"/assets/photos/lancaster/lancaster9.png",
-		"/assets/photos/lancaster/lancaster10.png",],
+		"/assets/photos/lancaster/lancaster10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
@@ -692,12 +692,12 @@ window.ADEX_DATA = {
 		"/assets/photos/valencia/valencia2.png",
 		"/assets/photos/valencia/valencia3.png",
 		"/assets/photos/valencia/valencia4.png",
-		"/assets/photos/valencia/valencia5png",
+		"/assets/photos/valencia/valencia5.png",
 		"/assets/photos/valencia/valencia6.png",
 		"/assets/photos/valencia/valencia7.png",
 		"/assets/photos/valencia/valencia8.png",
 		"/assets/photos/valencia/valencia9.png",
-		"/assets/photos/valencia/valencia10.png",],
+		"/assets/photos/valencia/valencia10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
@@ -724,12 +724,12 @@ window.ADEX_DATA = {
 		"/assets/photos/valencia/valencia2.png",
 		"/assets/photos/valencia/valencia3.png",
 		"/assets/photos/valencia/valencia4.png",
-		"/assets/photos/valencia/valencia5png",
+		"/assets/photos/valencia/valencia5.png",
 		"/assets/photos/valencia/valencia6.png",
 		"/assets/photos/valencia/valencia7.png",
 		"/assets/photos/valencia/valencia8.png",
 		"/assets/photos/valencia/valencia9.png",
-		"/assets/photos/valencia/valencia10.png",],
+		"/assets/photos/valencia/valencia10.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
