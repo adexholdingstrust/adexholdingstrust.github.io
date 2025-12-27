@@ -1,5 +1,5 @@
 /* =========================================================
-   ADEX HOLDINGS TRUST — data.js (RESTORED + FIXED) https://www.google.com/maps?q=&layer=c&cbll=39.64060312656101,-104.82539119293874&cbp=11,210,0,10,90&output=svembed
+   ADEX HOLDINGS TRUST — data.js (RESTORED + FIXED)
 ========================================================= */
 
 window.ADEX_DATA = {
