@@ -129,7 +129,17 @@ async function bindPropertyEditorSave() {
     }
   });
 }
-
+function makeBtnLink(label, href) {
+  if (!href || href === "#") return "";
+  return `
+    <a class="btn"
+       href="${escapeHtml(href)}"
+       target="_blank"
+       rel="noopener">
+       ${escapeHtml(label)}
+    </a>
+  `;
+}
 /* =======================
    LAZY LOADING
 ======================= */
@@ -1228,63 +1238,75 @@ if (!sessionStorage.getItem(viewKey)) {
    LAND DETAIL PAGE
 ======================= */
    function renderLandDetailPage() {
-  const host = qs("#landDetail");
-  if (!host || !window.ADEX_DATA?.lands) return;
+  // Only run on land detail page
+  if (!qs("#landTitle")) return;
+  if (!window.ADEX_DATA?.lands) return;
 
   const id = new URLSearchParams(location.search).get("id");
-  if (!id) {
-    host.innerHTML = "<p>Land parcel not found.</p>";
-    return;
-  }
+  if (!id) return;
 
   const l = window.ADEX_DATA.lands.find(x => x.id === id);
-  if (!l) {
-    host.innerHTML = "<p>Land parcel not found.</p>";
-    return;
-  }
+  if (!l) return;
 
+  /* ---------- SEO ---------- */
   setLandSEO(l);
 
-  const q = l.address || `${l.county || ""} ${l.state || ""}`.trim() || l.name;
-  const assessor = assessorLinkFor(l);
-  const maps = l.links?.maps || "#";
+  /* ---------- TITLE ---------- */
+  const titleEl = qs("#landTitle");
+  if (titleEl) titleEl.textContent = l.name || "Land Parcel";
 
-  host.innerHTML = `
-    <h1>${escapeHtml(l.name)}</h1>
+  /* ---------- FACTS ---------- */
+  const factsEl = qs("#landFacts");
+  if (factsEl) {
+    factsEl.innerHTML = `
+      <div><b>Acreage:</b> ${escapeHtml(String(l.acres ?? "—"))}</div>
+      <div><b>Parcel ID:</b> ${escapeHtml(l.parcelId || "—")}</div>
+      <div><b>County:</b> ${escapeHtml(l.county || "—")}</div>
+      <div><b>State:</b> ${escapeHtml(l.state || "—")}</div>
+      <div><b>Country:</b> ${escapeHtml(l.country || "—")}</div>
+    `;
+  }
 
-    <div class="meta">
-      ${escapeHtml(String(l.acres ?? "—"))} acres •
-      ${escapeHtml(l.county || "")}, ${escapeHtml(l.state || "")}
-    </div>
+  /* ---------- LINKS ---------- */
+  const linksEl = qs("#landLinks");
+  if (linksEl) {
+    const assessor = assessorLinkFor(l);
+    const maps =
+      l.links?.maps ||
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        l.address || `${l.county} ${l.state}`
+      )}`;
 
-    ${l.address ? `<div class="addr">${escapeHtml(l.address)}</div>` : ""}
+    linksEl.innerHTML = `
+      ${makeBtnLink("View on Google Maps", maps)}
+      ${makeBtnLink("County Assessor", assessor)}
+    `;
+  }
 
-    <div class="parcel" style="margin-top:16px;">
-      <strong>Parcel ID:</strong> ${escapeHtml(l.parcelId || "—")}<br/>
-      <strong>County:</strong> ${escapeHtml(l.county || "—")}
-    </div>
+  /* ---------- MAP FALLBACK ---------- */
+  const mapEl = qs("#landMap");
+  if (mapEl && !CFG.MAPBOX_TOKEN) {
+    mapEl.innerHTML = `
+      <div class="card muted"
+           style="display:flex;align-items:center;justify-content:center;
+                  height:100%;text-align:center;">
+        Interactive parcel maps will be enabled soon.
+      </div>
+    `;
+  }
 
-    <div style="margin-top:16px;">
-      <a href="${escapeHtml(maps)}" target="_blank" rel="noopener">View on Google Maps</a><br/>
-      <a href="${escapeHtml(assessor)}" target="_blank" rel="noopener">County Assessor</a>
-    </div>
-
-    <div class="map" style="margin-top:20px;">
-      <iframe loading="lazy"
-        data-src="${escapeHtml(mapEmbedSrc(q))}">
-      </iframe>
-    </div>
-  `;
-
-  setupLazy();
-
-  trackEvent("view_land_detail", {
-    id: l.id,
-    parcelId: l.parcelId,
-    county: l.county,
-    state: l.state,
-    acres: l.acres
-  });
+  /* ---------- TRACK ---------- */
+  const viewKey = `land_view:${l.id}`;
+  if (!sessionStorage.getItem(viewKey)) {
+    sessionStorage.setItem(viewKey, "1");
+    trackEvent("view_land_detail", {
+      id: l.id,
+      parcelId: l.parcelId,
+      county: l.county,
+      state: l.state,
+      acres: l.acres
+    });
+  }
 }
 /* =======================
    END LAND DETAIL PAGE
