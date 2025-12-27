@@ -7,7 +7,8 @@ window.ADEX_DATA = {
   tagline: "Residential rentals & land holdings",
   contact: {
     email: "tenantservices@adexholdings.com",
-    phone: "+1-949-415-4633"
+    phone: "+1-949-415-4633",
+	SMS: "+1-949-415-4633"
   },
 
   /* ======================
