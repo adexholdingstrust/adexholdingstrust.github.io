@@ -830,6 +830,46 @@ function setPropertySEO(p) {
   script.textContent = JSON.stringify(schema, null, 2);
   document.head.appendChild(script);
 }
+
+function setLandSEO(l) {
+  const baseUrl = location.origin;
+  const url = `${baseUrl}/land.html?id=${encodeURIComponent(l.id)}`;
+
+  const title = `${l.name} | ${l.county || ""}, ${l.state || ""} | Adex Holdings Trust`;
+  const description =
+    `${l.acres ?? "—"} acre land parcel located in ${l.county || ""}, ${l.state || ""}.`;
+
+  const image = googleStaticMap(
+    l.address || `${l.county} ${l.state}`,
+    "satellite"
+  );
+
+  document.title = title;
+
+  const upsert = (attr, key, val) => {
+    if (!val) return;
+    let el = document.head.querySelector(`meta[${attr}="${key}"]`);
+    if (!el) {
+      el = document.createElement("meta");
+      el.setAttribute(attr, key);
+      document.head.appendChild(el);
+    }
+    el.setAttribute("content", val);
+  };
+
+  upsert("name", "description", description);
+  upsert("property", "og:type", "article");
+  upsert("property", "og:title", title);
+  upsert("property", "og:description", description);
+  upsert("property", "og:image", image);
+  upsert("property", "og:url", url);
+
+  upsert("name", "twitter:card", "summary_large_image");
+  upsert("name", "twitter:title", title);
+  upsert("name", "twitter:description", description);
+  upsert("name", "twitter:image", image);
+}
+
 /* =======================
    PHOTO CAROUSEL (DATA-DRIVEN)
 ======================= */
@@ -1170,6 +1210,71 @@ if (!sessionStorage.getItem(viewKey)) {
 }
 
 /* =======================
+   LAND DETAIL PAGE
+======================= */
+   function renderLandDetailPage() {
+  const host = qs("#landDetail");
+  if (!host || !window.ADEX_DATA?.lands) return;
+
+  const id = new URLSearchParams(location.search).get("id");
+  if (!id) {
+    host.innerHTML = "<p>Land parcel not found.</p>";
+    return;
+  }
+
+  const l = window.ADEX_DATA.lands.find(x => x.id === id);
+  if (!l) {
+    host.innerHTML = "<p>Land parcel not found.</p>";
+    return;
+  }
+
+  setLandSEO(l);
+
+  const q = l.address || `${l.county || ""} ${l.state || ""}`.trim() || l.name;
+  const assessor = assessorLinkFor(l);
+  const maps = l.links?.maps || "#";
+
+  host.innerHTML = `
+    <h1>${escapeHtml(l.name)}</h1>
+
+    <div class="meta">
+      ${escapeHtml(String(l.acres ?? "—"))} acres •
+      ${escapeHtml(l.county || "")}, ${escapeHtml(l.state || "")}
+    </div>
+
+    ${l.address ? `<div class="addr">${escapeHtml(l.address)}</div>` : ""}
+
+    <div class="parcel" style="margin-top:16px;">
+      <strong>Parcel ID:</strong> ${escapeHtml(l.parcelId || "—")}<br/>
+      <strong>County:</strong> ${escapeHtml(l.county || "—")}
+    </div>
+
+    <div style="margin-top:16px;">
+      <a href="${escapeHtml(maps)}" target="_blank" rel="noopener">View on Google Maps</a><br/>
+      <a href="${escapeHtml(assessor)}" target="_blank" rel="noopener">County Assessor</a>
+    </div>
+
+    <div class="map" style="margin-top:20px;">
+      <iframe loading="lazy"
+        data-src="${escapeHtml(mapEmbedSrc(q))}">
+      </iframe>
+    </div>
+  `;
+
+  setupLazy();
+
+  trackEvent("view_land_detail", {
+    id: l.id,
+    parcelId: l.parcelId,
+    county: l.county,
+    state: l.state,
+    acres: l.acres
+  });
+}
+/* =======================
+   END LAND DETAIL PAGE
+======================= */
+/* =======================
    Video Rendering
 ======================= */
 function renderPropertyVideo(p) {
@@ -1321,9 +1426,15 @@ const items = window.ADEX_DATA.lands.filter(l => {
       const assessor = assessorLinkFor(l);
       const maps = l.links?.maps || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 
-      const card = document.createElement("div");
-      card.className = "propertyCard";
-      card.innerHTML = `
+const detailUrl = `/land.html?id=${encodeURIComponent(l.id)}`;
+
+const card = document.createElement("div");
+card.className = "propertyCard";
+
+card.innerHTML = `
+  <a class="propertyOverlayLink"
+     href="${detailUrl}"
+     aria-label="View ${escapeHtml(l.name)}"></a>
             // 🔹 ADD THIS RIGHT HERE
       card.addEventListener("click", () => {
         trackEvent("land_click", {
@@ -1757,6 +1868,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (who?.isAdmin === true) renderAdmin(availability);
 
   renderPropertyDetailPage(availability);
+  renderLandDetailPage();
   renderPropertiesPage(availability);
   renderLandsPage();
   initTenantPortalPropertyDropdown();
