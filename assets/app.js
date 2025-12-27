@@ -1248,6 +1248,17 @@ if (!sessionStorage.getItem(viewKey)) {
   const l = window.ADEX_DATA.lands.find(x => x.id === id);
   if (!l) return;
 
+   /* ---------- SUBTITLE ---------- */
+const subtitleEl = qs("#landSubtitle");
+if (subtitleEl) {
+  subtitleEl.textContent = [
+    l.county,
+    l.state,
+    l.country
+  ].filter(Boolean).join(", ");
+}
+
+
   /* ---------- SEO ---------- */
   setLandSEO(l);
 
@@ -1266,7 +1277,13 @@ if (!sessionStorage.getItem(viewKey)) {
       <div><b>Country:</b> ${escapeHtml(l.country || "—")}</div>
     `;
   }
-
+/* ---------- DESCRIPTION ---------- */
+const descEl = qs("#landDescription");
+if (descEl) {
+  descEl.textContent =
+    l.description ||
+    `Approximately ${l.acres ?? "—"} acres located in ${l.county || ""}, ${l.state || ""}.`;
+}
   /* ---------- LINKS ---------- */
   const linksEl = qs("#landLinks");
   if (linksEl) {
@@ -1283,17 +1300,21 @@ if (!sessionStorage.getItem(viewKey)) {
     `;
   }
 
-  /* ---------- MAP FALLBACK ---------- */
-  const mapEl = qs("#landMap");
-  if (mapEl && !CFG.MAPBOX_TOKEN) {
-    mapEl.innerHTML = `
-      <div class="card muted"
-           style="display:flex;align-items:center;justify-content:center;
-                  height:100%;text-align:center;">
-        Interactive parcel maps will be enabled soon.
-      </div>
-    `;
-  }
+/* ---------- MAP / MEDIA ---------- */
+const mapEl = qs("#landMap");
+if (mapEl) {
+  const q = l.address || `${l.county} ${l.state}`.trim();
+
+  mapEl.innerHTML = `
+    <iframe
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      src="${mapEmbedSrc(q)}"
+      style="width:100%;height:100%;border:0;border-radius:16px;"
+      aria-label="Parcel map"
+    ></iframe>
+  `;
+}
 
   /* ---------- TRACK ---------- */
   const viewKey = `land_view:${l.id}`;
