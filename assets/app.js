@@ -2,20 +2,70 @@
    ADEX HOLDINGS TRUST — app.js (CLOUDFLARE ACCESS SAFE)
    FINAL + PUBLIC PAGES PATCH (UPGRADED)
 ========================================================= */
-
 const CFG = {
   WORKER_BASE: "/api",
 
-  // Optional (only needed if you want Google Places Photos, Static Maps with key, etc.)
-  GOOGLE_MAPS_KEY: "AIzaSyCspQQOImwBp3gsquUvEIi_DYoDSXeL04g",     // e.g. "AIza..."
-  GOOGLE_PLACES_KEY: "AIzaSyCspQQOImwBp3gsquUvEIi_DYoDSXeL04g",   // e.g. "AIza..."
+  // injected at runtime from Cloudflare
+  MAPBOX_TOKEN: null,
+  GOOGLE_MAPS_KEY: null,
+  GOOGLE_PLACES_KEY: null,
 
-  // Optional (only needed for interactive parcel overlays + clustering map)
-  MAPBOX_TOKEN: "pk.eyJ1IjoiYWRleGhvbGRpbmdzIiwiYSI6ImNtam9wbjB6ajNiMXIzZHEycnlldWxwOWsifQ.4rq3yW5gE02kJwBz8Ecsww",        // e.g. "pk.eyJ..."
   MAPBOX_STYLE_STREETS: "mapbox://styles/mapbox/streets-v12",
   MAPBOX_STYLE_SAT: "mapbox://styles/mapbox/satellite-streets-v12",
   MAPBOX_STYLE_TERRAIN: "mapbox://styles/mapbox/outdoors-v12"
 };
+/* ============================================================
+   GLOBAL CONFIG LOADER (Cloudflare-backed)
+   ============================================================ */
+
+window.ADEX_CONFIG = {
+  loaded: false,
+  MAPBOX_TOKEN: null,
+  GOOGLE_MAPS_KEY: null,
+  GOOGLE_PLACES_KEY: null
+};
+
+async function loadAdexConfig() {
+  // Prevent duplicate loads
+  if (window.ADEX_CONFIG.loaded) {
+    return window.ADEX_CONFIG;
+  }
+
+  try {
+    const res = await fetch("/api/config", {
+  method: "GET",
+  credentials: "omit",
+  cache: "no-store",
+  headers: {
+    "Accept": "application/json"
+  }
+});
+
+   if (!res.ok) {
+  console.error("Config endpoint unavailable:", res.status);
+  return window.ADEX_CONFIG;
+}
+
+    const cfg = await res.json();
+
+    window.ADEX_CONFIG = {
+      loaded: true,
+      MAPBOX_TOKEN: cfg.MAPBOX_TOKEN || null,
+      GOOGLE_MAPS_KEY: cfg.GOOGLE_MAPS_KEY || null,
+      GOOGLE_PLACES_KEY: cfg.GOOGLE_PLACES_KEY || null
+    };
+
+// ✅ ADD this instead
+if (window.ADEX_CONFIG.MAPBOX_TOKEN && window.mapboxgl) {
+  mapboxgl.accessToken = window.ADEX_CONFIG.MAPBOX_TOKEN;
+}
+
+    return window.ADEX_CONFIG;
+  } catch (err) {
+    console.error("ADEX config load failed:", err);
+    return window.ADEX_CONFIG;
+  }
+}
 
 /* =======================
    HELPERS
@@ -1968,8 +2018,22 @@ function initAdminSidebar() {
 /* =======================
    INIT
 ======================= */
-
 document.addEventListener("DOMContentLoaded", async () => {
+
+  /* ---------- LOAD SECRETS ONCE ---------- */
+  const secrets = await loadAdexConfig();
+
+  // Bind secrets to CFG for legacy code
+  CFG.MAPBOX_TOKEN = secrets.MAPBOX_TOKEN;
+  CFG.GOOGLE_MAPS_KEY = secrets.GOOGLE_MAPS_KEY;
+  CFG.GOOGLE_PLACES_KEY = secrets.GOOGLE_PLACES_KEY;
+
+  // Mapbox global
+  if (CFG.MAPBOX_TOKEN && window.mapboxgl) {
+    mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
+  }
+
+   
   const availability = await fetchAvailability();
   const who = await loadWhoAmI();
 
