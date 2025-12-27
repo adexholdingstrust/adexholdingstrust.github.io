@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+  <!-- Title is dynamically overwritten by app.js -->
   <title>Land Parcel | Adex Holdings Trust</title>
 
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
 
-  <!-- Mapbox (safe to include) -->
+  <!-- Mapbox (required for parcel overlays) -->
   <link
     href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
     rel="stylesheet"
@@ -16,6 +18,7 @@
 </head>
 
 <body>
+
 <div class="container">
 
   <!-- =========================
@@ -33,7 +36,7 @@
     <div class="navlinks">
       <a href="index.html">About</a>
       <a href="properties.html">Rental Properties</a>
-      <a href="lands.html" style="color:var(--text);border-color:var(--line)">Lands</a>
+      <a href="lands.html" class="active">Lands</a>
       <a href="tenant-portal.html">Tenant Portal</a>
       <a href="tenant-faq.html">Tenant FAQ</a>
       <a href="careers-vendors.html">Careers / Vendors</a>
@@ -42,11 +45,60 @@
   </div>
 
   <!-- =========================
-       LAND DETAIL (JS-DRIVEN)
+       LAND DETAIL CARD
   ========================== -->
   <div class="card" style="margin-top:18px">
+
+    <!-- Back -->
     <a href="lands.html" class="back-link">← Back to Land Holdings</a>
-    <div id="landDetail"></div>
+
+    <!-- TITLE -->
+    <h1 id="landTitle" style="margin-top:10px;"></h1>
+
+    <!-- SUBTITLE -->
+    <div id="landSubtitle" class="small muted" style="margin-top:6px;"></div>
+
+    <!-- MEDIA (Gallery / Mapbox / Embed fallback) -->
+    <div
+      id="landMap"
+      style="
+        margin-top:20px;
+        height:420px;
+        border-radius:16px;
+        overflow:hidden;
+        background:#0f1115;
+      ">
+    </div>
+
+    <!-- FACTS GRID -->
+    <div
+      id="landFacts"
+      style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+        gap:18px;
+        margin-top:26px;
+      ">
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div style="margin-top:28px">
+      <div class="h2">Parcel Information</div>
+      <p id="landDescription" class="lead"></p>
+    </div>
+
+    <!-- LINKS -->
+    <div
+      id="landLinks"
+      style="
+        display:flex;
+        gap:14px;
+        flex-wrap:wrap;
+        margin-top:22px;
+      ">
+    </div>
+
+    <div class="hr" style="margin-top:32px"></div>
   </div>
 
   <!-- =========================
@@ -85,7 +137,7 @@
 </div>
 
 <!-- =========================
-     SCRIPTS
+     SCRIPTS (ORDER MATTERS)
 ========================== -->
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 <script src="assets/data.js"></script>
