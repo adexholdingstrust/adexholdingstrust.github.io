@@ -99,7 +99,7 @@ window.ADEX_DATA = {
 		"/assets/photos/oxford/oxford19.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
-        url: "https://youtu.be/M4NqBlfMiGI"
+        url: "https://www.youtube.com/watch?v=M4NqBlfMiGI"
          }
     },
 
