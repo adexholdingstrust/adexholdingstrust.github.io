@@ -16,7 +16,7 @@ window.ADEX_DATA = {
   rentals: [
     {
       id: "co-townhouse",
-      name: "Aurora Colorado Townhouse",
+      name: "Aurora Hoye Drive Colorado Townhouse",
       type: "Townhouse",
       address: "12061 E Hoye Drive, Aurora, CO 80012",
       city: "Aurora",
@@ -60,7 +60,7 @@ window.ADEX_DATA = {
 
     {
       id: "co-condo",
-      name: "Colorado Condo",
+      name: "Aurora Oxford Place Colorado Condo",
       type: "Condo",
       address: "13950 E Oxford Place, Aurora, CO 80014",
       city: "Aurora",
@@ -72,16 +72,34 @@ window.ADEX_DATA = {
       summary:
         "Well-maintained condominium in Aurora offering easy access to local amenities and major highways.",
       details:
-        "This condominium is located in Aurora, Colorado, within a convenient residential area. The property is close to shopping, dining, and major transportation corridors, making it ideal for working professionals or small families. Currently occupied.",
+        "Great location and great community! This is a secured building that requires a key or resident access code to enter the lobby. Easy access to the highway. From the moment you open the door you get the feel of uniqueness. This floorplan feels like it's one of a kind. Your entry into the home takes you from a hallway that leads you to the kitchen, and great room area. The kitchen offers space to move around in. Your large dining room over looks the massive great room, which makes this condo the perfect place to entertain guest. Gain access to the balcony from the dining area or the great room. This unit receives plenty of light due to the abundance of windows. Travel down a second hallway to not one, or two, but three spacious bedrooms. You will also observe a walk in laundry room, along with a full bathroom prior to reaching the bedrooms. The front loading washer and dryer stay with the unit. The Master bedroom is huge, with his and her closets. The Master bathroom also boast a rare five piece bath. When you say location, location, location this is what they are talking about. In the Cherry Creek School District. Close to shopping, dining, and Cherry Creek State Park. While the carpet may have possibly another year of life in it, with a deep cleaning, the seller is offering a generous $2000 carpet allowance with the sell of the property. This gives the buyer the opportunity to bring the space to life with their own ideas. Welcome home at Pier Point Village. UNDERGROUND GARAGE PARKING SPACE (Space FF). ADDITIONAL STORAGE SPACE (Storage unit II). Currently occupied.",
       embedQuery: "13950 E Oxford Place, Aurora, CO 80014",
       mapsLink:
         "https://www.google.com/maps?q=13950+E+Oxford+Place+Aurora+CO+80014",
       streetViewEmbed:
           "https://www.google.com/maps/embed?pb=!4v1766715350705!6m8!1m7!1s6Mbhl1428ypUr9dgFDX2jA!2m2!1d39.64103040953596!2d-104.8254105634934!3f175.28680071718463!4f7.954084946855772!5f0.40029571729599617&output=svembed",
-      photos: [],
+      photos: ["/assets/photos/oxford/oxford1.png",
+		"/assets/photos/oxford/oxford2.png",
+		"/assets/photos/oxford/oxford3.png",
+		"/assets/photos/oxford/oxford4.png",
+		"/assets/photos/oxford/oxford5.png",
+		"/assets/photos/oxford/oxford6.png",
+		"/assets/photos/oxford/oxford7.png",
+		"/assets/photos/oxford/oxford8.png",
+		"/assets/photos/oxford/oxford9.png",
+		"/assets/photos/oxford/oxford10.png",
+		"/assets/photos/oxford/oxford11.png",
+		"/assets/photos/oxford/oxford12.png",
+		"/assets/photos/oxford/oxford13.png",
+		"/assets/photos/oxford/oxford14.png",
+		"/assets/photos/oxford/oxford15.png",
+		"/assets/photos/oxford/oxford16.png",
+		"/assets/photos/oxford/oxford17.png",
+		"/assets/photos/oxford/oxford18.png",
+		"/assets/photos/oxford/oxford19.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
-        url: "https://www.youtube.com/watch?v=XXXX"
+        url: "https://youtu.be/M4NqBlfMiGI"
          }
     },
 
@@ -99,14 +117,32 @@ window.ADEX_DATA = {
       summary:
         "Spacious two-story single-family home in Fallbrook, California, with a quiet suburban feel.",
       details:
-        "This two-story single-family residence is located in Fallbrook, California, known for its relaxed lifestyle and scenic surroundings. The property offers ample living space and is situated in a residential neighborhood that balances privacy with accessibility. Currently occupied.",
+        "Enjoy Great Mountain Views from the backyard!! The house sits atop all other houses in the neighborhood. Impeccably maintained Beautiful Westbury Model home. High-end upgrades and designer touches throughout. Stunning reclaimed wood entry wall.  Huge open kitchen with a large island, granite counters, and a beautifully tiled backsplash. All stainless steel appliances. Upgraded Edison bulb pendant lights and chandelier in the dining area. Luxury plank flooring and upgraded carpeting throughout. The master bedroom has he and she walk-in closet.  They are two other bedrooms upstairs that have a shared bathroom with the jack and jill style allowing both second and third bedrooms have direct access to the bathroom from their respective bedrooms. The 4th Bedroom is conveniently on the first floor for older adults that may not be able to access the stairs or young adults who may need some privacy from their parents with their own bathroom. There’s a private loft with a wood feature wall. Currently occupied.",
       embedQuery: "464 Calabrese St, Fallbrook, CA 92028",
       mapsLink:
         "https://www.google.com/maps?q=464+Calabrese+St+Fallbrook+CA+92028",
       // Facing ~210 degrees
       streetViewEmbed:
         "https://www.google.com/maps/embed?pb=!4v1766785505734!6m8!1m7!1sxZ0A6vFbjnLbj9LDsCmupA!2m2!1d33.35443295883505!2d-117.1489938555766!3f303.42987!4f0!5f0.7820865974627469&output=svembed",
-      photos: [],
+      photos: ["/assets/photos/calabrese/calabrese1.png",
+		"/assets/photos/calabrese/calabrese2.png",
+		"/assets/photos/calabrese/calabrese3.png",
+		"/assets/photos/calabrese/calabrese4.png",
+		"/assets/photos/calabrese/calabrese5png",
+		"/assets/photos/calabrese/calabrese6.png",
+		"/assets/photos/calabrese/calabrese7.png",
+		"/assets/photos/calabrese/calabrese8.png",
+		"/assets/photos/calabrese/calabrese9.png",
+		"/assets/photos/calabrese/calabrese10.png",
+		"/assets/photos/calabrese/calabrese11.png",
+		"/assets/photos/calabrese/calabrese12.png",
+		"/assets/photos/calabrese/calabrese13.png",
+		"/assets/photos/calabrese/calabrese14.png",
+		"/assets/photos/calabrese/calabrese15.png",
+		"/assets/photos/calabrese/calabrese16.png",
+		"/assets/photos/calabrese/calabrese17.png",
+		"/assets/photos/calabrese/calabrese18.png",
+		"/assets/photos/calabrese/calabrese19.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
@@ -139,7 +175,7 @@ window.ADEX_DATA = {
                 "/assets/photos/sterling/sterling2.jpg"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
-        url: "https://www.youtube.com/watch?v=XXXX"
+        url: "https://www.youtube.com/watch?v=wXEWUcKPMg0"
          }
     },
 
@@ -163,12 +199,12 @@ window.ADEX_DATA = {
       mapsLink:
         "https://www.google.com/maps?q=Ibudo+Wura+Lagos+Nigeria",
       streetViewEmbed: null,
-      photos: [  "/assets/photos/ibudo-wura/front.jpg",
-                 "/assets/photos/ibudo-wura/living-room.jpg",
-                 "/assets/photos/ibudo-wura/kitchen.jpg"],
+      photos: [  "/assets/photos/ibudo/ibudo1.jpg",
+                 "/assets/photos/ibudo/ibudo2.jpg",
+                 "/assets/photos/ibudo/ibudo3.jpg"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
-        url: "https://www.youtube.com/watch?v=XXXX"
+        url: "https://www.youtube.com/watch?v=WgVJ7kAi4j8"
       }
     }   // ✅ closes last rental object
   ],    // ✅ closes rentals array
