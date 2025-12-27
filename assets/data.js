@@ -16,7 +16,7 @@ window.ADEX_DATA = {
   rentals: [
     {
       id: "co-townhouse",
-      name: "Colorado Townhouse",
+      name: "Aurora Colorado Townhouse",
       type: "Townhouse",
       address: "12061 E Hoye Drive, Aurora, CO 80012",
       city: "Aurora",
@@ -28,12 +28,30 @@ window.ADEX_DATA = {
       summary:
     "Modern townhouse located in a quiet Aurora neighborhood with convenient access to shopping, schools, and major roads.",
      details:
-    "This townhouse is located in Aurora, Colorado and offers a comfortable residential layout in a well-established community. The property provides easy access to nearby retail centers, schools, and commuter routes. Currently occupied.",
+    "This is a well-kept 2-bedroom, 1-and-1/2-bath townhome in the Peachwood subdivision. The main level features an open concept. A family room with a cozy fireplace to enjoy during the holiday season or on snowy Colorado days, a kitchen with quartz countertops & stainless steel appliances, and a dining area. The upper level offers two bedrooms, a full bathroom, and conveniently located laundry (including a washer and dryer). The spacious primary bedroom offers a vaulted ceiling and a ceiling fan. The private backspace can be used for relaxing and gardening (storage closet included). This quiet community offers a pool and clubhouse and is very close to grocery, shopping, highway, and schools. This house comes with two assigned parking spaces.  Great Location!! Close to shopping, dining, RTD bus, and light rail station.  Easy access to I-225 and just 15 minutes to Buckley Space Force Base and 20 minutes to the Denver Tech Center. Ring Security System has been installed with professional monitoring.  Currently occupied.",
       embedQuery: "12061 E Hoye Drive, Aurora, CO 80012",
       mapsLink:
         "https://www.google.com/maps?q=12061+E+Hoye+Drive+Aurora+CO+80012",
       streetViewEmbed: "https://www.google.com/maps?q=&layer=c&cbll=39.6988672,-104.8481339&cbp=11,0,0,0,0&output=svembed",
-      photos: [],
+      photos: ["/assets/photos/hoye/hoye1.png",
+		"/assets/photos/hoye/hoye2.png",
+		"/assets/photos/hoye/hoye3.png",
+		"/assets/photos/hoye/hoye4.png",
+		"/assets/photos/hoye/hoye5png",
+		"/assets/photos/hoye/hoye6.png",
+		"/assets/photos/hoye/hoye7.png",
+		"/assets/photos/hoye/hoye8.png",
+		"/assets/photos/hoye/hoye9.png",
+		"/assets/photos/hoye/hoye10.png",
+		"/assets/photos/hoye/hoye11.png",
+		"/assets/photos/hoye/hoye12.png",
+		"/assets/photos/hoye/hoye13.png",
+		"/assets/photos/hoye/hoye14.png",
+		"/assets/photos/hoye/hoye15.png",
+		"/assets/photos/hoye/hoye16.png",
+		"/assets/photos/hoye/hoye17.png",
+		"/assets/photos/hoye/hoye18.png",
+		"/assets/photos/hoye/hoye19.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
         url: "https://www.youtube.com/watch?v=XXXX"
