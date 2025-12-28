@@ -74,6 +74,23 @@ if (window.ADEX_CONFIG.MAPBOX_TOKEN && window.mapboxgl) {
 const qs = (s, r = document) => r.querySelector(s);
 const qsa = (s, r = document) => [...r.querySelectorAll(s)];
 
+/* =======================
+   MOBILE / TOUCH HELPERS
+======================= */
+const IS_TOUCH =
+  "ontouchstart" in window ||
+  navigator.maxTouchPoints > 0 ||
+  navigator.msMaxTouchPoints > 0;
+
+let IS_MOBILE = window.matchMedia("(max-width: 768px)").matches;
+window.addEventListener("resize", () => {
+  IS_MOBILE = window.matchMedia("(max-width: 768px)").matches;
+});
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 const escapeHtml = s =>
   String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -201,14 +218,21 @@ function initLandDetailMap(l) {
 
   mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
 
-  const map = new mapboxgl.Map({
-    container: el,
-    style: CFG.MAPBOX_STYLE_SAT,
-    center: l.center || [-115, 36],
-    zoom: 13
-  });
+const map = new mapboxgl.Map({
+  container: el,
+  style: CFG.MAPBOX_STYLE_SAT,
+  center: l.center || [-115, 36],
+  zoom: 13
+});
+
+if (!map.__resizeBound) {
+  map.__resizeBound = true;
+  window.addEventListener("resize", () => safeMapResize(map));
+  window.addEventListener("orientationchange", () => safeMapResize(map));
+}
 
   map.on("load", () => {
+     safeMapResize(map);
     map.addSource("parcel", {
       type: "geojson",
       data: {
@@ -250,6 +274,14 @@ const coords = extractCoords(l.geo.geometry);
     map.fitBounds(bounds, { padding: 40 });
   });
 }
+
+/* =======================
+   MAPBOX RESIZE FIX (MOBILE)
+======================= */
+function safeMapResize(map) {
+  if (!map || typeof map.resize !== "function") return;
+  setTimeout(() => map.resize(), 250);
+}
 /* =======================
    LAZY LOADING
 ======================= */
@@ -282,6 +314,31 @@ function setupLazy() {
   qsa("img[data-src], iframe[data-src]").forEach(el => io.observe(el));
 }
 
+/* =======================
+   RESPONSIVE EMBEDS & MAPS
+======================= */
+function resizeEmbeds() {
+  qsa("iframe").forEach(f => {
+    if (!f.parentElement) return;
+
+    const w = f.parentElement.clientWidth;
+    const h = Math.min(420, Math.round(w * 0.6));
+
+    f.style.width = "100%";
+    f.style.height = `${h}px`;
+  });
+}
+
+// Handle orientation change & resize
+let __resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(__resizeTimer);
+  __resizeTimer = setTimeout(resizeEmbeds, 120);
+});
+
+window.addEventListener("orientationchange", () => {
+  setTimeout(resizeEmbeds, 250);
+});
 /* =======================
    MAP HELPERS (PUBLIC)
    - fallback chain: Street View -> satellite -> static map
@@ -1042,6 +1099,20 @@ function wireCarousels(scope = document) {
 
     prev.addEventListener("click", () => go(i - 1));
     next.addEventListener("click", () => go(i + 1));
+     if (IS_TOUCH) {
+  let startX = 0;
+
+  track.addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
+  });
+
+  track.addEventListener("touchend", e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) < 40) return;
+    dx < 0 ? go(i + 1) : go(i - 1);
+  });
+}
+
   });
 }
 
@@ -1248,7 +1319,7 @@ function renderPropertiesPage(avail) {
       const overlay = card.querySelector(".propertyOverlayLink");
 if (overlay) {
  overlay.addEventListener("click", e => {
-  if (e.defaultPrevented) return;
+  if (IS_TOUCH && e.target.closest("a, button")) return;
 
   trackEvent("property_click", {
     id: p.id,
@@ -1699,6 +1770,7 @@ if (overlay) {
   applyFilter();
 }
 
+
 /* =======================
    INTERACTIVE LANDS MAP (MAPBOX + GEOJSON)
    - clusters pins (requires land.center or geo centroid)
@@ -1790,6 +1862,9 @@ async function initLandsInteractiveMap() {
     zoom: 4
   });
 
+   window.addEventListener("orientationchange", () => safeMapResize(map));
+   window.addEventListener("resize", () => safeMapResize(map));
+
   // Toggle UI
   const toggle = document.createElement("div");
   toggle.style.position = "absolute";
@@ -1816,6 +1891,7 @@ async function initLandsInteractiveMap() {
   });
 
   map.on("load", () => {
+     safeMapResize(map);
     map.addSource("lands", {
       type: "geojson",
       data: fc,
@@ -2100,4 +2176,5 @@ if (!document.body.classList.contains("admin")) {
 
 
   setupLazy();
+  resizeEmbeds();
 });
