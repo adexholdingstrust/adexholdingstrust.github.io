@@ -54,6 +54,11 @@
       font-weight:600;
     }
 
+    .metric .trend {
+      font-size:22px;
+      margin-left:6px;
+    }
+
     .metric .delta {
       margin-top:6px;
       font-size:13px;
@@ -151,9 +156,7 @@
   </div>
 
   <!-- KPI SUMMARY -->
-  <div class="grid" id="kpiSummary">
-    <!-- JS injects metrics -->
-  </div>
+  <div class="grid" id="kpiSummary"></div>
 
   <!-- PROPERTY PERFORMANCE -->
   <div class="section">
@@ -193,36 +196,74 @@
 <script>
 (async function(){
   const fmt = (n)=> n.toLocaleString();
+
   document.getElementById("reportTime").textContent =
     new Date().toLocaleString("en-US",{timeZone:"America/Los_Angeles"});
 
-  const k7 = await fetch("/api/admin/kpi?days=7").then(r=>r.json());
+  const k7  = await fetch("/api/admin/kpi?days=7").then(r=>r.json());
   const k30 = await fetch("/api/admin/kpi?days=30").then(r=>r.json());
   const engagement = await fetch("/api/admin/engagement").then(r=>r.json());
 
   const grid = document.getElementById("kpiSummary");
 
-  function card(title,val,delta){
+  function trendArrow(shortVal,longVal){
+    if(!longVal) return "→";
+    const delta = (shortVal - longVal) / longVal;
+    if(delta > 0.1) return "↑";
+    if(delta < -0.1) return "↓";
+    return "→";
+  }
+
+  function card(title,val,trend,subtitle){
     return `
       <div class="metric">
         <h3>${title}</h3>
-        <div class="value">${fmt(val)}</div>
-        <div class="delta">${delta}</div>
+        <div class="value">
+          ${fmt(val)}
+          <span class="trend">${trend}</span>
+        </div>
+        <div class="delta">${subtitle}</div>
       </div>`;
   }
 
+  const baseline30 = {
+    events: k30.totalEvents / 4,
+    views:  k30.views / 4,
+    severity: k30.highSeverity / 4
+  };
+
   grid.innerHTML =
-    card("7-Day Activity",k7.totalEvents,"Short-term engagement") +
-    card("30-Day Activity",k30.totalEvents,"Trend baseline") +
-    card("Property Views",k7.views,"High-intent interactions") +
-    card("High Severity Signals",k7.highSeverity,"Buyer / renter indicators");
+    card(
+      "7-Day Activity",
+      k7.totalEvents,
+      trendArrow(k7.totalEvents, baseline30.events),
+      "vs 30-day baseline"
+    ) +
+    card(
+      "Property Views",
+      k7.views,
+      trendArrow(k7.views, baseline30.views),
+      "High-intent interactions"
+    ) +
+    card(
+      "High Severity Signals",
+      k7.highSeverity,
+      trendArrow(k7.highSeverity, baseline30.severity),
+      "Conversion indicators"
+    ) +
+    card(
+      "Unique Properties",
+      k7.uniqueProperties,
+      "→",
+      "Demand diversity"
+    );
 
   const tbody = document.querySelector("#topProperties tbody");
 
   engagement.ranking.slice(0,5).forEach(p=>{
     const risk =
       p.score >= 15 ? "high" :
-      p.score >= 8 ? "medium" : "low";
+      p.score >= 8  ? "medium" : "low";
 
     tbody.innerHTML += `
       <tr>
@@ -236,13 +277,13 @@
 
   document.getElementById("insights").innerHTML = `
     <div class="insight">
-      Visitor activity remains strongest around high-value land assets, indicating sustained acquisition interest.
+      Demand momentum over the past 7 days is being used to assess near-term acquisition and leasing potential.
     </div>
     <div class="insight">
-      Engagement concentration suggests prioritizing follow-ups on top 20% of properties.
+      Engagement is concentrated among a limited number of high-performing properties, indicating prioritization opportunities.
     </div>
     <div class="insight">
-      Severity signals indicate increased conversion potential compared to previous periods.
+      Severity signals suggest increased readiness for conversion compared to historical averages.
     </div>`;
 })();
 </script>
