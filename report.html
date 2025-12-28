@@ -1,284 +1,1011 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Executive Report | Adex Holdings Trust</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Adex Holdings Trust — Analytics Report</title>
 
-  <link rel="icon" href="assets/logo.png"/>
-  <link rel="stylesheet" href="assets/styles.css"/>
+  <!-- Chart.js (line + bar) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Mapbox -->
-  <link
-    href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
-    rel="stylesheet"
-  />
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <!-- Leaflet (geo demand map) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    .report-header {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:28px;
+    :root{
+      --bg:#0b0f14;
+      --panel:#111824;
+      --panel2:#0f1620;
+      --text:#e8eef7;
+      --muted:#9db0c7;
+      --ok:#3ddc97;
+      --bad:#ff6b6b;
+      --warn:#ffd166;
+      --border:rgba(255,255,255,.10);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
     }
-
-    .report-title h1 {
+    *{box-sizing:border-box}
+    body{
       margin:0;
-      font-size:30px;
+      background: radial-gradient(1200px 700px at 10% 10%, rgba(61,220,151,.10), transparent 60%),
+                  radial-gradient(1100px 600px at 85% 20%, rgba(56,189,248,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      line-height:1.35;
     }
+    a{color:#8ad6ff;text-decoration:none}
+    a:hover{text-decoration:underline}
 
-    .report-title p {
-      margin:6px 0 0;
-      opacity:.7;
+    .wrap{max-width:1200px;margin:0 auto;padding:22px 18px 60px}
+    .topbar{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+      padding:16px 18px;border:1px solid var(--border);border-radius:18px;background:rgba(17,24,36,.75);
+      box-shadow:var(--shadow);backdrop-filter: blur(10px);
     }
-
-    .grid {
+    .brand h1{margin:0;font-size:18px;letter-spacing:.2px}
+    .brand .sub{margin-top:6px;color:var(--muted);font-size:12px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+    .btn{
+      appearance:none;border:1px solid var(--border);background:rgba(255,255,255,.06);
+      color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;
+      font-weight:600;font-size:13px;
+    }
+    .btn:hover{background:rgba(255,255,255,.10)}
+    .btn.primary{border-color:rgba(61,220,151,.35);background:rgba(61,220,151,.12)}
+    .btn.primary:hover{background:rgba(61,220,151,.16)}
+    .btn.bad{border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.10)}
+    .btn.bad:hover{background:rgba(255,107,107,.14)}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;border:1px solid var(--border);
+      color:var(--muted);font-size:12px;background:rgba(255,255,255,.04)
+    }
+    .pill b{color:var(--text)}
+    .grid{
+      margin-top:18px;
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:18px;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
     }
-
-    .metric {
-      padding:20px;
-      border-radius:14px;
-      background:linear-gradient(135deg,#111,#1b1b1b);
-      border:1px solid var(--line);
+    .card{
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:rgba(17,24,36,.65);
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
-
-    .metric h3 {
-      margin:0;
-      font-size:13px;
-      opacity:.7;
-      text-transform:uppercase;
-      letter-spacing:.04em;
+    .card .head{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
     }
-
-    .metric .value {
-      font-size:34px;
-      margin-top:8px;
-      font-weight:600;
+    .card .head h2{
+      margin:0;font-size:14px;letter-spacing:.2px
     }
+    .card .body{padding:14px 16px}
+    .span-12{grid-column: span 12}
+    .span-8{grid-column: span 8}
+    .span-6{grid-column: span 6}
+    .span-4{grid-column: span 4}
+    .span-3{grid-column: span 3}
 
-    .metric .delta {
-      margin-top:6px;
-      font-size:13px;
-      opacity:.8;
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:12px;
     }
-
-    .up { color:#3ddc97; }
-    .down { color:#ff6b6b; }
-
-    .section {
-      margin-top:42px;
-    }
-
-    .section h2 {
-      margin-bottom:14px;
-      font-size:22px;
-    }
-
-    canvas {
-      background:#0f0f0f;
-      border-radius:14px;
-      padding:14px;
-    }
-
-    #geoMap {
-      height:420px;
+    .kpi{
+      grid-column: span 3;
+      padding:12px 12px;
+      border:1px solid var(--border);
       border-radius:16px;
-      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
     }
+    .kpi .label{color:var(--muted);font-size:12px}
+    .kpi .value{margin-top:6px;font-size:22px;font-weight:800}
+    .kpi .delta{margin-top:8px;font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .delta .arrow{font-weight:900}
+    .delta .arrow.up{color:var(--ok)}
+    .delta .arrow.down{color:var(--bad)}
+    .delta .arrow.flat{color:var(--warn)}
+    .tiny{font-size:12px;color:var(--muted)}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .ok{color:var(--ok)}
+    .bad{color:var(--bad)}
+    .warn{color:var(--warn)}
 
-    .insight {
-      background:#101010;
-      border-left:4px solid #4da3ff;
-      padding:16px 18px;
-      border-radius:10px;
-      margin-top:14px;
+    canvas{width:100% !important;height:320px !important}
+    #geoMap{width:100%;height:380px;border-radius:16px;border:1px solid var(--border);overflow:hidden}
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+    }
+    .table th,.table td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--border);
+      vertical-align:top;
+      font-size:13px;
+    }
+    .table th{color:var(--muted);text-align:left;background:rgba(255,255,255,.03)}
+    .table tr:last-child td{border-bottom:none}
+
+    .callout{
+      border:1px solid rgba(255,209,102,.35);
+      background:rgba(255,209,102,.08);
+      padding:14px 14px;border-radius:16px;
+    }
+    .errorBox{
+      border:1px solid rgba(255,107,107,.35);
+      background:rgba(255,107,107,.10);
+      padding:14px;border-radius:16px;
+    }
+    .successBox{
+      border:1px solid rgba(61,220,151,.35);
+      background:rgba(61,220,151,.10);
+      padding:14px;border-radius:16px;
+    }
+    .split{
+      display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start
+    }
+    .split > div{flex:1;min-width:260px}
+    .mutedBox{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      padding:12px;border-radius:14px;
+    }
+    .footer{margin-top:18px;color:var(--muted);font-size:12px}
+    @media (max-width: 980px){
+      .span-8,.span-6,.span-4,.span-3{grid-column: span 12}
+      .kpi{grid-column: span 6}
+      canvas{height:300px !important}
     }
   </style>
 </head>
 
 <body>
-<div class="container">
-
-  <!-- HEADER -->
-  <div class="report-header">
-    <div class="report-title">
-      <h1>Executive Intelligence Report</h1>
-      <p>Portfolio engagement, demand signals, and strategic trends</p>
-    </div>
-    <div class="small">
-      Last updated:
-      <span id="reportTime"></span>
-    </div>
-  </div>
-
-  <!-- KPI GRID -->
-  <div class="grid" id="kpiGrid"></div>
-
-  <!-- ENGAGEMENT CHART -->
-  <div class="section">
-    <h2>Engagement Trend</h2>
-    <canvas id="engagementChart" height="120"></canvas>
-  </div>
-
-  <!-- GEOGRAPHIC DEMAND -->
-  <div class="section">
-    <h2>Geographic Demand Map</h2>
-    <div id="geoMap"></div>
-  </div>
-
-  <!-- AI INSIGHTS -->
-  <div class="section">
-    <h2>Executive Insights</h2>
-    <div id="insights"></div>
-  </div>
-
-  <div class="footer">
-    <div class="hr"></div>
-    <div class="small">
-      Confidential • Executive Use Only • © 2025 Adex Holdings Trust
-    </div>
-  </div>
-
-</div>
-
-<script src="assets/app.js"></script>
-
-<script>
-(async function(){
-
-  /* =============================
-     TIME
-  ============================= */
-  document.getElementById("reportTime").textContent =
-    new Date().toLocaleString("en-US",{ timeZone:"America/Los_Angeles" });
-
-  /* =============================
-     SAFE FETCH HELPERS
-  ============================= */
-  async function safeJSON(url) {
-    try {
-      const res = await accessFetch(url);
-      if (!res || !res.ok) return null;
-      return await res.json();
-    } catch {
-      return null;
-    }
-  }
-
-  /* =============================
-     KPI DATA
-  ============================= */
-  const k7  = await safeJSON("/admin/kpi?days=7")  || {};
-  const k30 = await safeJSON("/admin/kpi?days=30") || {};
-
-  function metric(title,value,delta,dir){
-    return `
-      <div class="metric">
-        <h3>${title}</h3>
-        <div class="value">${(value ?? 0).toLocaleString()}</div>
-        <div class="delta ${dir}">
-          ${dir==="up"?"↑":"↓"} ${delta}
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <h1>Adex Holdings Trust — Report</h1>
+        <div class="sub">
+          Trend arrows · Line + bar charts · Geo demand map · QoQ/YoY deltas · Funnel modeling · Executive summary
         </div>
       </div>
-    `;
-  }
+      <div class="actions">
+        <span class="pill"><span>Status:</span> <b id="authStatus">Checking…</b></span>
+        <button class="btn" id="btnRefresh">Refresh</button>
+        <button class="btn primary" id="btnExecSummary">Generate Exec Summary</button>
+        <a class="btn" id="btnDownloadCsv" href="/api/admin/events?format=csv" target="_blank" rel="noopener">Download CSV</a>
+      </div>
+    </div>
 
-  document.getElementById("kpiGrid").innerHTML =
-    metric("7-Day Events",k7.totalEvents,"vs baseline","up") +
-    metric("30-Day Events",k30.totalEvents,"trend window","up") +
-    metric("Property Views",k7.views,"engagement","up") +
-    metric("High Severity",k7.highSeverity,"buyer signals","up");
+    <div class="grid">
+      <div class="card span-12" id="noticeCard" style="display:none;">
+        <div class="head"><h2>Notice</h2></div>
+        <div class="body" id="noticeBody"></div>
+      </div>
 
-  /* =============================
-     ENGAGEMENT CHART
-  ============================= */
-  const series = await safeJSON("/admin/engagement/timeseries") || [];
+      <div class="card span-12">
+        <div class="head">
+          <h2>KPI Summary</h2>
+          <div class="tiny">Comparisons: 7d vs prior 7d, 30d vs prior 30d, QoQ, YoY (when data allows)</div>
+        </div>
+        <div class="body">
+          <div class="kpis" id="kpiGrid">
+            <!-- filled by JS -->
+          </div>
+          <div class="footer" id="kpiFoot"></div>
+        </div>
+      </div>
 
-  new Chart(
-    document.getElementById("engagementChart"),
-    {
-      type:"line",
-      data:{
-        labels: series.map(x=>x.date || ""),
-        datasets:[{
-          label:"Engagement",
-          data: series.map(x=>x.count || 0),
-          borderColor:"#4da3ff",
-          tension:.35
-        }]
-      },
-      options:{
-        plugins:{ legend:{ display:false }},
-        scales:{
-          x:{ ticks:{ color:"#aaa" }},
-          y:{ ticks:{ color:"#aaa" }}
-        }
+      <div class="card span-8">
+        <div class="head">
+          <h2>Engagement Over Time</h2>
+          <div class="tiny">Line: total events · Bar: property/land views</div>
+        </div>
+        <div class="body">
+          <canvas id="chartEngagement"></canvas>
+        </div>
+      </div>
+
+      <div class="card span-4">
+        <div class="head">
+          <h2>Funnel Conversion</h2>
+          <div class="tiny">Modeled from event types</div>
+        </div>
+        <div class="body">
+          <table class="table" id="funnelTable">
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th>Count</th>
+                <th>Conv.</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="tiny" style="margin-top:10px;">
+            Notes: conversion is stage-to-stage. If some events are missing, counts may be low.
+          </div>
+        </div>
+      </div>
+
+      <div class="card span-12">
+        <div class="head">
+          <h2>Geographic Demand</h2>
+          <div class="tiny">From event geo (heatmap GeoJSON)</div>
+        </div>
+        <div class="body">
+          <div id="geoMap"></div>
+          <div class="footer" id="geoFoot"></div>
+        </div>
+      </div>
+
+      <div class="card span-12">
+        <div class="head">
+          <h2>Executive Summary</h2>
+          <div class="tiny">GPT-generated when endpoint exists; otherwise a safe local summary</div>
+        </div>
+        <div class="body">
+          <div id="execSummary" class="mutedBox">
+            Click “Generate Exec Summary” to create a report narrative.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       report.html — Access-safe fetch + analytics UI
+       Fixes:
+       - “Unexpected end of input” (caused by trying to JSON-parse HTML login redirects)
+       - Cloudflare Access redirect CORS failures (detect + show login CTA)
+    ========================================================= */
+
+    const CFG = {
+      WORKER_BASE: "/api",
+      MAPBOX_TOKEN: null,             // optional if you later switch Leaflet tiles
+      GOOGLE_MAPS_KEY: null,
+      GOOGLE_PLACES_KEY: null,
+      DEFAULT_DAYS_PRIMARY: 30,
+      DEFAULT_DAYS_COMPARE: 30,
+      HEATMAP_DAYS: 30,
+      HEATMAP_MIN_SEVERITY: 1
+    };
+
+    const qs = (s, r=document) => r.querySelector(s);
+
+    function accessRedirected(res) {
+      const ct = (res && res.headers && res.headers.get("content-type")) ? res.headers.get("content-type") : "";
+      return (
+        res.type === "opaqueredirect" ||
+        res.status === 302 ||
+        ct.includes("text/html")
+      );
+    }
+
+    function showNotice(html, kind="warn") {
+      const card = qs("#noticeCard");
+      const body = qs("#noticeBody");
+      card.style.display = "block";
+      body.innerHTML = `
+        <div class="${kind === "bad" ? "errorBox" : kind === "ok" ? "successBox" : "callout"}">
+          ${html}
+        </div>
+      `;
+    }
+
+    function clearNotice(){
+      const card = qs("#noticeCard");
+      card.style.display = "none";
+      qs("#noticeBody").innerHTML = "";
+    }
+
+    function setAuthStatus(text, cls="") {
+      const el = qs("#authStatus");
+      el.textContent = text;
+      el.className = cls;
+    }
+
+    function pct(n){
+      if (!Number.isFinite(n)) return "—";
+      const sign = n > 0 ? "+" : "";
+      return `${sign}${(n*100).toFixed(1)}%`;
+    }
+
+    function fmtInt(n){
+      if (!Number.isFinite(n)) return "—";
+      return Math.round(n).toLocaleString();
+    }
+
+    function arrowFromDelta(d){
+      if (!Number.isFinite(d)) return { arrow:"•", cls:"flat" };
+      if (d > 0.001) return { arrow:"↑", cls:"up" };
+      if (d < -0.001) return { arrow:"↓", cls:"down" };
+      return { arrow:"→", cls:"flat" };
+    }
+
+    function safeJsonParse(text) {
+      // Prevent “Unexpected end of input” by checking empty/HTML first
+      if (!text || !String(text).trim()) {
+        return { __empty: true };
+      }
+      const t = String(text).trim();
+      if (t.startsWith("<!doctype") || t.startsWith("<html") || t.includes("cloudflareaccess.com") || t.includes("cdn-cgi/access/login")) {
+        return { __html: true, __text: t.slice(0, 400) };
+      }
+      try {
+        return JSON.parse(t);
+      } catch (e) {
+        return { __parseError: true, __error: String(e), __text: t.slice(0, 400) };
       }
     }
-  );
 
-  /* =============================
-     GEO MAP (SAFE)
-  ============================= */
-  let geo = { type:"FeatureCollection", features:[] };
+    async function accessFetch(path, opts = {}) {
+      // IMPORTANT:
+      // - credentials: "include" so Cloudflare Access session cookie is sent
+      // - redirect: "manual" so we can detect redirect to Access login and stop trying to parse HTML
+      const res = await fetch(`${CFG.WORKER_BASE}${path}`, {
+        credentials: "include",
+        redirect: "manual",
+        cache: "no-store",
+        headers: { "Accept": "application/json", ...(opts.headers || {}) },
+        ...opts
+      });
 
-  try {
-    const data = await safeJSON("/admin/heatmap?days=30");
-    if (data && data.type==="FeatureCollection") {
-      geo = data;
+      if (accessRedirected(res)) {
+        // Do NOT attempt res.json() — it will cause HTML parsing errors
+        const redirectUrl = `/cdn-cgi/access/login/adexholdings.com?redirect_url=${encodeURIComponent(`${CFG.WORKER_BASE}${path}`)}`;
+        throw new Error(`AUTH_REQUIRED::${redirectUrl}`);
+      }
+
+      return res;
     }
-  } catch {}
 
-  if (window.mapboxgl && CFG.MAPBOX_TOKEN) {
-    mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
+    async function fetchJson(path, opts = {}) {
+      const res = await accessFetch(path, opts);
 
-    const map = new mapboxgl.Map({
-      container:"geoMap",
-      style:"mapbox://styles/mapbox/dark-v11",
-      center:[-98,38],
-      zoom:3
-    });
+      // Some endpoints may return JSON, some may return text. Parse safely either way.
+      const text = await res.text();
+      const obj = safeJsonParse(text);
 
-    map.on("load",()=>{
-      map.addSource("events",{ type:"geojson", data:geo });
+      if (obj && (obj.__html || obj.__parseError)) {
+        // If we got HTML or failed parse, treat as auth or server issue.
+        // This is the exact root cause of your “Unexpected end of input”.
+        if (obj.__html) {
+          const redirectUrl = `/cdn-cgi/access/login/adexholdings.com?redirect_url=${encodeURIComponent(`${CFG.WORKER_BASE}${path}`)}`;
+          throw new Error(`AUTH_REQUIRED::${redirectUrl}`);
+        }
+        throw new Error(`BAD_JSON::${obj.__error || "JSON parse failed"}`);
+      }
 
-      map.addLayer({
-        id:"heat",
-        type:"heatmap",
-        source:"events",
-        paint:{
-          "heatmap-radius":20,
-          "heatmap-intensity":1,
-          "heatmap-opacity":0.85
+      // If endpoint returns empty body, return empty object
+      if (obj && obj.__empty) return {};
+
+      return obj;
+    }
+
+    async function loadConfig() {
+      try {
+        const res = await fetch(`${CFG.WORKER_BASE}/config`, {
+          method: "GET",
+          credentials: "omit",
+          cache: "no-store",
+          headers: { "Accept":"application/json" }
+        });
+        if (!res.ok) return;
+
+        const text = await res.text();
+        const cfg = safeJsonParse(text);
+        if (cfg && !cfg.__html && !cfg.__parseError) {
+          CFG.MAPBOX_TOKEN = cfg.MAPBOX_TOKEN || null;
+          CFG.GOOGLE_MAPS_KEY = cfg.GOOGLE_MAPS_KEY || null;
+          CFG.GOOGLE_PLACES_KEY = cfg.GOOGLE_PLACES_KEY || null;
+        }
+      } catch {}
+    }
+
+    /* -----------------------------
+       DATA: KPIs + Events
+    ------------------------------ */
+
+    async function loadKpi(days){
+      // expected shape: { totalEvents, views, highSeverity, uniqueProperties }
+      return fetchJson(`/admin/kpi?days=${encodeURIComponent(days)}`);
+    }
+
+    async function loadEvents(limit=5000){
+      // expected shape: { events:[{ts,eventType,path,city,region,country,severity,data,geo?}] }
+      return fetchJson(`/admin/events?limit=${encodeURIComponent(limit)}`);
+    }
+
+    async function loadHeatmap(days=30, minSeverity=1){
+      // expected geojson FeatureCollection (points) OR {type:"FeatureCollection", features:[]}
+      const qs = new URLSearchParams();
+      if (days) {
+        const since = new Date(Date.now() - (Number(days) * 86400000)).toISOString();
+        qs.set("since", since);
+      }
+      if (minSeverity != null) qs.set("minSeverity", String(minSeverity));
+      return fetchJson(`/admin/heatmap?${qs.toString()}`);
+    }
+
+    /* -----------------------------
+       COMPUTATIONS
+    ------------------------------ */
+
+    function computePriorDelta(currentValue, priorValue){
+      if (!Number.isFinite(currentValue) || !Number.isFinite(priorValue) || priorValue === 0) return null;
+      return (currentValue - priorValue) / priorValue;
+    }
+
+    function computeQuarterKey(d){
+      const dt = (d instanceof Date) ? d : new Date(d);
+      const q = Math.floor(dt.getMonth() / 3) + 1;
+      return `${dt.getFullYear()}-Q${q}`;
+    }
+
+    function computeYearKey(d){
+      const dt = (d instanceof Date) ? d : new Date(d);
+      return String(dt.getFullYear());
+    }
+
+    function groupCountsByKey(events, keyFn){
+      const out = new Map();
+      for (const e of events){
+        const k = keyFn(e.ts);
+        out.set(k, (out.get(k) || 0) + 1);
+      }
+      return out;
+    }
+
+    function sumEventType(events, type){
+      return events.reduce((acc,e)=> acc + (e.eventType === type ? 1 : 0), 0);
+    }
+
+    function sumEventTypes(events, types){
+      const set = new Set(types);
+      return events.reduce((acc,e)=> acc + (set.has(e.eventType) ? 1 : 0), 0);
+    }
+
+    function bucketDaily(events){
+      // returns arrays: labels, totalCounts, viewCounts
+      const byDay = new Map();
+
+      for (const e of events){
+        const dt = new Date(e.ts);
+        if (!isFinite(dt)) continue;
+        const k = dt.toISOString().slice(0,10); // YYYY-MM-DD
+        const row = byDay.get(k) || { total:0, views:0 };
+        row.total += 1;
+
+        // Count "views" as detail view events if present, otherwise fall back to page_view
+        if (e.eventType === "view_property_detail" || e.eventType === "view_land_detail") row.views += 1;
+        byDay.set(k, row);
+      }
+
+      const labels = Array.from(byDay.keys()).sort();
+      const totalCounts = labels.map(k => byDay.get(k).total);
+      const viewCounts = labels.map(k => byDay.get(k).views);
+      return { labels, totalCounts, viewCounts };
+    }
+
+    /* -----------------------------
+       RENDER: KPI cards + deltas
+    ------------------------------ */
+
+    function renderKpis({k7, kPrev7, k30, kPrev30, qoq, yoy}){
+      const host = qs("#kpiGrid");
+      host.innerHTML = "";
+
+      const cards = [
+        {
+          label:"Total Events (30d)",
+          value: k30?.totalEvents,
+          delta: computePriorDelta(Number(k30?.totalEvents), Number(kPrev30?.totalEvents)),
+          foot: `vs prior 30d`
+        },
+        {
+          label:"Property/Land Views (30d)",
+          value: k30?.views,
+          delta: computePriorDelta(Number(k30?.views), Number(kPrev30?.views)),
+          foot: `vs prior 30d`
+        },
+        {
+          label:"High Severity (30d)",
+          value: k30?.highSeverity,
+          delta: computePriorDelta(Number(k30?.highSeverity), Number(kPrev30?.highSeverity)),
+          foot: `vs prior 30d`
+        },
+        {
+          label:"Unique Properties (30d)",
+          value: k30?.uniqueProperties,
+          delta: computePriorDelta(Number(k30?.uniqueProperties), Number(kPrev30?.uniqueProperties)),
+          foot: `vs prior 30d`
+        }
+      ];
+
+      for (const c of cards){
+        const v = Number(c.value);
+        const d = c.delta;
+        const ar = arrowFromDelta(d);
+
+        const el = document.createElement("div");
+        el.className = "kpi";
+        el.innerHTML = `
+          <div class="label">${c.label}</div>
+          <div class="value">${fmtInt(v)}</div>
+          <div class="delta">
+            <span class="arrow ${ar.cls}">${ar.arrow}</span>
+            <span>${d == null ? "—" : pct(d)} <span class="tiny">(${c.foot})</span></span>
+          </div>
+        `;
+        host.appendChild(el);
+      }
+
+      const foot = qs("#kpiFoot");
+      const qoqTxt = qoq == null ? "—" : `${pct(qoq)} QoQ`;
+      const yoyTxt = yoy == null ? "—" : `${pct(yoy)} YoY`;
+      foot.innerHTML = `
+        <span class="pill"><span>7d:</span> <b>${fmtInt(Number(k7?.totalEvents))}</b></span>
+        <span class="pill"><span>Prior 7d:</span> <b>${fmtInt(Number(kPrev7?.totalEvents))}</b></span>
+        <span class="pill"><span>QoQ:</span> <b>${qoqTxt}</b></span>
+        <span class="pill"><span>YoY:</span> <b>${yoyTxt}</b></span>
+        <span class="pill"><span>Updated:</span> <b>${new Date().toLocaleString()}</b></span>
+      `;
+    }
+
+    /* -----------------------------
+       RENDER: Charts
+    ------------------------------ */
+
+    let chartEngagement = null;
+
+    function renderCharts(events){
+      const { labels, totalCounts, viewCounts } = bucketDaily(events);
+
+      const ctx = qs("#chartEngagement").getContext("2d");
+      if (chartEngagement) chartEngagement.destroy();
+
+      chartEngagement = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              type: "line",
+              label: "Total events",
+              data: totalCounts,
+              tension: 0.25,
+              borderWidth: 2,
+              pointRadius: 0
+            },
+            {
+              type: "bar",
+              label: "Detail views",
+              data: viewCounts,
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { labels: { color: "#e8eef7" } },
+            tooltip: { enabled: true }
+          },
+          scales: {
+            x: {
+              ticks: { color: "rgba(232,238,247,.75)", maxRotation: 0, autoSkip: true },
+              grid: { color: "rgba(255,255,255,.06)" }
+            },
+            y: {
+              ticks: { color: "rgba(232,238,247,.75)" },
+              grid: { color: "rgba(255,255,255,.06)" }
+            }
+          }
         }
       });
-    });
-  }
+    }
 
-  /* =============================
-     AI INSIGHTS (STATIC FOR NOW)
-  ============================= */
-  document.getElementById("insights").innerHTML = `
-    <div class="insight">
-      Engagement is accelerating around high-acreage land parcels, suggesting acquisition-focused interest.
-    </div>
-    <div class="insight">
-      Geographic clustering indicates sustained demand in Western U.S. regions.
-    </div>
-    <div class="insight">
-      High-severity signals correlate strongly with repeat property views.
-    </div>
-  `;
+    /* -----------------------------
+       RENDER: Funnel
+    ------------------------------ */
 
-})();
-</script>
+    function renderFunnel(events){
+      const tbody = qs("#funnelTable tbody");
+      tbody.innerHTML = "";
 
+      // Funnel stages modeled from your existing event types in app.js
+      // Adjust/extend these if you add more tracking events.
+      const stageDefs = [
+        { name: "Page views", types: ["page_view"] },
+        { name: "Property card clicks", types: ["property_click"] },
+        { name: "Land card clicks", types: ["land_click"] },
+        { name: "Property detail views", types: ["view_property_detail"] },
+        { name: "Land detail views", types: ["view_land_detail"] }
+      ];
+
+      const counts = stageDefs.map(s => sumEventTypes(events, s.types));
+
+      // Conversion stage-to-stage: current / previous
+      for (let i=0; i<stageDefs.length; i++){
+        const prev = i === 0 ? null : counts[i-1];
+        const cur = counts[i];
+        const conv = (prev && prev > 0) ? (cur / prev) : (i === 0 ? 1 : null);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${stageDefs[i].name}</td>
+          <td class="mono">${fmtInt(cur)}</td>
+          <td>${conv == null ? "—" : (i===0 ? "100%" : (conv*100).toFixed(1) + "%")}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    /* -----------------------------
+       RENDER: Geo demand map
+    ------------------------------ */
+
+    let geoMap = null;
+    let geoLayer = null;
+
+    function renderGeo(geojson){
+      const el = qs("#geoMap");
+
+      if (!geoMap){
+        geoMap = L.map(el, { zoomControl: true, scrollWheelZoom: false });
+        // OSM tiles (no keys, safe default)
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(geoMap);
+        geoMap.setView([37.5, -96], 4);
+      }
+
+      if (geoLayer){
+        geoLayer.remove();
+        geoLayer = null;
+      }
+
+      const fc = (geojson && geojson.type === "FeatureCollection" && Array.isArray(geojson.features))
+        ? geojson
+        : { type:"FeatureCollection", features:[] };
+
+      if (!fc.features.length){
+        qs("#geoFoot").textContent = "No geo features found for this time range.";
+        return;
+      }
+
+      const pts = [];
+
+      geoLayer = L.geoJSON(fc, {
+        pointToLayer: (feature, latlng) => {
+          const w = Number(feature?.properties?.weight ?? 1);
+          const sev = Number(feature?.properties?.severity ?? feature?.properties?.minSeverity ?? 1);
+          const r = Math.max(4, Math.min(16, 4 + Math.sqrt(Math.max(1,w))));
+
+          const m = L.circleMarker(latlng, {
+            radius: r,
+            weight: 1,
+            opacity: 0.85,
+            fillOpacity: 0.35
+          });
+
+          const city = feature?.properties?.city || "";
+          const region = feature?.properties?.region || "";
+          const country = feature?.properties?.country || "";
+          const label = [city, region, country].filter(Boolean).join(", ") || "Unknown";
+
+          m.bindPopup(`
+            <div style="min-width:200px">
+              <b>Demand signal</b><br/>
+              <span>${label}</span><br/>
+              <span>Weight: ${isFinite(w) ? w : "—"}</span><br/>
+              <span>Severity: ${isFinite(sev) ? sev : "—"}</span>
+            </div>
+          `);
+
+          pts.push(latlng);
+          return m;
+        }
+      }).addTo(geoMap);
+
+      if (pts.length){
+        const b = L.latLngBounds(pts);
+        geoMap.fitBounds(b.pad(0.25));
+      }
+
+      qs("#geoFoot").textContent = `Plotted ${fc.features.length.toLocaleString()} geo features.`;
+    }
+
+    /* -----------------------------
+       Executive summary (GPT endpoint optional)
+    ------------------------------ */
+
+    function localExecutiveSummary({k30, kPrev30, qoq, yoy, events}){
+      const total = Number(k30?.totalEvents) || 0;
+      const views = Number(k30?.views) || 0;
+      const hi = Number(k30?.highSeverity) || 0;
+
+      const dTot = computePriorDelta(Number(k30?.totalEvents), Number(kPrev30?.totalEvents));
+      const dViews = computePriorDelta(Number(k30?.views), Number(kPrev30?.views));
+      const dHi = computePriorDelta(Number(k30?.highSeverity), Number(kPrev30?.highSeverity));
+
+      // top “assets” by views if the event payload includes data.name
+      const counts = new Map();
+      for (const e of (events || [])){
+        if (e.eventType !== "view_property_detail" && e.eventType !== "view_land_detail") continue;
+        const name = e?.data?.name || e?.data?.parcelId || e?.data?.id || e?.path || "Unknown";
+        counts.set(name, (counts.get(name)||0) + 1);
+      }
+      const top = Array.from(counts.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+      const bullet = (label, delta) => {
+        const ar = arrowFromDelta(delta);
+        const dTxt = delta == null ? "—" : pct(delta);
+        return `<li><span class="${ar.cls}"><b>${ar.arrow}</b></span> ${label}: <span class="mono">${dTxt}</span> vs prior period</li>`;
+      };
+
+      return `
+        <div class="split">
+          <div>
+            <b>Executive Summary (Safe Local)</b>
+            <p style="margin-top:10px;color:var(--muted)">
+              In the last 30 days, the site recorded <b>${fmtInt(total)}</b> total events and <b>${fmtInt(views)}</b> detail views.
+              High-severity activity totaled <b>${fmtInt(hi)}</b>.
+              QoQ: <b>${qoq == null ? "—" : pct(qoq)}</b>, YoY: <b>${yoy == null ? "—" : pct(yoy)}</b>.
+            </p>
+            <ul style="margin:10px 0 0 18px;color:var(--muted)">
+              ${bullet("Total events", dTot)}
+              ${bullet("Detail views", dViews)}
+              ${bullet("High severity", dHi)}
+            </ul>
+          </div>
+          <div>
+            <b>Top Viewed Assets</b>
+            <div class="tiny" style="margin-top:8px;">(based on detail-view events)</div>
+            <div style="margin-top:10px">
+              ${
+                top.length
+                  ? top.map(([name,c]) => `
+                      <div class="mutedBox" style="margin-bottom:10px">
+                        <div style="display:flex;justify-content:space-between;gap:10px">
+                          <div style="max-width:78%">${String(name).replace(/</g,"&lt;")}</div>
+                          <div class="mono">${fmtInt(c)}</div>
+                        </div>
+                      </div>
+                    `).join("")
+                  : `<div class="mutedBox">No detail-view events found yet.</div>`
+              }
+            </div>
+          </div>
+        </div>
+        <div class="tiny" style="margin-top:12px;">
+          If you want a true GPT-written summary, add a Worker endpoint like <span class="mono">/api/admin/gpt-summary</span> and this page will use it automatically.
+        </div>
+      `;
+    }
+
+    async function tryGptSummary(payload){
+      // Optional endpoint: if you implement it, return { summaryHtml } or { summaryText }
+      // If it doesn't exist (404/redirect), we fall back to local.
+      try {
+        const res = await accessFetch("/admin/gpt-summary", {
+          method: "POST",
+          headers: { "Content-Type":"application/json", "Accept":"application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+        const out = safeJsonParse(text);
+
+        if (out && !out.__html && !out.__parseError) {
+          const html = out.summaryHtml || null;
+          const txt = out.summaryText || null;
+          if (html) return String(html);
+          if (txt) return `<div style="white-space:pre-wrap">${String(txt).replace(/</g,"&lt;")}</div>`;
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    /* -----------------------------
+       MAIN LOAD
+    ------------------------------ */
+
+    async function computeQoQYoYFromEvents(events){
+      // This computes QoQ/YoY using event counts by quarter/year.
+      // If you only have recent data, QoQ/YoY may be unavailable.
+      const byQ = groupCountsByKey(events, computeQuarterKey);
+      const byY = groupCountsByKey(events, computeYearKey);
+
+      const qKeys = Array.from(byQ.keys()).sort(); // lexicographic works for YYYY-Q#
+      const yKeys = Array.from(byY.keys()).sort();
+
+      let qoq = null, yoy = null;
+
+      if (qKeys.length >= 2) {
+        const curK = qKeys[qKeys.length - 1];
+        const prevK = qKeys[qKeys.length - 2];
+        const curV = byQ.get(curK);
+        const prevV = byQ.get(prevK);
+        qoq = computePriorDelta(curV, prevV);
+      }
+
+      if (yKeys.length >= 2) {
+        const curY = yKeys[yKeys.length - 1];
+        const prevY = yKeys[yKeys.length - 2];
+        const curV = byY.get(curY);
+        const prevV = byY.get(prevY);
+        yoy = computePriorDelta(curV, prevV);
+      }
+
+      return { qoq, yoy };
+    }
+
+    async function loadAll(){
+      clearNotice();
+      setAuthStatus("Checking…");
+
+      // Try a lightweight authenticated endpoint first to confirm session
+      try {
+        await loadConfig();
+
+        // KPI: primary windows
+        const [k7, k30] = await Promise.all([ loadKpi(7), loadKpi(30) ]);
+
+        // KPI: comparison windows (prior periods) — requires your Worker to interpret days= and compare
+        // If your KPI endpoint only supports “last N days”, we can approximate prior by shifting on server.
+        // Most setups don't support that, so we attempt a best-effort alternate query:
+        // /admin/kpi?days=30&offsetDays=30 (optional if you implement it)
+        let kPrev7 = null, kPrev30 = null;
+        try { kPrev7 = await fetchJson(`/admin/kpi?days=7&offsetDays=7`); } catch { kPrev7 = null; }
+        try { kPrev30 = await fetchJson(`/admin/kpi?days=30&offsetDays=30`); } catch { kPrev30 = null; }
+
+        // If offsetDays not implemented, fall back to zeros so deltas show “—”
+        if (!kPrev7 || Object.keys(kPrev7).length === 0) kPrev7 = { totalEvents: NaN, views: NaN, highSeverity: NaN, uniqueProperties: NaN };
+        if (!kPrev30 || Object.keys(kPrev30).length === 0) kPrev30 = { totalEvents: NaN, views: NaN, highSeverity: NaN, uniqueProperties: NaN };
+
+        // Events + heatmap
+        const eventsOut = await loadEvents(5000);
+        const events = Array.isArray(eventsOut.events) ? eventsOut.events : [];
+
+        const heat = await loadHeatmap(CFG.HEATMAP_DAYS, CFG.HEATMAP_MIN_SEVERITY);
+
+        // QoQ / YoY from events (best-effort)
+        const { qoq, yoy } = await computeQoQYoYFromEvents(events);
+
+        // Render UI
+        renderKpis({k7, kPrev7, k30, kPrev30, qoq, yoy});
+        renderCharts(events);
+        renderFunnel(events);
+        renderGeo(heat);
+
+        setAuthStatus("Authenticated", "ok");
+
+        // Save for exec summary generation
+        window.__REPORT_CACHE = { k7, kPrev7, k30, kPrev30, qoq, yoy, events };
+
+      } catch (e) {
+        const msg = String(e && e.message ? e.message : e);
+
+        if (msg.startsWith("AUTH_REQUIRED::")) {
+          const redirectUrl = msg.split("AUTH_REQUIRED::")[1] || "/cdn-cgi/access/login";
+          setAuthStatus("Auth required", "bad");
+          showNotice(
+            `
+              <b>Cloudflare Access login required.</b><br/>
+              This report calls authenticated endpoints (e.g., <span class="mono">/api/admin/kpi</span>).
+              Your browser is being redirected to Cloudflare Access, which cannot be fetched via JS due to CORS, so nothing renders.<br/><br/>
+              <a class="btn primary" style="display:inline-block" href="${redirectUrl}">Sign in to view report</a>
+              <a class="btn" style="display:inline-block;margin-left:8px" href="/admin.html">Open Admin Dashboard</a>
+              <div class="tiny" style="margin-top:10px;">
+                After signing in, refresh this page.
+              </div>
+            `,
+            "bad"
+          );
+          return;
+        }
+
+        if (msg.startsWith("BAD_JSON::")) {
+          setAuthStatus("Data error", "bad");
+          showNotice(
+            `
+              <b>Data parsing error.</b><br/>
+              The endpoint returned a non-JSON response (or truncated JSON), so the report cannot render.<br/><br/>
+              <span class="tiny">Details:</span> <span class="mono">${msg.replace(/</g,"&lt;")}</span><br/><br/>
+              Fix: ensure your Worker returns valid JSON for report endpoints (KPI/events/heatmap) and that Cloudflare Access redirects are not being parsed as JSON.
+            `,
+            "bad"
+          );
+          return;
+        }
+
+        setAuthStatus("Failed", "bad");
+        showNotice(
+          `
+            <b>Report failed to load.</b><br/>
+            <span class="tiny">Error:</span> <span class="mono">${msg.replace(/</g,"&lt;")}</span><br/><br/>
+            Check:
+            <ul style="margin:8px 0 0 18px">
+              <li>Your Worker routes: <span class="mono">/api/admin/kpi</span>, <span class="mono">/api/admin/events</span>, <span class="mono">/api/admin/heatmap</span></li>
+              <li>Cloudflare Access policy: this page should be protected the same way as <span class="mono">/admin.html</span></li>
+              <li>Worker responses must be JSON (not HTML)</li>
+            </ul>
+          `,
+          "bad"
+        );
+      }
+    }
+
+    /* -----------------------------
+       EXEC SUMMARY button
+    ------------------------------ */
+    async function generateExecSummary(){
+      const box = qs("#execSummary");
+      box.innerHTML = `<div class="tiny">Generating…</div>`;
+
+      const data = window.__REPORT_CACHE;
+      if (!data) {
+        box.innerHTML = `<div class="errorBox">No report data loaded yet. Please refresh.</div>`;
+        return;
+      }
+
+      // Try GPT endpoint first (if you add it), else fall back to safe local.
+      const gpt = await tryGptSummary({
+        kpi30: data.k30,
+        kpiPrev30: data.kPrev30,
+        qoq: data.qoq,
+        yoy: data.yoy,
+        sampleEvents: (data.events || []).slice(0, 250)
+      });
+
+      if (gpt) {
+        box.innerHTML = `
+          <div class="successBox">
+            <b>GPT Executive Summary</b>
+            <div class="tiny" style="margin-top:6px;">Generated via <span class="mono">/api/admin/gpt-summary</span></div>
+          </div>
+          <div style="margin-top:12px">${gpt}</div>
+        `;
+        return;
+      }
+
+      box.innerHTML = localExecutiveSummary({
+        k30: data.k30,
+        kPrev30: data.kPrev30,
+        qoq: data.qoq,
+        yoy: data.yoy,
+        events: data.events
+      });
+    }
+
+    /* -----------------------------
+       Wire UI
+    ------------------------------ */
+    qs("#btnRefresh").addEventListener("click", () => loadAll());
+    qs("#btnExecSummary").addEventListener("click", () => generateExecSummary());
+
+    // Kick off
+    (async () => {
+      // IMPORTANT:
+      // If this page is NOT behind Access, the fetch calls will redirect to Cloudflare Access login,
+      // and JS will be blocked by CORS (expected). We handle that gracefully now.
+      await loadAll();
+    })();
+  </script>
 </body>
 </html>
