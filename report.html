@@ -24,6 +24,7 @@
       --shadow: 0 16px 50px rgba(0,0,0,.45);
       --radius:18px;
       --radius2:16px;
+      --chip:#101f39;
     }
 
     *{box-sizing:border-box}
@@ -47,8 +48,17 @@
       width:52px;height:52px;border-radius:12px;overflow:hidden;
       border:1px solid var(--line); background: rgba(255,255,255,.05);
       display:flex;align-items:center;justify-content:center;
+      position:relative;
     }
     .logo img{width:100%;height:100%;object-fit:cover;display:block;}
+    .logo .fallback{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:900; letter-spacing:.08em;
+      color:rgba(255,255,255,.85);
+      background:rgba(255,255,255,.04);
+      font-size:13px;
+    }
     .brand h1{font-size:20px;margin:0;line-height:1.2;}
     .brand .sub{font-size:13px;color:var(--muted);margin-top:6px;max-width:650px;}
     .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
@@ -73,6 +83,7 @@
     button:hover, a.btn:hover{filter:brightness(1.06);}
     button.primary{background: var(--btn2); border-color: rgba(61,220,151,.25);}
     button.ghost{background: rgba(255,255,255,.03);}
+    button.danger{background: rgba(255,107,107,.14); border-color: rgba(255,107,107,.25);}
 
     .grid{
       margin-top:14px;
@@ -158,11 +169,61 @@
     .small{font-size:12px;color:var(--muted);}
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
 
+    /* NEW: controls */
+    .controls{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(0,1fr));
+      gap:10px;
+    }
+    .control{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:10px;
+    }
+    .control label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .control input, .control select{
+      width:100%;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: var(--txt);
+      padding:10px 10px;
+      border-radius:12px;
+      outline:none;
+      font-size:13px;
+    }
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      color: var(--muted);
+    }
+    .chip b{color:rgba(255,255,255,.86);font-weight:700;}
+
+    /* NEW: print-friendly */
+    @media print{
+      body{background:#fff;color:#000;}
+      .top, .card{box-shadow:none;}
+      .actions, #noticeCard{display:none !important;}
+      canvas{border:1px solid #ccc; background:#fff;}
+      .card{break-inside:avoid;}
+    }
+
     @media (max-width: 980px){
       .grid{grid-template-columns: 1fr;}
       .two{grid-template-columns: 1fr;}
       .kpis{grid-template-columns: repeat(2, minmax(0,1fr));}
       canvas{height:280px;}
+      .controls{grid-template-columns: repeat(2, minmax(0,1fr));}
     }
   </style>
 </head>
@@ -172,9 +233,9 @@
     <div class="top">
       <div class="brand">
         <div class="logo" title="Adex Holdings Trust">
-          <!-- Put your real logo here (same-origin recommended) -->
-          <img id="logoImg" src="/assets/logo.png" alt="Adex Logo"
-               onerror="this.style.display='none'; this.parentElement.textContent='ADEX';" />
+          <!-- NEW: multi-fallback logo strategy -->
+          <img id="logoImg" src="/assets/logo.png" alt="Adex Logo" />
+          <div class="fallback" id="logoFallback" style="display:none;">ADEX</div>
         </div>
         <div>
           <h1>Adex Holdings Trust — Report</h1>
@@ -191,7 +252,10 @@
         </div>
         <button class="ghost" id="refreshBtn" type="button">Refresh</button>
         <button class="primary" id="execBtn" type="button">Generate Exec Summary</button>
+        <button class="ghost" id="authBtn" type="button" title="Open an authenticated endpoint in a new tab to complete Cloudflare Access login">Authenticate</button>
         <a class="btn" id="csvBtn" href="#" target="_blank" rel="noopener">Download CSV</a>
+        <a class="btn" id="jsonBtn" href="#" target="_blank" rel="noopener">Download JSON</a>
+        <button class="ghost" id="printBtn" type="button">Print / Save PDF</button>
       </div>
     </div>
 
@@ -204,6 +268,76 @@
         </div>
         <div class="cardBody">
           <div class="notice" id="noticeBox"></div>
+        </div>
+      </div>
+
+      <!-- NEW: Segmentation / Controls (added, does not remove anything) -->
+      <div class="card full">
+        <div class="cardHead">
+          <h2>Controls & Segmentation</h2>
+          <div class="hint">Tune windows, limits, severity, and segment event modeling</div>
+        </div>
+        <div class="cardBody">
+          <div class="controls">
+            <div class="control">
+              <label for="daysKpi">KPI Days</label>
+              <select id="daysKpi">
+                <option value="7">7</option>
+                <option value="14">14</option>
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
+                <option value="90">90</option>
+                <option value="365">365</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="daysCharts">Charts Days</label>
+              <select id="daysCharts">
+                <option value="7">7</option>
+                <option value="14">14</option>
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
+                <option value="90">90</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="eventLimit">Event Limit</label>
+              <select id="eventLimit">
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+                <option value="2000" selected>2000</option>
+                <option value="5000">5000</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="minSeverity">Min Severity</label>
+              <select id="minSeverity">
+                <option value="1" selected>1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="segment">Segment</label>
+              <select id="segment">
+                <option value="all" selected>All</option>
+                <option value="property">Property</option>
+                <option value="land">Land</option>
+                <option value="high_sev">High Severity</option>
+              </select>
+            </div>
+            <div class="control">
+              <label>&nbsp;</label>
+              <button class="primary" id="applyBtn" type="button" style="width:100%;justify-content:center;">Apply</button>
+            </div>
+          </div>
+
+          <div class="chips" id="activeFilters"></div>
+          <div class="small" style="margin-top:10px;">
+            Tip: If you see “Auth required”, click <b>Authenticate</b>, complete Cloudflare Access in the new tab, then come back and hit <b>Refresh</b>.
+          </div>
         </div>
       </div>
 
@@ -267,6 +401,78 @@
           <div class="notice" id="execBox">
             No report data loaded yet. Please refresh.
           </div>
+        </div>
+      </div>
+
+      <!-- NEW INSIGHTS (added, does not remove anything) -->
+
+      <div class="card">
+        <div class="cardHead">
+          <h2>Traffic Sources</h2>
+          <div class="hint">Referrer domains (best-effort)</div>
+        </div>
+        <div class="cardBody">
+          <table class="table" id="refTable">
+            <thead><tr><th>Source</th><th>Events</th><th>Share</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="small" id="refNote" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardHead">
+          <h2>Device & Browser Mix</h2>
+          <div class="hint">User-Agent parsing (best-effort)</div>
+        </div>
+        <div class="cardBody">
+          <table class="table" id="uaTable">
+            <thead><tr><th>Category</th><th>Events</th><th>Share</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="small" id="uaNote" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <div class="cardHead">
+          <h2>Top Content & Demand Drivers</h2>
+          <div class="hint">Top properties/lands/pages by views and clicks (based on event metadata)</div>
+        </div>
+        <div class="cardBody">
+          <table class="table" id="contentTable">
+            <thead><tr><th>Item</th><th>Type</th><th>Views</th><th>Clicks</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="small" id="contentNote" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <div class="cardHead">
+          <h2>Anomalies & Watchlist</h2>
+          <div class="hint">Basic z-score on daily events + low-data warnings</div>
+        </div>
+        <div class="cardBody">
+          <table class="table" id="anomTable">
+            <thead><tr><th>Date</th><th>Events</th><th>Deviation</th><th>Note</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="small" id="anomNote" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <div class="cardHead">
+          <h2>Data Quality & Coverage</h2>
+          <div class="hint">Freshness, missing geo, bad timestamps, sample caveats</div>
+        </div>
+        <div class="cardBody">
+          <table class="table" id="dqTable">
+            <thead><tr><th>Check</th><th>Result</th><th>Details</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="small" id="dqNote" style="margin-top:10px;"></div>
         </div>
       </div>
 
