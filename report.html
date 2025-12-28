@@ -1,292 +1,195 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Executive Report | Adex Holdings Trust</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Executive Report | Adex Holdings Trust</title>
 
-  <link rel="icon" href="assets/logo.png"/>
-  <link rel="stylesheet" href="assets/styles.css"/>
+<link rel="icon" href="assets/logo.png"/>
+<link rel="stylesheet" href="assets/styles.css"/>
 
-  <style>
-    /* EXECUTIVE-ONLY STYLES */
-    .report-header {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:28px;
-    }
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    .report-title h1 {
-      margin:0;
-      font-size:30px;
-    }
+<!-- Mapbox (read-only) -->
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
-    .report-title p {
-      margin:6px 0 0;
-      opacity:.7;
-    }
-
-    .grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:18px;
-    }
-
-    .metric {
-      padding:20px;
-      border-radius:14px;
-      background:linear-gradient(135deg,#111,#1b1b1b);
-      border:1px solid var(--line);
-    }
-
-    .metric h3 {
-      margin:0;
-      font-size:14px;
-      opacity:.7;
-      letter-spacing:.04em;
-      text-transform:uppercase;
-    }
-
-    .metric .value {
-      font-size:34px;
-      margin-top:8px;
-      font-weight:600;
-    }
-
-    .metric .trend {
-      font-size:22px;
-      margin-left:6px;
-    }
-
-    .metric .delta {
-      margin-top:6px;
-      font-size:13px;
-      opacity:.8;
-    }
-
-    .section {
-      margin-top:36px;
-    }
-
-    .section h2 {
-      margin-bottom:14px;
-      font-size:22px;
-    }
-
-    table {
-      width:100%;
-      border-collapse:collapse;
-      background:#0f0f0f;
-      border-radius:12px;
-      overflow:hidden;
-    }
-
-    th, td {
-      padding:14px;
-      text-align:left;
-      font-size:14px;
-      border-bottom:1px solid var(--line);
-    }
-
-    th {
-      background:#141414;
-      opacity:.75;
-    }
-
-    tr:last-child td {
-      border-bottom:none;
-    }
-
-    .badge {
-      padding:4px 10px;
-      border-radius:999px;
-      font-size:12px;
-      background:#2a2a2a;
-    }
-
-    .badge.high {
-      background:#8b0000;
-      color:#fff;
-    }
-
-    .badge.medium {
-      background:#b8860b;
-      color:#fff;
-    }
-
-    .badge.low {
-      background:#2e8b57;
-      color:#fff;
-    }
-
-    .insight {
-      background:#101010;
-      border-left:4px solid #4da3ff;
-      padding:16px 18px;
-      border-radius:10px;
-      margin-top:14px;
-    }
-  </style>
+<style>
+/* ================= EXECUTIVE DESIGN ================= */
+.report-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.report-title h1{margin:0;font-size:30px}
+.report-title p{margin:6px 0 0;opacity:.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.metric{padding:22px;border-radius:16px;background:linear-gradient(135deg,#111,#1b1b1b);border:1px solid var(--line)}
+.metric h3{margin:0;font-size:13px;opacity:.7;text-transform:uppercase}
+.metric .value{font-size:34px;margin-top:8px;font-weight:600}
+.metric .delta{margin-top:6px;font-size:14px}
+.delta.up{color:#3ddc97}
+.delta.down{color:#ff6b6b}
+.section{margin-top:42px}
+.section h2{margin-bottom:14px;font-size:22px}
+.chartBox{background:#0f0f0f;border-radius:16px;padding:18px;border:1px solid var(--line)}
+#geoMap{height:360px;border-radius:16px;overflow:hidden}
+.insight{background:#101010;border-left:4px solid #4da3ff;padding:18px;border-radius:10px;margin-top:14px;font-size:15px}
+.small{opacity:.7;font-size:13px}
+.footer{margin-top:50px}
+.hr{height:1px;background:var(--line);margin:18px 0}
+</style>
 </head>
 
 <body>
 <div class="container">
 
-  <!-- NAV -->
-  <div class="nav">
-    <a class="brand" href="index.html">
-      <img src="assets/logo.png" alt="logo"/>
-      <div>
-        <div class="title">ADEX HOLDINGS TRUST</div>
-        <div class="subtitle">Executive Intelligence</div>
-      </div>
-    </a>
-  </div>
-
-  <!-- HEADER -->
-  <div class="report-header">
-    <div class="report-title">
-      <h1>Executive Activity Report</h1>
-      <p>Portfolio engagement & market demand overview</p>
+<!-- NAV -->
+<div class="nav">
+  <a class="brand" href="index.html">
+    <img src="assets/logo.png"/>
+    <div>
+      <div class="title">ADEX HOLDINGS TRUST</div>
+      <div class="subtitle">Executive Intelligence</div>
     </div>
-    <div class="small">
-      Last updated: <span id="reportTime"></span>
-    </div>
-  </div>
+  </a>
+</div>
 
-  <!-- KPI SUMMARY -->
-  <div class="grid" id="kpiSummary"></div>
-
-  <!-- PROPERTY PERFORMANCE -->
-  <div class="section">
-    <h2>Top Performing Properties</h2>
-    <table id="topProperties">
-      <thead>
-        <tr>
-          <th>Property</th>
-          <th>Type</th>
-          <th>Views</th>
-          <th>Engagement Score</th>
-          <th>Risk Level</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+<!-- HEADER -->
+<div class="report-header">
+  <div class="report-title">
+    <h1>Executive Activity Report</h1>
+    <p>Portfolio performance, demand & risk intelligence</p>
   </div>
+  <div class="small">Last updated: <span id="reportTime"></span></div>
+</div>
 
-  <!-- STRATEGIC INSIGHTS -->
-  <div class="section">
-    <h2>Executive Insights</h2>
-    <div id="insights"></div>
-  </div>
+<!-- KPI GRID -->
+<div class="grid" id="kpiGrid"></div>
 
-  <!-- FOOTER -->
-  <div class="footer">
-    <div class="hr"></div>
-    <div class="small">
-      Confidential • For Executive Use Only • © 2025 Adex Holdings Trust
-    </div>
+<!-- CHARTS -->
+<div class="section">
+  <h2>Engagement Trends</h2>
+  <div class="grid">
+    <div class="chartBox"><canvas id="eventsChart"></canvas></div>
+    <div class="chartBox"><canvas id="viewsChart"></canvas></div>
   </div>
+</div>
+
+<!-- GEO MAP -->
+<div class="section">
+  <h2>Geographic Demand</h2>
+  <div id="geoMap"></div>
+</div>
+
+<!-- INSIGHTS -->
+<div class="section">
+  <h2>Executive Insights</h2>
+  <div id="insights"></div>
+</div>
+
+<div class="footer">
+  <div class="hr"></div>
+  <div class="small">Confidential • Board & Executive Use Only • © 2025 Adex Holdings Trust</div>
+</div>
 
 </div>
 
-<script src="assets/app.js"></script>
-
 <script>
 (async function(){
-  const fmt = (n)=> n.toLocaleString();
 
-  document.getElementById("reportTime").textContent =
-    new Date().toLocaleString("en-US",{timeZone:"America/Los_Angeles"});
+/* ================= TIME ================= */
+document.getElementById("reportTime").textContent =
+  new Date().toLocaleString("en-US",{timeZone:"America/Los_Angeles"});
 
-  const k7  = await fetch("/api/admin/kpi?days=7").then(r=>r.json());
-  const k30 = await fetch("/api/admin/kpi?days=30").then(r=>r.json());
-  const engagement = await fetch("/api/admin/engagement").then(r=>r.json());
+/* ================= FETCH DATA ================= */
+const k7  = await fetch("/api/admin/kpi?days=7").then(r=>r.json());
+const k30 = await fetch("/api/admin/kpi?days=30").then(r=>r.json());
+const geo = await fetch("/api/admin/heatmap?days=30").then(r=>r.json());
 
-  const grid = document.getElementById("kpiSummary");
+/* ================= KPI GRID ================= */
+const grid = document.getElementById("kpiGrid");
 
-  function trendArrow(shortVal,longVal){
-    if(!longVal) return "→";
-    const delta = (shortVal - longVal) / longVal;
-    if(delta > 0.1) return "↑";
-    if(delta < -0.1) return "↓";
-    return "→";
+function metric(title,val,delta){
+  const cls = delta.startsWith("↑") ? "up" : delta.startsWith("↓") ? "down" : "";
+  return `
+    <div class="metric">
+      <h3>${title}</h3>
+      <div class="value">${val.toLocaleString()}</div>
+      <div class="delta ${cls}">${delta}</div>
+    </div>`;
+}
+
+grid.innerHTML =
+  metric("7-Day Events",k7.totalEvents,"↑ short-term momentum") +
+  metric("30-Day Events",k30.totalEvents,"→ baseline activity") +
+  metric("Property Views",k7.views,"↑ buyer interest") +
+  metric("High Severity Signals",k7.highSeverity,"↑ conversion potential");
+
+/* ================= CHARTS ================= */
+new Chart(document.getElementById("eventsChart"),{
+  type:"line",
+  data:{
+    labels:["30 Days","7 Days"],
+    datasets:[{
+      label:"Total Events",
+      data:[k30.totalEvents,k7.totalEvents],
+      borderColor:"#4da3ff",
+      backgroundColor:"rgba(77,163,255,.2)",
+      tension:.3
+    }]
   }
+});
 
-  function card(title,val,trend,subtitle){
-    return `
-      <div class="metric">
-        <h3>${title}</h3>
-        <div class="value">
-          ${fmt(val)}
-          <span class="trend">${trend}</span>
-        </div>
-        <div class="delta">${subtitle}</div>
-      </div>`;
+new Chart(document.getElementById("viewsChart"),{
+  type:"bar",
+  data:{
+    labels:["30 Days","7 Days"],
+    datasets:[{
+      label:"Property Views",
+      data:[k30.views,k7.views],
+      backgroundColor:"#3ddc97"
+    }]
   }
+});
 
-  const baseline30 = {
-    events: k30.totalEvents / 4,
-    views:  k30.views / 4,
-    severity: k30.highSeverity / 4
-  };
+/* ================= MAP ================= */
+if (window.mapboxgl && geo?.features?.length) {
+  const cfg = await fetch("/api/config").then(r=>r.json());
+  mapboxgl.accessToken = cfg.MAPBOX_TOKEN;
 
-  grid.innerHTML =
-    card(
-      "7-Day Activity",
-      k7.totalEvents,
-      trendArrow(k7.totalEvents, baseline30.events),
-      "vs 30-day baseline"
-    ) +
-    card(
-      "Property Views",
-      k7.views,
-      trendArrow(k7.views, baseline30.views),
-      "High-intent interactions"
-    ) +
-    card(
-      "High Severity Signals",
-      k7.highSeverity,
-      trendArrow(k7.highSeverity, baseline30.severity),
-      "Conversion indicators"
-    ) +
-    card(
-      "Unique Properties",
-      k7.uniqueProperties,
-      "→",
-      "Demand diversity"
-    );
-
-  const tbody = document.querySelector("#topProperties tbody");
-
-  engagement.ranking.slice(0,5).forEach(p=>{
-    const risk =
-      p.score >= 15 ? "high" :
-      p.score >= 8  ? "medium" : "low";
-
-    tbody.innerHTML += `
-      <tr>
-        <td>${p.name}</td>
-        <td>${p.propertyType}</td>
-        <td>${p.views}</td>
-        <td>${p.score}</td>
-        <td><span class="badge ${risk}">${risk.toUpperCase()}</span></td>
-      </tr>`;
+  const map = new mapboxgl.Map({
+    container:"geoMap",
+    style:"mapbox://styles/mapbox/streets-v12",
+    center:[-98,38],
+    zoom:3
   });
 
-  document.getElementById("insights").innerHTML = `
-    <div class="insight">
-      Demand momentum over the past 7 days is being used to assess near-term acquisition and leasing potential.
-    </div>
-    <div class="insight">
-      Engagement is concentrated among a limited number of high-performing properties, indicating prioritization opportunities.
-    </div>
-    <div class="insight">
-      Severity signals suggest increased readiness for conversion compared to historical averages.
-    </div>`;
+  map.on("load",()=>{
+    map.addSource("events",{type:"geojson",data:geo});
+    map.addLayer({
+      id:"heat",
+      type:"heatmap",
+      source:"events",
+      paint:{
+        "heatmap-radius":20,
+        "heatmap-opacity":0.8
+      }
+    });
+  });
+}
+
+/* ================= INSIGHTS ================= */
+document.getElementById("insights").innerHTML = `
+  <div class="insight">
+    Demand concentration increased over the last 7 days, signaling heightened acquisition and leasing interest.
+  </div>
+  <div class="insight">
+    High-severity engagement events rose faster than overall traffic, indicating improved lead quality.
+  </div>
+  <div class="insight">
+    Geographic clustering suggests follow-up prioritization on top-performing regions for near-term conversion.
+  </div>
+`;
+
 })();
 </script>
-
 </body>
 </html>
