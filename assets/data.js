@@ -81,7 +81,7 @@ window.ADEX_DATA = {
 		"/assets/photos/hoye/hoye45.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
-        url: "https://www.youtube.com/watch?v=XXXX"
+        url: "https://www.youtube.com/watch?v=WdH9qhalWE4"
          }
     },
 
@@ -224,7 +224,7 @@ window.ADEX_DATA = {
 		"/assets/photos/calabrese/calabrese45.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
-        url: "https://www.youtube.com/watch?v=XXXX"
+        url: "https://www.youtube.com/watch?v=Hy2a6Kan5E"
          }
     },
 
