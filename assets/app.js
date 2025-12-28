@@ -297,7 +297,8 @@ function googleStaticMap(query, maptype = "roadmap") {
 }
 
 function osmStaticFallback(query) {
-  return `https://www.openstreetmap.org/export/embed.html?bbox=&layer=mapnik&marker=${encodeURIComponent(query)}`;
+  const q = encodeURIComponent(query || "");
+  return `https://www.openstreetmap.org/export/embed.html?bbox=&layer=mapnik&marker=${q}`;
 }
 
 function mapEmbedSrc(query) {
