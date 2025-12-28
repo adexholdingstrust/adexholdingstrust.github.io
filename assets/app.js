@@ -83,7 +83,12 @@ const escapeHtml = s =>
     .replace(/'/g, "&#039;");
 
 function accessRedirected(res) {
-  return res.type === "opaqueredirect" || res.status === 302;
+  const ct = res.headers.get("content-type") || "";
+  return (
+    res.type === "opaqueredirect" ||
+    res.status === 302 ||
+    ct.includes("text/html")
+  );
 }
 
 function notify(msg, bad = false) {
@@ -447,16 +452,14 @@ async function accessFetch(path, opts = {}) {
   });
 
 if (accessRedirected(res)) {
-  if (
-    !silent &&
-    document.body.classList.contains("admin") &&
-    location.pathname.startsWith("/admin")
-  ) {
+  if (!silent && location.pathname.startsWith("/admin")) {
     notify("Session expired. Please refresh and sign in again.", true);
   }
-  throw new Error("Access redirect");
+  if (!location.pathname.startsWith("/admin")) {
+  return res; // allow public pages to continue
 }
-
+throw new Error("Access redirect");
+}
   return res;
 }
 /* =======================
@@ -2032,13 +2035,20 @@ function initAdminSidebar() {
 ======================= */
 document.addEventListener("DOMContentLoaded", async () => {
 
-  /* ---------- LOAD SECRETS ONCE ---------- */
+  /* ---------- LOAD CONFIG ---------- */
   const secrets = await loadAdexConfig();
 
-  // Bind secrets to CFG for legacy code
   CFG.MAPBOX_TOKEN = secrets.MAPBOX_TOKEN;
   CFG.GOOGLE_MAPS_KEY = secrets.GOOGLE_MAPS_KEY;
   CFG.GOOGLE_PLACES_KEY = secrets.GOOGLE_PLACES_KEY;
+
+  if (CFG.MAPBOX_TOKEN && window.mapboxgl) {
+    mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
+  }
+
+  /* ---------- AUTH + AVAILABILITY ---------- */
+  const who = await loadWhoAmI();
+  const availability = await fetchAvailability();
 
   // Mapbox global
   if (CFG.MAPBOX_TOKEN && window.mapboxgl) {
@@ -2085,9 +2095,12 @@ if (!document.body.classList.contains("admin")) {
   renderLandsPage();
   initTenantPortalPropertyDropdown();
 
-  initLandsInteractiveMap().catch(err =>
-    console.warn("Interactive lands map failed:", err)
-  );
+   try {
+     await initLandsInteractiveMap();
+      } catch (err) {
+     console.warn("Interactive lands map failed:", err);
+      }
+
 
   setupLazy();
 });
