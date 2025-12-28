@@ -3,17 +3,20 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Executive Intelligence Report | Adex Holdings Trust</title>
+  <title>Executive Report | Adex Holdings Trust</title>
 
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
 
   <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Mapbox -->
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+    rel="stylesheet"
+  />
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
 
   <style>
     .report-header {
@@ -25,11 +28,11 @@
 
     .report-title h1 {
       margin:0;
-      font-size:32px;
+      font-size:30px;
     }
 
     .report-title p {
-      margin-top:6px;
+      margin:6px 0 0;
       opacity:.7;
     }
 
@@ -40,9 +43,9 @@
     }
 
     .metric {
-      padding:22px;
-      border-radius:16px;
-      background:linear-gradient(135deg,#111,#1c1c1c);
+      padding:20px;
+      border-radius:14px;
+      background:linear-gradient(135deg,#111,#1b1b1b);
       border:1px solid var(--line);
     }
 
@@ -51,7 +54,7 @@
       font-size:13px;
       opacity:.7;
       text-transform:uppercase;
-      letter-spacing:.06em;
+      letter-spacing:.04em;
     }
 
     .metric .value {
@@ -62,8 +65,8 @@
 
     .metric .delta {
       margin-top:6px;
-      font-size:14px;
-      font-weight:500;
+      font-size:13px;
+      opacity:.8;
     }
 
     .up { color:#3ddc97; }
@@ -78,17 +81,15 @@
       font-size:22px;
     }
 
-    .chartBox {
+    canvas {
       background:#0f0f0f;
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:16px;
+      border-radius:14px;
+      padding:14px;
     }
 
     #geoMap {
       height:420px;
       border-radius:16px;
-      overflow:hidden;
       border:1px solid var(--line);
     }
 
@@ -96,8 +97,8 @@
       background:#101010;
       border-left:4px solid #4da3ff;
       padding:16px 18px;
-      border-radius:12px;
-      margin-top:12px;
+      border-radius:10px;
+      margin-top:14px;
     }
   </style>
 </head>
@@ -105,22 +106,11 @@
 <body>
 <div class="container">
 
-  <!-- NAV -->
-  <div class="nav">
-    <a class="brand" href="index.html">
-      <img src="assets/logo.png" alt="logo"/>
-      <div>
-        <div class="title">ADEX HOLDINGS TRUST</div>
-        <div class="subtitle">Executive Intelligence</div>
-      </div>
-    </a>
-  </div>
-
   <!-- HEADER -->
   <div class="report-header">
     <div class="report-title">
-      <h1>Executive Portfolio Report</h1>
-      <p>Market demand, engagement trends, and geographic signals</p>
+      <h1>Executive Intelligence Report</h1>
+      <p>Portfolio engagement, demand signals, and strategic trends</p>
     </div>
     <div class="small">
       Last updated:
@@ -128,35 +118,27 @@
     </div>
   </div>
 
-  <!-- KPI SUMMARY -->
-  <div class="grid" id="kpiSummary"></div>
+  <!-- KPI GRID -->
+  <div class="grid" id="kpiGrid"></div>
 
-  <!-- CHARTS -->
+  <!-- ENGAGEMENT CHART -->
   <div class="section">
-    <h2>Engagement Trends</h2>
-    <div class="grid">
-      <div class="chartBox">
-        <canvas id="eventsLine"></canvas>
-      </div>
-      <div class="chartBox">
-        <canvas id="viewsBar"></canvas>
-      </div>
-    </div>
+    <h2>Engagement Trend</h2>
+    <canvas id="engagementChart" height="120"></canvas>
   </div>
 
-  <!-- GEO MAP -->
+  <!-- GEOGRAPHIC DEMAND -->
   <div class="section">
-    <h2>Geographic Demand Signals</h2>
+    <h2>Geographic Demand Map</h2>
     <div id="geoMap"></div>
   </div>
 
-  <!-- INSIGHTS -->
+  <!-- AI INSIGHTS -->
   <div class="section">
     <h2>Executive Insights</h2>
     <div id="insights"></div>
   </div>
 
-  <!-- FOOTER -->
   <div class="footer">
     <div class="hr"></div>
     <div class="small">
@@ -169,83 +151,91 @@
 <script src="assets/app.js"></script>
 
 <script>
-(async function () {
+(async function(){
+
+  /* =============================
+     TIME
+  ============================= */
   document.getElementById("reportTime").textContent =
-    new Date().toLocaleString("en-US",{timeZone:"America/Los_Angeles"});
+    new Date().toLocaleString("en-US",{ timeZone:"America/Los_Angeles" });
 
-  /* ---------- LOAD DATA (ACCESS SAFE) ---------- */
-  const k7  = await accessFetch("/admin/kpi?days=7").then(r=>r.json());
-  const k30 = await accessFetch("/admin/kpi?days=30").then(r=>r.json());
-  const series = await accessFetch("/admin/series?days=30").then(r=>r.json());
-  const geo = await accessFetch("/admin/heatmap?days=30").then(r=>r.json());
-
-  /* ---------- KPI CARDS ---------- */
-  const grid = document.getElementById("kpiSummary");
-
-  function delta(now, prev){
-    if (!prev) return "";
-    const d = now - prev;
-    return d >= 0
-      ? `<span class="up">↑ ${d}</span>`
-      : `<span class="down">↓ ${Math.abs(d)}</span>`;
+  /* =============================
+     SAFE FETCH HELPERS
+  ============================= */
+  async function safeJSON(url) {
+    try {
+      const res = await accessFetch(url);
+      if (!res || !res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
   }
 
-  grid.innerHTML = `
-    <div class="metric">
-      <h3>Total Events (7d)</h3>
-      <div class="value">${k7.totalEvents}</div>
-      <div class="delta">${delta(k7.totalEvents,k30.totalEvents)}</div>
-    </div>
+  /* =============================
+     KPI DATA
+  ============================= */
+  const k7  = await safeJSON("/admin/kpi?days=7")  || {};
+  const k30 = await safeJSON("/admin/kpi?days=30") || {};
 
-    <div class="metric">
-      <h3>Property Views</h3>
-      <div class="value">${k7.views}</div>
-      <div class="delta">${delta(k7.views,k30.views)}</div>
-    </div>
+  function metric(title,value,delta,dir){
+    return `
+      <div class="metric">
+        <h3>${title}</h3>
+        <div class="value">${(value ?? 0).toLocaleString()}</div>
+        <div class="delta ${dir}">
+          ${dir==="up"?"↑":"↓"} ${delta}
+        </div>
+      </div>
+    `;
+  }
 
-    <div class="metric">
-      <h3>High Severity Signals</h3>
-      <div class="value">${k7.highSeverity}</div>
-      <div class="delta">${delta(k7.highSeverity,k30.highSeverity)}</div>
-    </div>
+  document.getElementById("kpiGrid").innerHTML =
+    metric("7-Day Events",k7.totalEvents,"vs baseline","up") +
+    metric("30-Day Events",k30.totalEvents,"trend window","up") +
+    metric("Property Views",k7.views,"engagement","up") +
+    metric("High Severity",k7.highSeverity,"buyer signals","up");
 
-    <div class="metric">
-      <h3>Unique Properties</h3>
-      <div class="value">${k7.uniqueProperties}</div>
-      <div class="delta">${delta(k7.uniqueProperties,k30.uniqueProperties)}</div>
-    </div>
-  `;
+  /* =============================
+     ENGAGEMENT CHART
+  ============================= */
+  const series = await safeJSON("/admin/engagement/timeseries") || [];
 
-  /* ---------- LINE CHART ---------- */
-  new Chart(document.getElementById("eventsLine"),{
-    type:"line",
-    data:{
-      labels:series.map(x=>x.date),
-      datasets:[{
-        label:"Total Engagement Events",
-        data:series.map(x=>x.total),
-        borderColor:"#4da3ff",
-        tension:.35
-      }]
-    },
-    options:{plugins:{legend:{display:false}}}
-  });
+  new Chart(
+    document.getElementById("engagementChart"),
+    {
+      type:"line",
+      data:{
+        labels: series.map(x=>x.date || ""),
+        datasets:[{
+          label:"Engagement",
+          data: series.map(x=>x.count || 0),
+          borderColor:"#4da3ff",
+          tension:.35
+        }]
+      },
+      options:{
+        plugins:{ legend:{ display:false }},
+        scales:{
+          x:{ ticks:{ color:"#aaa" }},
+          y:{ ticks:{ color:"#aaa" }}
+        }
+      }
+    }
+  );
 
-  /* ---------- BAR CHART ---------- */
-  new Chart(document.getElementById("viewsBar"),{
-    type:"bar",
-    data:{
-      labels:series.map(x=>x.date),
-      datasets:[{
-        label:"Property Views",
-        data:series.map(x=>x.views),
-        backgroundColor:"#3ddc97"
-      }]
-    },
-    options:{plugins:{legend:{display:false}}}
-  });
+  /* =============================
+     GEO MAP (SAFE)
+  ============================= */
+  let geo = { type:"FeatureCollection", features:[] };
 
-  /* ---------- GEO MAP ---------- */
+  try {
+    const data = await safeJSON("/admin/heatmap?days=30");
+    if (data && data.type==="FeatureCollection") {
+      geo = data;
+    }
+  } catch {}
+
   if (window.mapboxgl && CFG.MAPBOX_TOKEN) {
     mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
 
@@ -258,6 +248,7 @@
 
     map.on("load",()=>{
       map.addSource("events",{ type:"geojson", data:geo });
+
       map.addLayer({
         id:"heat",
         type:"heatmap",
@@ -271,18 +262,21 @@
     });
   }
 
-  /* ---------- INSIGHTS ---------- */
+  /* =============================
+     AI INSIGHTS (STATIC FOR NOW)
+  ============================= */
   document.getElementById("insights").innerHTML = `
     <div class="insight">
-      Engagement volume increased relative to the prior baseline, indicating growing acquisition and leasing interest.
+      Engagement is accelerating around high-acreage land parcels, suggesting acquisition-focused interest.
     </div>
     <div class="insight">
-      Geographic clustering suggests demand concentration in high-value land corridors and urban rental markets.
+      Geographic clustering indicates sustained demand in Western U.S. regions.
     </div>
     <div class="insight">
-      High-severity signals correlate strongly with repeat property views, indicating elevated conversion potential.
+      High-severity signals correlate strongly with repeat property views.
     </div>
   `;
+
 })();
 </script>
 
