@@ -446,11 +446,11 @@ async function accessFetch(path, opts = {}) {
     ...fetchOpts
   });
 
-  if (accessRedirected(res)) {
-  // Only show session error on admin pages
+if (accessRedirected(res)) {
   if (
     !silent &&
-    document.body.classList.contains("admin")
+    document.body.classList.contains("admin") &&
+    location.pathname.startsWith("/admin")
   ) {
     notify("Session expired. Please refresh and sign in again.", true);
   }
