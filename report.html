@@ -1,258 +1,279 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Executive Report | Adex Holdings Trust</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Adex Holdings Trust — Report</title>
 
-  <!-- Favicon / Logo -->
-  <link rel="icon" href="/assets/logo.png"/>
-
-  <!-- Global Styles -->
-  <link rel="stylesheet" href="/assets/styles.css"/>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-  <!-- Mapbox (container only for now; token added later) -->
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+  <!-- IMPORTANT: do NOT include Cloudflare beacon scripts with SRI here.
+       Your browser (ETP) + SRI mismatch was causing noise. -->
 
   <style>
-    /* ===============================
-       EXECUTIVE REPORT STYLES
-       =============================== */
-
-    .report-header {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:28px;
+    :root{
+      --bg:#0b1220;
+      --card:#0f1a2d;
+      --card2:#0d1626;
+      --line:rgba(255,255,255,.10);
+      --txt:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.65);
+      --bad:#ff6b6b;
+      --ok:#3ddc97;
+      --warn:#ffcc66;
+      --btn:#172744;
+      --btn2:#153a2a;
+      --shadow: 0 16px 50px rgba(0,0,0,.45);
+      --radius:18px;
+      --radius2:16px;
     }
 
-    .report-header-left {
-      display:flex;
-      gap:16px;
-      align-items:center;
-    }
-
-    .report-header img {
-      height:48px;
-      width:auto;
-    }
-
-    .report-title h1 {
+    *{box-sizing:border-box}
+    body{
       margin:0;
-      font-size:30px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 10% 10%, #13213c 0%, var(--bg) 55%) fixed;
+      color:var(--txt);
     }
 
-    .report-title p {
-      margin:6px 0 0;
-      opacity:.7;
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px 40px;}
+    .top{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; padding:18px; border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,26,45,.85), rgba(10,18,32,.85));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
-
-    .report-actions {
-      display:flex;
-      gap:10px;
-      align-items:center;
+    .brand{display:flex;align-items:center;gap:12px;}
+    .logo{
+      width:52px;height:52px;border-radius:12px;overflow:hidden;
+      border:1px solid var(--line); background: rgba(255,255,255,.05);
+      display:flex;align-items:center;justify-content:center;
     }
-
-    .status-pill {
-      padding:6px 12px;
-      border-radius:999px;
-      font-size:12px;
-      background:#1f2937;
-      border:1px solid var(--line);
+    .logo img{width:100%;height:100%;object-fit:cover;display:block;}
+    .brand h1{font-size:20px;margin:0;line-height:1.2;}
+    .brand .sub{font-size:13px;color:var(--muted);margin-top:6px;max-width:650px;}
+    .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border:1px solid var(--line);
+      border-radius:999px;background:rgba(255,255,255,.03);
+      font-size:13px;color:var(--muted);
     }
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--warn);box-shadow:0 0 0 3px rgba(255,204,102,.15);}
+    .dot.ok{background:var(--ok);box-shadow:0 0 0 3px rgba(61,220,151,.15);}
+    .dot.bad{background:var(--bad);box-shadow:0 0 0 3px rgba(255,107,107,.15);}
 
-    .grid {
+    button, a.btn{
+      appearance:none;border:1px solid var(--line);
+      background: var(--btn);
+      color:var(--txt);
+      padding:10px 12px;border-radius:12px;
+      font-weight:600;font-size:13px; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    }
+    button:hover, a.btn:hover{filter:brightness(1.06);}
+    button.primary{background: var(--btn2); border-color: rgba(61,220,151,.25);}
+    button.ghost{background: rgba(255,255,255,.03);}
+
+    .grid{
+      margin-top:14px;
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:18px;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
     }
-
-    .metric {
-      padding:20px;
-      border-radius:14px;
-      background:linear-gradient(135deg,#0f172a,#020617);
+    .full{grid-column:1/-1;}
+    .card{
       border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,26,45,.72), rgba(10,18,32,.72));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
     }
-
-    .metric h3 {
-      margin:0;
-      font-size:13px;
-      opacity:.7;
-      text-transform:uppercase;
-      letter-spacing:.04em;
-    }
-
-    .metric .value {
-      font-size:34px;
-      margin-top:8px;
-      font-weight:600;
-    }
-
-    .metric .delta {
-      margin-top:6px;
-      font-size:13px;
-      opacity:.85;
-    }
-
-    .section {
-      margin-top:36px;
-    }
-
-    .section h2 {
-      margin-bottom:14px;
-      font-size:22px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-    }
-
-    .panel {
-      background:#020617;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:16px;
-    }
-
-    canvas {
-      max-height:300px;
-    }
-
-    table {
-      width:100%;
-      border-collapse:collapse;
-      font-size:14px;
-    }
-
-    th, td {
-      padding:12px;
+    .cardHead{
+      padding:14px 16px;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
       border-bottom:1px solid var(--line);
-      text-align:left;
     }
+    .cardHead h2{font-size:15px;margin:0;}
+    .cardHead .hint{font-size:12px;color:var(--muted);}
+    .cardBody{padding:14px 16px;}
 
-    th {
-      opacity:.7;
-      text-transform:uppercase;
-      font-size:12px;
+    .notice{
+      border:1px solid rgba(255,107,107,.35);
+      background: linear-gradient(180deg, rgba(255,107,107,.12), rgba(0,0,0,0));
+      border-radius: var(--radius2);
+      padding:14px;
+      color: rgba(255,255,255,.9);
     }
+    .notice b{display:block;margin-bottom:6px;}
+    .notice .muted{color:var(--muted); font-size:13px; margin-top:8px;}
 
-    tr:last-child td {
-      border-bottom:none;
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:10px;
     }
-
-    .map-container {
-      height:360px;
+    .kpi{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
       border-radius:14px;
-      background:radial-gradient(circle at center,#020617,#000);
-      border:1px dashed var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      opacity:.6;
+      padding:12px;
+    }
+    .kpi .label{font-size:12px;color:var(--muted);}
+    .kpi .val{font-size:18px;font-weight:800;margin-top:6px;}
+    .kpi .delta{margin-top:6px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+    .arrow{font-weight:900;}
+    .arrow.up{color:var(--ok);}
+    .arrow.down{color:var(--bad);}
+
+    .two{
+      display:grid;
+      grid-template-columns: 1.4fr .6fr;
+      gap:14px;
     }
 
-    .map-container span {
-      font-size:14px;
+    canvas{
+      width:100%;
+      height:320px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.12);
     }
 
-    .insight {
-      background:#020617;
-      border-left:4px solid #4da3ff;
-      padding:18px;
-      border-radius:12px;
+    .table{
+      width:100%;
+      border-collapse: collapse;
+      font-size:13px;
+      overflow:hidden;
+      border-radius:14px;
+      border:1px solid var(--line);
     }
+    .table th, .table td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;
+      vertical-align:top;
+    }
+    .table th{color:var(--muted);font-weight:700;background: rgba(255,255,255,.03);}
+    .table tr:last-child td{border-bottom:none;}
+    .small{font-size:12px;color:var(--muted);}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
 
-    .footer {
-      margin-top:50px;
-      opacity:.6;
-      font-size:12px;
-      text-align:center;
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr;}
+      .two{grid-template-columns: 1fr;}
+      .kpis{grid-template-columns: repeat(2, minmax(0,1fr));}
+      canvas{height:280px;}
     }
   </style>
 </head>
 
 <body>
-<div class="container">
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo" title="Adex Holdings Trust">
+          <!-- Put your real logo here (same-origin recommended) -->
+          <img id="logoImg" src="/assets/adex-logo.png" alt="Adex Logo"
+               onerror="this.style.display='none'; this.parentElement.textContent='ADEX';" />
+        </div>
+        <div>
+          <h1>Adex Holdings Trust — Report</h1>
+          <div class="sub">
+            Trend arrows · Line + bar charts · Geo demand map · QoQ/YoY deltas · Funnel modeling · Executive summary
+          </div>
+        </div>
+      </div>
 
-  <!-- HEADER -->
-  <div class="report-header">
-    <div class="report-header-left">
-      <img src="/assets/logo.png" alt="Adex Holdings Trust"/>
-      <div class="report-title">
-        <h1>Adex Holdings Trust — Executive Report</h1>
-        <p>Trend arrows · Line + bar charts · Geo demand · QoQ / YoY · Funnel · AI summary</p>
+      <div class="actions">
+        <div class="pill" id="statusPill">
+          <span class="dot" id="statusDot"></span>
+          <span><b>Status:</b> <span id="statusText">Idle</span></span>
+        </div>
+        <button class="ghost" id="refreshBtn" type="button">Refresh</button>
+        <button class="primary" id="execBtn" type="button">Generate Exec Summary</button>
+        <a class="btn" id="csvBtn" href="#" target="_blank" rel="noopener">Download CSV</a>
       </div>
     </div>
 
-    <div class="report-actions">
-      <span class="status-pill" id="reportStatus">Loading…</span>
-      <button class="btn" onclick="location.reload()">Refresh</button>
-      <button class="btn primary">Generate Exec Summary</button>
-      <button class="btn">Download CSV</button>
+    <div class="grid">
+
+      <div class="card full" id="noticeCard" style="display:none;">
+        <div class="cardHead">
+          <h2>Notice</h2>
+          <div class="hint">Access / connectivity</div>
+        </div>
+        <div class="cardBody">
+          <div class="notice" id="noticeBox"></div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <div class="cardHead">
+          <h2>KPI Summary</h2>
+          <div class="hint">Comparisons: 7d vs prior 7d, 30d vs prior 30d, QoQ, YoY (when data allows)</div>
+        </div>
+        <div class="cardBody">
+          <div class="kpis" id="kpiGrid"></div>
+          <div class="small" id="kpiFoot" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardHead">
+          <h2>Engagement Over Time</h2>
+          <div class="hint">Line: total events · Bars: views</div>
+        </div>
+        <div class="cardBody">
+          <canvas id="engagementChart" width="1200" height="420"></canvas>
+          <div class="small" id="engagementNote" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardHead">
+          <h2>Funnel Conversion</h2>
+          <div class="hint">Modeled from event types</div>
+        </div>
+        <div class="cardBody">
+          <table class="table" id="funnelTable">
+            <thead>
+              <tr><th>Stage</th><th>Count</th><th>Conv.</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="small" style="margin-top:10px;">
+            Notes: conversion is stage-to-stage. If some events are missing, counts may be low.
+          </div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <div class="cardHead">
+          <h2>Geographic Demand</h2>
+          <div class="hint">From event geo (heatmap GeoJSON)</div>
+        </div>
+        <div class="cardBody">
+          <canvas id="geoChart" width="1200" height="420"></canvas>
+          <div class="small" id="geoNote" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <div class="cardHead">
+          <h2>Executive Summary</h2>
+          <div class="hint">GPT-generated when endpoint exists; otherwise a safe local summary</div>
+        </div>
+        <div class="cardBody">
+          <div class="notice" id="execBox">
+            No report data loaded yet. Please refresh.
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- META -->
-  <div class="small">
-    Last updated: <strong><span id="reportTime"></span></strong>
-  </div>
-
-  <!-- KPI SUMMARY -->
-  <div class="section">
-    <h2>KPI Summary</h2>
-    <div class="grid" id="kpiSummary"></div>
-  </div>
-
-  <!-- ENGAGEMENT -->
-  <div class="section">
-    <h2>Engagement Over Time</h2>
-    <div class="panel">
-      <canvas id="engagementChart"></canvas>
-    </div>
-  </div>
-
-  <!-- FUNNEL -->
-  <div class="section">
-    <h2>Funnel Conversion</h2>
-    <div class="panel">
-      <table>
-        <thead>
-          <tr>
-            <th>Stage</th>
-            <th>Count</th>
-            <th>Conversion</th>
-          </tr>
-        </thead>
-        <tbody id="funnelBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- GEO DEMAND -->
-  <div class="section">
-    <h2>Geographic Demand</h2>
-    <div class="map-container">
-      <span>Geo heatmap will render here (Mapbox)</span>
-    </div>
-  </div>
-
-  <!-- EXEC SUMMARY -->
-  <div class="section">
-    <h2>Executive Summary</h2>
-    <div id="execSummary"></div>
-  </div>
-
-  <!-- FOOTER -->
-  <div class="footer">
-    Confidential · Executive Use Only · © 2025 Adex Holdings Trust
-  </div>
-
-</div>
-
-<!-- REPORT LOGIC -->
-<script src="/assets/report.js"></script>
-
+  <!-- Calls report.js -->
+  <script src="/assets/report.js" defer></script>
 </body>
 </html>
