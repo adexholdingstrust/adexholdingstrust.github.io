@@ -7,6 +7,7 @@
    - Geo demand map (canvas lat/lon plotting)
    - Funnel conversion modeling
    - GPT exec summary (optional endpoint)
+   
 ========================================================= */
 
 (function () {
