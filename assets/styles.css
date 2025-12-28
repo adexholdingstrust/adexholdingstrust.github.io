@@ -75,7 +75,7 @@ a:hover{opacity:.95}
 
 /* Hero (index) */
 .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:center;margin-top:18px}
-@media (max-width:860px){.hero{grid-template-columns:1fr}.nav{position:static}}
+@media (max-width:620px){.hero{grid-template-columns:1fr}.nav{position:static}}
 
 .card{
   border:1px solid var(--line);
@@ -616,23 +616,6 @@ body.withSidebar .container {
   max-width: 1400px;
 }
 
-/* Sidebar shell */
-.adminSidebar {
-  position: sticky;
-  top: 24px;
-  height: fit-content;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(23,26,33,.92),
-      rgba(23,26,33,.78)
-    );
-  box-shadow: var(--shadow2);
-  padding: 14px;
-}
-
 /* Sidebar title */
 .adminSidebar .sideTitle {
   font-size: 11px;
@@ -643,49 +626,69 @@ body.withSidebar .container {
   margin-bottom: 10px;
 }
 
-/* Sidebar links */
-.adminSidebar a {
+/* ===== ADMIN SIDEBAR (SINGLE SOURCE OF TRUTH) ===== */
+.adminSidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  background: #0f1115;
+  border-right: 1px solid rgba(255,255,255,.08);
+  z-index: 1000;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  font-weight: 800;
-  font-size: 14px;
-  color: var(--muted);
-  border: 1px solid transparent;
-  transition:
-    background .12s ease,
-    border-color .12s ease,
-    color .12s ease;
+  flex-direction: column;
+  transition: transform .25s ease;
 }
 
-.adminSidebar a:hover {
-  color: var(--text);
-  background: rgba(217,177,95,.10);
-  border-color: rgba(217,177,95,.35);
+/* Desktop layout */
+.container.withSidebar {
+  margin-left: 220px;
 }
 
-.adminSidebar a.active {
-  color: var(--gold);
-  background: rgba(217,177,95,.16);
-  border-color: rgba(217,177,95,.45);
+/* Mobile behavior */
+@media (max-width: 900px) {
+  .adminSidebar {
+    transform: translateX(-100%);
+  }
+  .adminSidebar.open {
+    transform: translateX(0);
+  }
+  .container.withSidebar {
+    margin-left: 0;
+  }
 }
 
 /* ---------- Mobile admin density improvements ---------- */
-
 @media (max-width: 860px) {
 
-  /* Remove hover lift on touch */
-  .card:hover,
-  .kpiCard:hover {
-    transform: none;
-  }
-
-  /* Tighten container padding */
   .container {
     padding: 16px;
   }
+
+  .card {
+    padding: 14px;
+  }
+
+  .kpiValue {
+    font-size: 28px;
+  }
+
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .table th,
+  .table td {
+    padding: 8px 10px;
+    font-size: 12.5px;
+  }
+
+  .btn {
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+}
 
   /* Reduce card padding */
   .card {
@@ -723,9 +726,6 @@ body.withSidebar .container {
   /* Hide sidebar on mobile */
   body.withSidebar .container {
     grid-template-columns: 1fr;
-  }
-  .adminSidebar {
-    display: none;
   }
 }
 
@@ -851,20 +851,7 @@ body.withSidebar .container {
     grid-template-columns: 1fr;
   }
 }
-.adminSidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  width: 220px;
-  background: #0f172a;
-  border-right: 1px solid rgba(255,255,255,.08);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  z-index: 10;
-}
+
 
 .adminSidebar a {
   color: #cbd5f5;
@@ -877,9 +864,6 @@ body.withSidebar .container {
 .adminSidebar a:hover {
   background: rgba(99,102,241,.15);
   color: #fff;
-}
-.container {
-  margin-left: 240px;
 }
 .card {
   border-left: 4px solid transparent;
@@ -923,19 +907,6 @@ body.withSidebar .container {
 /* ===============================
    ADMIN SIDEBAR
 =============================== */
-
-.adminSidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  width: 220px;
-  background: #0f1115;
-  border-right: 1px solid rgba(255,255,255,.08);
-  display: flex;
-  flex-direction: column;
-  z-index: 1000;
-}
 
 .sideBrand {
   display: flex;
@@ -991,15 +962,6 @@ body.withSidebar .container {
 }
 
 /* mobile */
-@media (max-width: 900px) {
-  .adminSidebar {
-    transform: translateX(-100%);
-    transition: transform .25s ease;
-  }
-
-  .adminSidebar.open {
-    transform: translateX(0);
-  }
 
   .sideToggle {
     display: block;
@@ -1045,10 +1007,10 @@ body.withSidebar .container {
   position: relative;
 }
 
-.propertyOverlayLink {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
+@media (max-width: 860px) {
+  .propertyOverlayLink {
+    z-index: 1;
+  }
 }
 .propertyGallery {
   margin: 16px 0 20px;
