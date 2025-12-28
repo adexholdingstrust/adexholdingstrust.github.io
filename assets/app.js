@@ -299,9 +299,7 @@ function googleStaticMap(query, maptype = "roadmap") {
 function osmStaticFallback(query) {
   // Keyless fallback (OpenStreetMap static render)
   // Note: public tile endpoints can rate-limit; this is best-effort.
-  return `https://staticmap.openstreetmap.de/staticmap.php?center=${encodeURIComponent(
-    query
-  )}&zoom=14&size=900x520&markers=${encodeURIComponent(query)},red-pushpin`;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=&layer=mapnik&marker=${encodeURIComponent(q)}`;
 }
 
 function mapEmbedSrc(query) {
