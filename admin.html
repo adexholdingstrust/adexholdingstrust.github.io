@@ -1,269 +1,156 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<meta name="robots" content="noindex,nofollow"/>
-<title>Adex Holdings Trust | Admin</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="robots" content="noindex,nofollow"/>
+  <title>Adex Holdings Trust | Admin</title>
 
-<link rel="icon" href="assets/logo.png"/>
-<link rel="stylesheet" href="assets/styles.css"/>
+  <!-- CONTEXT LOCK -->
+  <script>
+  (function () {
+    if (location.pathname.startsWith("/cdn-cgi/access")) return;
+    if (
+      location.protocol !== "https:" ||
+      location.hostname !== "adexholdings.com" ||
+      location.pathname !== "/admin.html"
+    ) {
+      document.open();
+      document.write(`
+        <!doctype html>
+        <html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial">
+        <div><h2>Access Restricted</h2><p>This account has no access.</p></div>
+        </body></html>
+      `);
+      document.close();
+      throw new Error("Blocked context");
+    }
+  })();
+  </script>
 
-<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link rel="icon" href="assets/logo.png"/>
+  <link rel="stylesheet" href="assets/styles.css"/>
 
-<style>
-/* ===============================
-   ROOT / THEMING
-================================ */
-:root {
-  --bg: #0b0f14;
-  --panel: #121822;
-  --text: #e6ebf0;
-  --muted: #9aa4af;
-  --line: rgba(255,255,255,.08);
-  --accent: #3ddc97;
-}
+  <!-- Mapbox -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 
-[data-theme="light"] {
-  --bg: #f6f8fb;
-  --panel: #ffffff;
-  --text: #1b1f24;
-  --muted: #5f6b7a;
-  --line: rgba(0,0,0,.08);
-  --accent: #0b7cff;
-}
+  <!-- ✅ ADMIN LAYOUT FIXES -->
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  overflow: hidden;
-}
+    body.admin {
+      display: flex;
+      background: #0b0f14;
+    }
 
-body.admin {
-  display: flex;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-}
+    /* Sidebar */
+    .adminSidebar {
+      width: 240px;
+      min-width: 240px;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+      z-index: 20;
+    }
 
-/* ===============================
-   SIDEBAR
-================================ */
-.adminSidebar {
-  width: 240px;
-  background: var(--panel);
-  border-right: 1px solid var(--line);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  transition: width .25s ease;
-}
+    /* Main content */
+    .container.withSidebar {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px 28px 120px;
+      box-sizing: border-box;
+    }
 
-.adminSidebar.collapsed {
-  width: 68px;
-}
+    /* Cards spacing */
+    .card {
+      margin-bottom: 28px;
+    }
 
-.sideBrand {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:16px;
-  font-weight:600;
-}
+    /* Tables should scroll horizontally if needed */
+    .table {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+    }
 
-.sideBrand img {
-  width:34px;
-  height:34px;
-}
+    /* Prevent giant text scaling */
+    h1, .h1 {
+      font-size: 28px;
+      line-height: 1.25;
+    }
 
-.sideNav {
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  padding:8px;
-}
+    /* Mobile fallback */
+    @media (max-width: 980px) {
+      body.admin {
+        flex-direction: column;
+      }
 
-.sideNav a {
-  padding:10px 12px;
-  border-radius:8px;
-  color:var(--text);
-  text-decoration:none;
-  font-size:14px;
-}
+      .adminSidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
 
-.sideNav a:hover,
-.sideNav a.active {
-  background:rgba(61,220,151,.12);
-}
-
-.sideFooter {
-  margin-top:auto;
-  padding:12px;
-  border-top:1px solid var(--line);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.sideToggle {
-  background:none;
-  border:none;
-  color:var(--text);
-  font-size:20px;
-  cursor:pointer;
-}
-
-/* ===============================
-   MAIN CONTENT
-================================ */
-.container.withSidebar {
-  flex:1;
-  height:100vh;
-  overflow-y:auto;
-  padding:20px 24px 140px;
-  box-sizing:border-box;
-}
-
-/* ===============================
-   NAV BAR
-================================ */
-.nav {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:14px;
-}
-
-.badge {
-  padding:6px 10px;
-  border-radius:999px;
-  font-size:12px;
-  border:1px solid var(--line);
-}
-
-/* ===============================
-   BREADCRUMBS
-================================ */
-.breadcrumbs {
-  font-size:13px;
-  color:var(--muted);
-  margin-bottom:12px;
-}
-
-.breadcrumbs span {
-  opacity:.6;
-}
-
-/* ===============================
-   STICKY KPI BAR
-================================ */
-.stickyKPI {
-  position:sticky;
-  top:0;
-  z-index:30;
-  background:var(--bg);
-  padding-bottom:12px;
-}
-
-/* ===============================
-   CARDS
-================================ */
-.card {
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:16px;
-  padding:18px;
-  margin-bottom:26px;
-}
-
-.h1 {
-  font-size:26px;
-  margin:6px 0 10px;
-}
-
-.kicker {
-  font-size:12px;
-  text-transform:uppercase;
-  color:var(--muted);
-}
-
-/* ===============================
-   TABLES
-================================ */
-.table {
-  width:100%;
-  border-collapse:collapse;
-  font-size:14px;
-}
-
-.table th, .table td {
-  padding:10px 8px;
-  border-bottom:1px solid var(--line);
-  white-space:nowrap;
-}
-
-/* ===============================
-   MOBILE
-================================ */
-@media (max-width: 960px) {
-  .adminSidebar {
-    position:fixed;
-    z-index:60;
-    transform:translateX(-100%);
-  }
-  .adminSidebar.open {
-    transform:translateX(0);
-  }
-}
-</style>
+      .container.withSidebar {
+        height: auto;
+        overflow: visible;
+        padding: 18px;
+      }
+    }
+  </style>
 </head>
 
-<body class="admin" data-theme="dark">
+<body class="admin">
 
 <!-- SIDEBAR -->
-<aside class="adminSidebar" id="sidebar">
+<aside class="adminSidebar">
   <div class="sideBrand">
-    <img src="assets/logo.png"/>
+    <img src="assets/logo.png" alt="Adex Holdings Trust"/>
     <span>Admin</span>
   </div>
-
   <nav class="sideNav">
     <a href="#adminKPI" class="active">Overview</a>
     <a href="#propertyRanking">Engagement</a>
     <a href="#adminHeatmap">Heatmap</a>
-    <a href="#events">Events</a>
-    <a href="#availability">Availability</a>
-    <a href="#audit">Audit</a>
+    <a href="#eventsTable">Events</a>
+    <a href="#adminList">Availability</a>
+    <a href="#auditTable">Audit</a>
   </nav>
-
-  <div class="sideFooter">
-    <button class="sideToggle" id="collapseBtn">☰</button>
-    <button class="sideToggle" id="themeBtn">🌓</button>
-  </div>
 </aside>
 
 <!-- MAIN -->
 <div class="container withSidebar">
 
-  <!-- NAV -->
+  <!-- TOP BAR -->
   <div class="nav">
-    <button class="sideToggle" id="mobileNavBtn">☰</button>
-    <div id="whoami" class="badge">Loading…</div>
-  </div>
-
-  <!-- BREADCRUMBS -->
-  <div class="breadcrumbs" id="breadcrumbs">
-    Admin <span>›</span> Overview
-  </div>
-
-  <!-- STICKY KPI -->
-  <div class="stickyKPI">
-    <div class="card" id="adminKPI">
-      <div class="kicker">Analytics</div>
-      <div class="h1">Key Performance Indicators</div>
-      <div class="small" id="kpiUpdated">Last updated: —</div>
+    <div class="brand">
+      <img src="assets/logo.png" alt="Logo"/>
+      <div>
+        <div class="title">ADEX HOLDINGS TRUST</div>
+        <div class="subtitle">Admin Portal</div>
+      </div>
     </div>
+    <div id="whoami" class="badge">Loading identity…</div>
+  </div>
+
+  <!-- KPI -->
+  <div class="card" id="adminKPI">
+    <div class="kicker">Analytics</div>
+    <div class="h1">Key Performance Indicators</div>
+  </div>
+
+  <!-- KPI DASHBOARD -->
+  <div class="card" id="kpiDashboard">
+    <div class="kicker">Analytics</div>
+    <div class="h1">Overview Dashboard</div>
+    <div class="kpiGrid"></div>
   </div>
 
   <!-- ENGAGEMENT -->
@@ -274,7 +161,7 @@ body.admin {
       <thead>
         <tr>
           <th>#</th><th>Property</th><th>Views</th>
-          <th>Severity</th><th>Score</th><th>Last Seen (PST)</th>
+          <th>High Severity</th><th>Score</th><th>Last Seen</th>
         </tr>
       </thead>
       <tbody id="engagementRankingBody"></tbody>
@@ -285,18 +172,19 @@ body.admin {
   <div class="card">
     <div class="kicker">Analytics</div>
     <div class="h1">Event Heatmap</div>
-    <div id="adminHeatmap" style="height:420px;border-radius:12px"></div>
+    <div id="adminHeatmap" style="height:420px;border-radius:12px;"></div>
   </div>
 
   <!-- EVENTS -->
   <div class="card" id="events">
     <div class="kicker">Analytics</div>
     <div class="h1">Tracked Events</div>
+    <div id="adminControls"></div>
     <table class="table" id="eventsTable">
       <thead>
         <tr>
-          <th>Time (PST)</th><th>Type</th><th>Path</th>
-          <th>Location</th><th>Severity</th><th>IP</th>
+          <th>Time</th><th>Type</th><th>Property</th>
+          <th>Location</th><th>Severity</th><th>IP / ASN</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -307,8 +195,10 @@ body.admin {
   <div class="card" id="availability">
     <div class="kicker">Admin</div>
     <div class="h1">Rental Availability</div>
-    <div id="adminList"></div>
-    <button id="saveBtn" class="btn primary">Save availability</button>
+    <div id="adminList" class="availabilityGrid"></div>
+    <div class="btnRow">
+      <button id="saveBtn" class="btn primary">Save availability</button>
+    </div>
   </div>
 
   <!-- AUDIT -->
@@ -318,7 +208,7 @@ body.admin {
     <table class="table" id="auditTable">
       <thead>
         <tr>
-          <th>Time (PST)</th><th>User</th><th>Action</th><th>Details</th>
+          <th>Time</th><th>User</th><th>Action</th><th>Details</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -330,7 +220,7 @@ body.admin {
 <script src="assets/data.js"></script>
 <script src="assets/app.js"></script>
 
-<script>
+    <script>
 /* ===============================
    UI ENHANCEMENTS (HTML ONLY)
 ================================ */
@@ -387,6 +277,5 @@ setTimeout(() => {
   if (k) k.textContent = "Last updated: " + fmtPST(new Date().toISOString());
 }, 1200);
 </script>
-
 </body>
 </html>
