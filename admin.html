@@ -366,29 +366,45 @@ function computeMetrics(days) {
 /* ===============================
    PROPERTY ENGAGEMENT RANKING
 ================================ */
-
 async function renderEngagementRanking() {
   const body = document.getElementById("engagementRankingBody");
-  if (!body || !ADMIN_EVENTS.length) return;
+  if (!body || !window.ADMIN_EVENTS || !ADMIN_EVENTS.length) return;
 
   const map = {};
 
   ADMIN_EVENTS.forEach(e => {
-    if (!e.property) return;
+    // ✅ Normalize property field
+    const property =
+      e.property ||
+      e.propertyId ||
+      e.property_id ||
+      e.data?.property ||
+      e.data?.propertyId ||
+      null;
 
-    if (!map[e.property]) {
-      map[e.property] = {
+    if (!property) return;
+
+    if (!map[property]) {
+      map[property] = {
         views: 0,
         high: 0,
         lastSeen: e.ts
       };
     }
 
-    if (e.type === "view") map[e.property].views++;
-    if (e.severity >= 4) map[e.property].high++;
+    // ✅ Normalize event type
+    const type = e.type || e.eventType;
 
-    if (new Date(e.ts) > new Date(map[e.property].lastSeen)) {
-      map[e.property].lastSeen = e.ts;
+    if (type === "view" || type === "property_view") {
+      map[property].views++;
+    }
+
+    if (Number(e.severity) >= 4) {
+      map[property].high++;
+    }
+
+    if (new Date(e.ts) > new Date(map[property].lastSeen)) {
+      map[property].lastSeen = e.ts;
     }
   });
 
@@ -402,18 +418,23 @@ async function renderEngagementRanking() {
     }))
     .sort((a, b) => b.score - a.score);
 
-  body.innerHTML = rows
-    .map((r, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${r.property}</td>
-        <td>${r.views}</td>
-        <td class="${r.high ? "warn" : ""}">${r.high}</td>
-        <td>${r.score}</td>
-        <td>${fmtPST(r.lastSeen)}</td>
-      </tr>
-    `)
-    .join("");
+  // ✅ Render
+  body.innerHTML = rows.length
+    ? rows
+        .map(
+          (r, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${r.property}</td>
+            <td>${r.views}</td>
+            <td class="${r.high ? "warn" : ""}">${r.high}</td>
+            <td>${r.score}</td>
+            <td>${fmtPST(r.lastSeen)}</td>
+          </tr>
+        `
+        )
+        .join("")
+    : `<tr><td colspan="6" style="text-align:center;opacity:.6">No property engagement data yet</td></tr>`;
 }
 
 /* ---------- Sparklines ---------- */
