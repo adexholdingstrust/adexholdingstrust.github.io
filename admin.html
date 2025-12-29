@@ -506,8 +506,6 @@ function trend(curr, prev) {
 
   bind("kpi7", m7, p7);
   bind("kpi30", m30, p30);
-
-  renderEngagementRanking();
 })();
 
 
@@ -537,6 +535,13 @@ document.querySelectorAll(".overviewTitle").forEach(t => {
     "beforeend",
     `<div class="small">Updated ${fmtPST(new Date())}</div>`
   );
+});
+  /* ---------- Engagement Ranking Bootstrap ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const body = document.getElementById("engagementRankingBody");
+  if (body) {
+    renderEngagementRanking();
+  }
 });
 </script>
 
