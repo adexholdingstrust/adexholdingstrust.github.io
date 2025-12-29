@@ -162,21 +162,25 @@
         <div class="miniKpi">
           <div class="miniLabel">Total Events</div>
           <div class="miniValue" id="kpi7Total">291</div>
+          <canvas class="sparkline"></canvas>
         </div>
 
         <div class="miniKpi">
           <div class="miniLabel">Property Views</div>
           <div class="miniValue" id="kpi7Views">46</div>
+          <canvas class="sparkline"></canvas>
         </div>
 
         <div class="miniKpi">
           <div class="miniLabel">High Severity</div>
           <div class="miniValue warn" id="kpi7High">37</div>
+          <canvas class="sparkline"></canvas>
         </div>
 
         <div class="miniKpi">
           <div class="miniLabel">Unique Properties</div>
           <div class="miniValue" id="kpi7Unique">7</div>
+          <canvas class="sparkline"></canvas>
         </div>
       </div>
     </div>
@@ -189,21 +193,25 @@
         <div class="miniKpi">
           <div class="miniLabel">Total Events</div>
           <div class="miniValue" id="kpi30Total">291</div>
+          <canvas class="sparkline"></canvas>
         </div>
 
         <div class="miniKpi">
           <div class="miniLabel">Property Views</div>
           <div class="miniValue" id="kpi30Views">46</div>
+          <canvas class="sparkline"></canvas>
         </div>
 
         <div class="miniKpi">
           <div class="miniLabel">High Severity</div>
           <div class="miniValue warn" id="kpi30High">37</div>
+          <canvas class="sparkline"></canvas>
         </div>
 
         <div class="miniKpi">
           <div class="miniLabel">Unique Properties</div>
           <div class="miniValue" id="kpi30Unique">7</div>
+          <canvas class="sparkline"></canvas>
         </div>
       </div>
     </div>
@@ -277,6 +285,109 @@
 
 <script src="assets/data.js"></script>
 <script src="assets/app.js"></script>
+
+  <script>
+/* ===============================
+   ADMIN KPI ENGINE (REAL DATA)
+================================ */
+
+const ADMIN_EVENTS = window.ADMIN_EVENTS || [];
+const now = Date.now();
+const DAY = 86400000;
+
+function inRange(ts, days) {
+  return new Date(ts).getTime() >= (now - days * DAY);
+}
+
+function buildTimeline(events, days) {
+  const buckets = {};
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now - i * DAY).toISOString().slice(0, 10);
+    buckets[d] = 0;
+  }
+  events.forEach(e => {
+    const d = e.ts.slice(0, 10);
+    if (buckets[d] !== undefined) buckets[d]++;
+  });
+  return Object.values(buckets);
+}
+
+function computeMetrics(days) {
+  const slice = ADMIN_EVENTS.filter(e => inRange(e.ts, days));
+  return {
+    total: slice.length,
+    views: slice.filter(e => e.type === "view").length,
+    high: slice.filter(e => e.severity >= 4).length,
+    unique: new Set(slice.map(e => e.property)).size,
+    timeline: buildTimeline(slice, days)
+  };
+}
+
+/* ---------- Sparklines ---------- */
+function drawSparkline(canvas, data) {
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width = canvas.offsetWidth;
+  const h = canvas.height = canvas.offsetHeight;
+  ctx.clearRect(0, 0, w, h);
+
+  const max = Math.max(...data, 1);
+  ctx.strokeStyle = "#d9b15f";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+
+  data.forEach((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - (v / max) * h;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+/* ---------- Trends ---------- */
+function trend(curr, prev) {
+  if (!prev) return "—";
+  const pct = ((curr - prev) / prev) * 100;
+  return `${pct >= 0 ? "↑" : "↓"} ${Math.abs(pct).toFixed(1)}%`;
+}
+
+/* ---------- Render ---------- */
+const m7 = computeMetrics(7);
+const m30 = computeMetrics(30);
+const p7 = computeMetrics(14);
+const p30 = computeMetrics(60);
+
+function bind(prefix, curr, prev) {
+  const map = {
+    Total: curr.total,
+    Views: curr.views,
+    High: curr.high,
+    Unique: curr.unique
+  };
+
+  Object.entries(map).forEach(([k, v]) => {
+    const el = document.getElementById(prefix + k);
+    if (!el) return;
+
+    el.textContent = v;
+    const card = el.closest(".miniKpi");
+    card.dataset.tip = `Trend: ${trend(v, prev[k.toLowerCase()])}`;
+    drawSparkline(card.querySelector("canvas"), curr.timeline);
+  });
+}
+
+bind("kpi7", m7, p7);
+bind("kpi30", m30, p30);
+
+/* ---------- Timestamp ---------- */
+document.querySelectorAll(".overviewTitle").forEach(t => {
+  t.insertAdjacentHTML(
+    "beforeend",
+    `<div class="small">Updated ${fmtPST(new Date())}</div>`
+  );
+});
+</script>
+
 
     <script>
 /* ===============================
