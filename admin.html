@@ -535,24 +535,27 @@ if (themeBtn) {
 document.body.dataset.theme = localStorage.getItem("adminTheme") || "dark";
 
 // Breadcrumbs auto-update
+// Breadcrumbs auto-update
 const bc = document.getElementById("breadcrumbs");
+const sections = document.querySelectorAll(".card");
 
-const obs = new IntersectionObserver(
-  entries => {
-    if (!bc) return;
-
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        const title = e.target.querySelector(".h1")?.textContent;
-        if (title) {
-          bc.innerHTML = `Admin <span>›</span> ${title}`;
+if (bc && sections.length) {
+  const obs = new IntersectionObserver(
+    entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const title = e.target.querySelector(".h1")?.textContent;
+          if (title) {
+            bc.innerHTML = `Admin <span>›</span> ${title}`;
+          }
         }
-      }
-    });
-  },
-  { threshold: 0.3 }
-);
-sections.forEach(s => obs.observe(s));
+      });
+    },
+    { threshold: 0.3 }
+  );
+
+  sections.forEach(s => obs.observe(s));
+}
 
 /* ===============================
    AUDIT TABLE PST FIX
