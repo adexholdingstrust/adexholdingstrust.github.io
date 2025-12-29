@@ -510,6 +510,7 @@ async function accessFetch(path, opts = {}) {
       notify("Session expired. Please refresh and sign in again.", true);
     }
 
+    // Public pages can continue even if auth redirects
     if (!location.pathname.startsWith("/admin")) {
       return res;
     }
