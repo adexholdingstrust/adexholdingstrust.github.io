@@ -1333,15 +1333,14 @@ function renderPropertiesPage(avail) {
       const overlay = card.querySelector(".propertyOverlayLink");
 if (overlay) {
  overlay.addEventListener("click", () => {
-  trackEvent("property_click", {
-    id: p.id,
-    name: p.name,
-    address: p.address,
-    city: p.city,
-    state: p.state,
-    country: p.country,
-    status: available ? "available" : "rented"
-  });
+  trackEvent("view_rental", {
+  id: p.id,
+  name: p.name,
+  state: p.state,
+  county: p.county,
+  country: p.country,
+  status: available ? "available" : "rented"
+});
 });
 
 }
@@ -1430,12 +1429,13 @@ function renderPropertyDetailPage(avail) {
 const viewKey = `property_view:${p.id}`;
 if (!sessionStorage.getItem(viewKey)) {
   sessionStorage.setItem(viewKey, "1");
-  trackEvent("view_property_detail", {
-    id: p.id,
-    name: p.name,
-    state: p.state,
-    country: p.country
-  });
+  trackEvent("view_rental", {
+  id: p.id,
+  name: p.name,
+  state: p.state,
+  county: p.county,
+  country: p.country
+});
 }
 }
 /* =======================
@@ -1566,13 +1566,14 @@ if (descEl) {
   const viewKey = `land_view:${l.id}`;
   if (!sessionStorage.getItem(viewKey)) {
     sessionStorage.setItem(viewKey, "1");
-    trackEvent("view_land_detail", {
-      id: l.id,
-      parcelId: l.parcelId,
-      county: l.county,
-      state: l.state,
-      acres: l.acres
-    });
+    trackEvent("view_land", {
+  id: l.id,
+  name: l.name,
+  county: l.county,
+  state: l.state,
+  acres: l.acres,
+  parcelId: l.parcelId
+});
   }
 }
 /* =======================
@@ -1764,13 +1765,14 @@ card.innerHTML = `
 const overlay = card.querySelector(".propertyOverlayLink");
 if (overlay) {
   overlay.addEventListener("click", () => {
-    trackEvent("land_click", {
-      id: l.id,
-      parcelId: l.parcelId,
-      county: l.county,
-      state: l.state,
-      acres: l.acres
-    });
+    trackEvent("view_land", {
+  id: l.id,
+  name: l.name,
+  county: l.county,
+  state: l.state,
+  acres: l.acres,
+  parcelId: l.parcelId
+   });
   });
 }
       const media = qs(".media", card);
