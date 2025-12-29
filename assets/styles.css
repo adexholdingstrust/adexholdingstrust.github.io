@@ -322,6 +322,13 @@ textarea{min-height:120px;resize:vertical}
   border-radius: var(--radius2);
   background: rgba(0,0,0,.18);
 }
+.propertyOverlayLink {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: pointer;
+  display: block; /* ← THIS IS THE MISSING PIECE */
+}
 
 /* Carousel buttons */
 .carousel button{
