@@ -858,7 +858,7 @@ body.withSidebar .container {
 
 /* Hide original select visually (JS still uses it) */
 .toggleWrap select {
-  position: absolute;
+  position: relative;
   inset: 0;
   opacity: 0;
   cursor: pointer;
