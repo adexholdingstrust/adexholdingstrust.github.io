@@ -318,6 +318,15 @@
 <script src="assets/data.js"></script>
 <script src="assets/app.js"></script>
 
+<script>
+function fmtPST(ts) {
+  return new Date(ts).toLocaleString("en-US", {
+    timeZone: "America/Los_Angeles"
+  });
+}
+</script>
+
+
   <script>
 /* ===============================
    ADMIN KPI ENGINE (REAL DATA)
@@ -515,11 +524,14 @@ if (mobileNavBtn && sidebar) {
 
 // Theme toggle
 const themeBtn = document.getElementById("themeBtn");
-themeBtn.onclick = () => {
-  const t = document.body.dataset.theme === "dark" ? "light" : "dark";
-  document.body.dataset.theme = t;
-  localStorage.setItem("adminTheme", t);
-};
+if (themeBtn) {
+  themeBtn.onclick = () => {
+    const t = document.body.dataset.theme === "dark" ? "light" : "dark";
+    document.body.dataset.theme = t;
+    localStorage.setItem("adminTheme", t);
+  };
+}
+
 document.body.dataset.theme = localStorage.getItem("adminTheme") || "dark";
 
 // Breadcrumbs auto-update
@@ -538,13 +550,6 @@ const obs = new IntersectionObserver(
   { threshold: .3 }
 );
 sections.forEach(s => obs.observe(s));
-
-// PST formatter
-function fmtPST(ts) {
-  return new Date(ts).toLocaleString("en-US", {
-    timeZone: "America/Los_Angeles"
-  });
-}
 
 /* ===============================
    AUDIT TABLE PST FIX
