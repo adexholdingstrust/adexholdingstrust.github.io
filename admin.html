@@ -436,13 +436,14 @@ function trend(curr, prev) {
 }
 
 /* ---------- Render ---------- */
-(function waitForEvents() {
+
+(function waitForAdminEvents() {
   if (!window.ADMIN_EVENTS || !window.ADMIN_EVENTS.length) {
-    setTimeout(waitForEvents, 200);
+    setTimeout(waitForAdminEvents, 200);
     return;
   }
 
-  ADMIN_EVENTS = window.ADMIN_EVENTS;
+  const ADMIN_EVENTS = window.ADMIN_EVENTS;
 
   const m7 = computeMetrics(7);
   const m30 = computeMetrics(30);
@@ -454,6 +455,7 @@ function trend(curr, prev) {
 
   renderEngagementRanking();
 })();
+
 
 function bind(prefix, curr, prev) {
   const map = {
@@ -474,8 +476,6 @@ function bind(prefix, curr, prev) {
   });
 }
 
-bind("kpi7", m7, p7);
-bind("kpi30", m30, p30);
 
 /* ---------- Timestamp ---------- */
 document.querySelectorAll(".overviewTitle").forEach(t => {
@@ -490,7 +490,7 @@ document.querySelectorAll(".overviewTitle").forEach(t => {
     <script>
 /* ===============================
    UI ENHANCEMENTS (HTML ONLY)
-================================ */
+================================ 
 
 // Sidebar collapse
 collapseBtn.onclick = () =>
@@ -498,7 +498,20 @@ collapseBtn.onclick = () =>
 
 // Mobile nav
 mobileNavBtn.onclick = () =>
-  sidebar.classList.toggle("open");
+  sidebar.classList.toggle("open"); */
+
+  const sidebar = document.querySelector(".adminSidebar");
+
+const collapseBtn = document.getElementById("collapseBtn");
+if (collapseBtn && sidebar) {
+  collapseBtn.onclick = () => sidebar.classList.toggle("collapsed");
+}
+
+const mobileNavBtn = document.getElementById("mobileNavBtn");
+if (mobileNavBtn && sidebar) {
+  mobileNavBtn.onclick = () => sidebar.classList.toggle("open");
+}
+
 
 // Theme toggle
 const themeBtn = document.getElementById("themeBtn");
