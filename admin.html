@@ -366,75 +366,99 @@ function computeMetrics(days) {
 /* ===============================
    PROPERTY ENGAGEMENT RANKING
 ================================ */
+
 async function renderEngagementRanking() {
   const body = document.getElementById("engagementRankingBody");
-  if (!body || !window.ADMIN_EVENTS || !ADMIN_EVENTS.length) return;
+  if (!body) return;
 
-  const map = {};
+  body.innerHTML =
+    `<tr><td colspan="6" style="opacity:.6;text-align:center">Loading engagement data…</td></tr>`;
 
-  ADMIN_EVENTS.forEach(e => {
-    // ✅ Normalize property field
-    const property =
-      e.property ||
-      e.propertyId ||
-      e.property_id ||
-      e.data?.property ||
-      e.data?.propertyId ||
-      null;
+  try {
+    const res = await fetch("/api/admin/events?limit=1000", {
+      credentials: "include"
+    });
 
-    if (!property) return;
+    if (!res.ok) throw new Error("events fetch failed");
 
-    if (!map[property]) {
-      map[property] = {
-        views: 0,
-        high: 0,
-        lastSeen: e.ts
-      };
-    }
+    const out = await res.json();
+    const events = out.events || [];
 
-    // ✅ Normalize event type
-    const type = e.type || e.eventType;
+    const map = {};
 
-    if (type === "view" || type === "property_view") {
-      map[property].views++;
-    }
+    events.forEach(e => {
+      const property =
+        e.data?.id ||
+        e.data?.name ||
+        e.data?.parcelId ||
+        e.property ||
+        null;
 
-    if (Number(e.severity) >= 4) {
-      map[property].high++;
-    }
+      if (!property) return;
 
-    if (new Date(e.ts) > new Date(map[property].lastSeen)) {
-      map[property].lastSeen = e.ts;
-    }
-  });
+      if (!map[property]) {
+        map[property] = {
+          views: 0,
+          high: 0,
+          lastSeen: e.ts
+        };
+      }
 
-  const rows = Object.entries(map)
-    .map(([property, v]) => ({
-      property,
-      views: v.views,
-      high: v.high,
-      score: v.views + v.high * 2,
-      lastSeen: v.lastSeen
-    }))
-    .sort((a, b) => b.score - a.score);
+      if (e.eventType === "view_rental" || e.eventType === "view_land") {
+        map[property].views++;
+      }
 
-  // ✅ Render
-  body.innerHTML = rows.length
-    ? rows
-        .map(
-          (r, i) => `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${r.property}</td>
-            <td>${r.views}</td>
-            <td class="${r.high ? "warn" : ""}">${r.high}</td>
-            <td>${r.score}</td>
-            <td>${fmtPST(r.lastSeen)}</td>
-          </tr>
-        `
-        )
-        .join("")
-    : `<tr><td colspan="6" style="text-align:center;opacity:.6">No property engagement data yet</td></tr>`;
+      if (Number(e.severity) >= 4) {
+        map[property].high++;
+      }
+
+      if (new Date(e.ts) > new Date(map[property].lastSeen)) {
+        map[property].lastSeen = e.ts;
+      }
+    });
+
+    const rows = Object.entries(map)
+      .map(([property, v]) => ({
+        property,
+        views: v.views,
+        high: v.high,
+        score: v.views + v.high * 2,
+        lastSeen: v.lastSeen
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    body.innerHTML = rows.length
+      ? rows
+          .map(
+            (r, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${propertyLabel(r.property)}</td>
+              <td>${r.views}</td>
+              <td class="${r.high ? "warn" : ""}">${r.high}</td>
+              <td>${r.score}</td>
+              <td>${fmtPST(r.lastSeen)}</td>
+            </tr>
+          `
+          )
+          .join("")
+      : `<tr><td colspan="6" style="opacity:.6;text-align:center">No engagement data yet</td></tr>`;
+  } catch (err) {
+    body.innerHTML =
+      `<tr><td colspan="6" style="color:#ff6b6b;text-align:center">Failed to load engagement data</td></tr>`;
+    console.error(err);
+  }
+}
+
+// Friendly label helper (HTML-only)
+function propertyLabel(val) {
+  const rental = window.ADEX_DATA?.rentals?.find(p => p.id === val);
+  if (rental) return rental.name;
+
+  const land = window.ADEX_DATA?.lands?.find(l => l.id === val);
+  if (land) return land.name;
+
+  return val;
 }
 
 /* ---------- Sparklines ---------- */
