@@ -523,19 +523,18 @@ async function accessFetch(path, opts = {}) {
 /* =======================
    EVENT TRACKING (PRIVACY-SAFE)
 ======================= */
+const payload = JSON.stringify({
+  eventType,
+  path: location.pathname,
+  referrer: document.referrer || null,
+  userAgent: navigator.userAgent,
+  language: navigator.language,
+  screen: { w: window.screen.width, h: window.screen.height },
+  tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
 
-function trackEvent(eventType, data = {}) {
-  try {
-    const payload = JSON.stringify({
-      eventType,
-      path: location.pathname,
-      referrer: document.referrer || null,
-      userAgent: navigator.userAgent,
-      language: navigator.language,
-      screen: { w: window.screen.width, h: window.screen.height },
-      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      ...data
-    });
+  // 🔑 IMPORTANT: ALL custom fields go under `data`
+  data
+});
 
     const isAdmin = document.body.classList.contains("admin");
     const url = isAdmin
