@@ -1323,15 +1323,19 @@ function renderPropertiesPage(avail) {
       const overlay = card.querySelector(".propertyOverlayLink");
 if (overlay) {
  overlay.addEventListener("click", e => {
-  if (IS_TOUCH && e.target.closest("a, button")) return;
+  if (e.target !== overlay && e.target.closest("a, button")) {
+    return;
+  }
 
-  trackEvent("property_click", {
-    id: p.id,
-    name: p.name,
-    state: p.state,
-    country: p.country
+  trackEvent("land_click", {
+    id: l.id,
+    parcelId: l.parcelId,
+    county: l.county,
+    state: l.state,
+    acres: l.acres
   });
 });
+
 }
       // media area
       const media = qs(".media", card);
