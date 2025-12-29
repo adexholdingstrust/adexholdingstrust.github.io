@@ -461,6 +461,51 @@ function propertyLabel(val) {
   return val;
 }
 
+/* ===============================
+   TRACKED EVENTS TABLE
+================================ */
+
+async function renderTrackedEvents() {
+  const table = document.querySelector("#eventsTable tbody");
+  if (!table) return;
+
+  table.innerHTML =
+    `<tr><td colspan="6" style="opacity:.6;text-align:center">Loading events…</td></tr>`;
+
+  try {
+    const res = await fetch("/api/admin/events?limit=500", {
+      credentials: "include"
+    });
+
+    if (!res.ok) throw new Error("events fetch failed");
+
+    const out = await res.json();
+    const events = out.events || [];
+
+    table.innerHTML = events.length
+      ? events
+          .map(e => `
+            <tr>
+              <td>${fmtPST(e.ts)}</td>
+              <td>${e.eventType || e.type || "—"}</td>
+              <td>${propertyLabel(e.property || e.data?.id || "—")}</td>
+              <td>${e.location || e.data?.location || "—"}</td>
+              <td class="${e.severity >= 4 ? "warn" : ""}">
+                ${e.severity ?? "—"}
+              </td>
+              <td>${e.ip || "—"} ${e.asn ? `(${e.asn})` : ""}</td>
+            </tr>
+          `)
+          .join("")
+      : `<tr><td colspan="6" style="opacity:.6;text-align:center">No events found</td></tr>`;
+  } catch (err) {
+    table.innerHTML =
+      `<tr><td colspan="6" style="color:#ff6b6b;text-align:center">Failed to load events</td></tr>`;
+    console.error(err);
+  }
+}
+
+    
 /* ---------- Sparklines ---------- */
 function drawSparkline(canvas, data) {
   if (!canvas) return;
@@ -538,11 +583,15 @@ document.querySelectorAll(".overviewTitle").forEach(t => {
 });
   /* ---------- Engagement Ranking Bootstrap ---------- */
 document.addEventListener("DOMContentLoaded", () => {
-  const body = document.getElementById("engagementRankingBody");
-  if (body) {
+  if (document.getElementById("engagementRankingBody")) {
     renderEngagementRanking();
   }
+
+  if (document.querySelector("#eventsTable tbody")) {
+    renderTrackedEvents();
+  }
 });
+
 </script>
 
 
