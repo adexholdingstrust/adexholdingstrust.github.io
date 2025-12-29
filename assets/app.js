@@ -1233,12 +1233,22 @@ function renderPropertiesPage(avail) {
 
   const controls = ensureFilterBar(host.id ? `#${host.id}` : "#propertyList", window.ADEX_DATA.rentals, "rentals");
   const applyFilter = () => {
-    const country = controls?.countrySel?.value || "ALL";
-    const items = window.ADEX_DATA.rentals.filter(p => (country === "ALL" ? true : p.country === country));
-    draw(items);
-    setupLazy();
-    wireCarousels(host);
-  };
+  const country = controls?.countrySel?.value || "ALL";
+
+  /* 🔔 ADD THIS */
+  trackEvent("properties_filter", {
+    country: country === "ALL" ? null : country
+  });
+  /* 🔔 END ADD */
+
+  const items = window.ADEX_DATA.rentals.filter(p =>
+    (country === "ALL" ? true : p.country === country)
+  );
+
+  draw(items);
+  setupLazy();
+  wireCarousels(host);
+};
 
   const draw = items => {
     host.innerHTML = "";
@@ -1322,17 +1332,15 @@ function renderPropertiesPage(avail) {
       `;
       const overlay = card.querySelector(".propertyOverlayLink");
 if (overlay) {
- overlay.addEventListener("click", e => {
-  if (e.target !== overlay && e.target.closest("a, button")) {
-    return;
-  }
-
-  trackEvent("land_click", {
-    id: l.id,
-    parcelId: l.parcelId,
-    county: l.county,
-    state: l.state,
-    acres: l.acres
+ overlay.addEventListener("click", () => {
+  trackEvent("property_click", {
+    id: p.id,
+    name: p.name,
+    address: p.address,
+    city: p.city,
+    state: p.state,
+    country: p.country,
+    status: available ? "available" : "rented"
   });
 });
 
@@ -1670,36 +1678,39 @@ if (controls && !controls.bar.querySelector(".acreHint")) {
 }
 
   const applyFilter = () => {
-    const country = controls?.countrySel?.value || "ALL";
-    const county = controls?.countySel?.value || "ALL";
-const minA =
-  controls?.acreMin?.value !== "" && controls?.acreMin?.value != null
-    ? Number(controls.acreMin.value)
-    : null;
+  const country = controls?.countrySel?.value || "ALL";
+  const county = controls?.countySel?.value || "ALL";
 
-const maxA =
-  controls?.acreMax?.value !== "" && controls?.acreMax?.value != null
-    ? Number(controls.acreMax.value)
-    : null;
+  const minA =
+    controls?.acreMin?.value !== "" && controls?.acreMin?.value != null
+      ? Number(controls.acreMin.value)
+      : null;
 
+  const maxA =
+    controls?.acreMax?.value !== "" && controls?.acreMax?.value != null
+      ? Number(controls.acreMax.value)
+      : null;
 
-const items = window.ADEX_DATA.lands.filter(l => {
-  if (country !== "ALL" && l.country !== country) return false;
-  if (county !== "ALL" && l.county !== county) return false;
+  /* 🔔 ADD THIS */
+  trackEvent("lands_filter", {
+    country: country === "ALL" ? null : country,
+    county: county === "ALL" ? null : county,
+    minA,
+    maxA
+  });
+  /* 🔔 END ADD */
 
-  // Acres filter (OPTIONAL)
-  if (minA !== null && Number.isFinite(l.acres) && l.acres < minA) return false;
-  if (maxA !== null && Number.isFinite(l.acres) && l.acres > maxA) return false;
+  const items = window.ADEX_DATA.lands.filter(l => {
+    if (country !== "ALL" && l.country !== country) return false;
+    if (county !== "ALL" && l.county !== county) return false;
+    if (minA !== null && Number.isFinite(l.acres) && l.acres < minA) return false;
+    if (maxA !== null && Number.isFinite(l.acres) && l.acres > maxA) return false;
+    return true;
+  });
 
-  return true;
-});
-
-
-    draw(items);
-
-    setupLazy();
-  };
-
+  draw(items);
+  setupLazy();
+};
   const draw = items => {
     host.innerHTML = "";
 
