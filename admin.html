@@ -41,85 +41,6 @@
   <!-- NEW: Mapbox (heatmap) -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-  <!-- =====================================================
-     MOBILE + IOS ADMIN FIXES (ADD-ONLY)
-===================================================== -->
-<style>
-/* Prevent iOS auto-zoom on inputs */
-input, textarea, select {
-  font-size: 16px;
-}
-
-/* Touch-safe hit targets */
-button, .btn, a, .sideToggle {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* Mobile sidebar behavior */
-@media (max-width: 900px) {
-  body.admin {
-    overflow-x: hidden;
-  }
-
-  .adminSidebar {
-    position: fixed;
-    top: 0;
-    left: -260px;
-    width: 260px;
-    height: 100vh;
-    z-index: 1200;
-    background: #0f1115;
-    transition: left 0.25s ease;
-  }
-
-  .adminSidebar.open {
-    left: 0;
-  }
-
-  .container.withSidebar {
-    margin-left: 0 !important;
-    padding-left: 14px;
-    padding-right: 14px;
-  }
-
-  .sideToggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-  }
-}
-
-/* KPI grid collapse */
-@media (max-width: 900px) {
-  .kpiGrid {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* Horizontal-safe tables */
-@media (max-width: 900px) {
-  table.table {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    white-space: nowrap;
-  }
-}
-
-/* Heatmap resize */
-@media (max-width: 900px) {
-  #adminHeatmap {
-    height: 300px !important;
-  }
-}
-
-/* iOS momentum scrolling */
-.card, .container {
-  -webkit-overflow-scrolling: touch;
-}
-</style>
 </head>
 
 <body class="admin">
@@ -384,30 +305,9 @@ button, .btn, a, .sideToggle {
 </div>
 
 <script src="assets/data.js"></script>
+
+
 <script src="assets/app.js"></script>
-
-<!-- =====================================================
-     MOBILE SIDEBAR TOGGLE (ADD-ONLY)
-===================================================== -->
-<script>
-(function () {
-  const toggle = document.getElementById("sideToggle");
-  const sidebar = document.getElementById("adminSidebar");
-
-  if (!toggle || !sidebar) return;
-
-  toggle.addEventListener("click", function () {
-    sidebar.classList.toggle("open");
-  });
-
-  // Auto-close on nav tap (mobile UX)
-  sidebar.querySelectorAll("a").forEach(function (link) {
-    link.addEventListener("click", function () {
-      sidebar.classList.remove("open");
-    });
-  });
-})();
-</script>
 
 </body>
 </html>
