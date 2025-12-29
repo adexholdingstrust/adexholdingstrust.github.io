@@ -15,6 +15,61 @@
     href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
     rel="stylesheet"
   />
+
+  <!-- =========================
+       MOBILE + IOS FIXES (ADD)
+  ========================== -->
+  <style>
+    /* Prevent iOS zoom-on-input */
+    input, textarea, select, button {
+      font-size: 16px;
+    }
+
+    /* Safe-area support (iPhone notch) */
+    body {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    /* Mobile nav behavior */
+    @media (max-width: 860px) {
+      .nav {
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .navlinks {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .navlinks.open {
+        display: flex;
+      }
+
+      .navToggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,.05);
+        cursor: pointer;
+      }
+    }
+
+    /* Reduce map height on mobile */
+    @media (max-width: 620px) {
+      #landMap {
+        height: 300px !important;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -33,7 +88,17 @@
       </div>
     </a>
 
-    <div class="navlinks">
+    <!-- MOBILE ADD: HAMBURGER -->
+    <button
+      class="navToggle"
+      id="navToggle"
+      aria-label="Toggle navigation"
+      style="display:none"
+    >
+      ☰
+    </button>
+
+    <div class="navlinks" id="navLinks">
       <a href="index.html">About</a>
       <a href="properties.html">Rental Properties</a>
       <a href="lands.html" class="active">Lands</a>
@@ -142,6 +207,35 @@
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
 <script src="assets/data.js"></script>
 <script src="assets/app.js"></script>
+
+<!-- =========================
+     MOBILE NAV SCRIPT (ADD)
+========================== -->
+<script>
+(function () {
+  const toggle = document.getElementById("navToggle");
+  const links = document.getElementById("navLinks");
+
+  if (!toggle || !links) return;
+
+  function update() {
+    if (window.innerWidth <= 860) {
+      toggle.style.display = "inline-flex";
+      links.classList.remove("open");
+    } else {
+      toggle.style.display = "none";
+      links.classList.remove("open");
+    }
+  }
+
+  toggle.addEventListener("click", () => {
+    links.classList.toggle("open");
+  });
+
+  window.addEventListener("resize", update);
+  update();
+})();
+</script>
 
 </body>
 </html>
