@@ -7,133 +7,44 @@
   <title>Adex Holdings Trust | Admin</title>
 
   <!-- HARD CONTEXT BLOCK -->
-  <script>
-  (function () {
-    if (location.pathname.startsWith("/cdn-cgi/access")) return;
-    if (
-      location.protocol !== "https:" ||
-      location.hostname !== "adexholdings.com" ||
-      location.pathname !== "/admin.html"
-    ) {
-      document.open();
-      document.write(`
-        <!doctype html>
-        <html><head><title>Access Restricted</title></head>
-        <body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial">
-          <div>
-            <h2>Access Restricted</h2>
-            <p>This account has no access to this page.</p>
-          </div>
-        </body></html>
-      `);
-      document.close();
-      throw new Error("Blocked context");
-    }
-  })();
-  </script>
+ <script>
+(function () {
+  // Allow Cloudflare Access internals
+  if (location.pathname.startsWith("/cdn-cgi/access")) return;
+
+  // Enforce final location only
+  if (
+    location.protocol !== "https:" ||
+    location.hostname !== "adexholdings.com" ||
+    location.pathname !== "/admin.html"
+  ) {
+    document.open();
+    document.write(`
+      <!doctype html>
+      <html><head><title>Access Restricted</title></head>
+      <body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial">
+        <div>
+          <h2>Access Restricted</h2>
+          <p>This account has no access to this page.</p>
+        </div>
+      </body></html>
+    `);
+    document.close();
+    throw new Error("Blocked context");
+  }
+})();
+</script>
 
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
 
-  <!-- Mapbox -->
+  <!-- NEW: Mapbox (heatmap) -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet"/>
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-
-  <!-- MOBILE + LAYOUT FIXES -->
-  <style>
-    input, textarea, select { font-size: 16px; }
-
-    button, .btn, a {
-      min-height: 44px;
-      min-width: 44px;
-    }
-
-    .container.withSidebar {
-      margin-left: 260px;
-      transition: margin-left 0.25s ease;
-    }
-
-    .adminSidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 260px;
-      height: 100vh;
-      background: #0f1115;
-      z-index: 1200;
-      transition: left 0.25s ease;
-    }
-
-    .mobileToggle {
-      display: none;
-    }
-
-    @media (max-width: 900px) {
-      body.admin {
-        overflow-x: hidden;
-      }
-
-      .adminSidebar {
-        left: -260px;
-      }
-
-      .adminSidebar.open {
-        left: 0;
-      }
-
-      .container.withSidebar {
-        margin-left: 0 !important;
-        padding: 14px;
-      }
-
-      body.sidebar-open {
-        overflow: hidden;
-      }
-
-      .mobileToggle {
-        display: flex;
-        position: fixed;
-        top: 14px;
-        left: 14px;
-        z-index: 1400;
-        background: #0f1115;
-        color: #fff;
-        border-radius: 8px;
-        padding: 10px 14px;
-        font-size: 22px;
-      }
-
-      .kpiGrid {
-        grid-template-columns: 1fr !important;
-      }
-
-      table.table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-      }
-
-      #adminHeatmap {
-        height: 300px !important;
-      }
-
-      .card {
-        margin-bottom: 18px;
-      }
-    }
-
-    .card, .container {
-      -webkit-overflow-scrolling: touch;
-    }
-  </style>
 </head>
 
 <body class="admin">
-
-<!-- MOBILE TOGGLE -->
-<button class="mobileToggle" id="sideToggle">☰</button>
-
-<!-- SIDEBAR -->
+<!-- ADMIN SIDEBAR -->
 <aside class="adminSidebar" id="adminSidebar">
   <div class="sideBrand">
     <img src="assets/logo.png" alt="Adex Holdings Trust"/>
@@ -141,22 +52,22 @@
   </div>
 
   <nav class="sideNav">
-    <a href="#kpiDashboard" class="active">Overview</a>
+    <a href="#adminKPI" class="active">Overview</a>
     <a href="#propertyRanking">Engagement</a>
-    <a href="#heatmap">Heatmap</a>
-    <a href="#events">Events</a>
-    <a href="#availability">Availability</a>
-    <a href="#audit">Audit</a>
+    <a href="#adminHeatmap">Heatmap</a>
+    <a href="#eventsTable">Events</a>
+    <a href="#adminList">Availability</a>
+    <a href="#auditTable">Audit</a>
   </nav>
-</aside>
 
-<!-- MAIN CONTENT -->
+  <button class="sideToggle" id="sideToggle">☰</button>
+</aside>
 <div class="container withSidebar">
 
-  <!-- TOP NAV -->
+  <!-- NAV -->
   <div class="nav">
     <div class="brand">
-      <img src="assets/logo.png" alt="Adex Holdings Trust"/>
+      <img src="assets/logo.png" alt="Adex Holdings Trust logo"/>
       <div>
         <div class="title">ADEX HOLDINGS TRUST</div>
         <div class="subtitle">Admin Portal</div>
@@ -166,73 +77,186 @@
   </div>
 
   <div id="maintenanceBanner" class="notice danger" style="display:none">
-    🚨 Maintenance Mode Active
+    🚨 Maintenance Mode Active — Admin actions are disabled.
   </div>
 
-  <!-- KPI DASHBOARD -->
-  <div class="card" id="kpiDashboard">
+  <!-- NEW: KPI SUMMARY -->
+  <div class="card" id="dashboard">
     <div class="kicker">Analytics</div>
-    <div class="h1">Overview Dashboard</div>
-    <div class="kpiGrid"></div>
+    <div class="h1">Key Performance Indicators</div>
+    <div id="adminKPI"></div>
+  </div>
+<!-- ADD: KPI DASHBOARD GRID (VISUAL UPGRADE ONLY) -->
+<div class="card" id="kpiDashboard">
+
+  <div class="kicker">Analytics</div>
+  <div class="h1">Overview Dashboard</div>
+
+  <div class="kpiGrid">
+
+    <div class="kpiCard">
+      <div class="kpiLabel">Total Events</div>
+      <div class="kpiValue" id="kpiTotalEvents">—</div>
+      <div class="kpiMeta">Last 30 days</div>
+      <canvas id="sparkTotalEvents" height="28"></canvas>
+    </div>
+
+    <div class="kpiCard">
+      <div class="kpiLabel">Property Views</div>
+      <div class="kpiValue" id="kpiPropertyViews">—</div>
+      <div class="kpiMeta">Rental + Land</div>
+      <canvas id="sparkPropertyViews" height="28"></canvas>
+    </div>
+
+    <div class="kpiCard warning">
+      <div class="kpiLabel">High Severity Events</div>
+      <div class="kpiValue" id="kpiHighSeverity">—</div>
+      <div class="kpiMeta">Severity ≥ threshold</div>
+      <canvas id="sparkHighSeverity" height="28"></canvas>
+    </div>
+
+    <div class="kpiCard">
+      <div class="kpiLabel">Unique Properties</div>
+      <div class="kpiValue" id="kpiUniqueProperties">—</div>
+      <div class="kpiMeta">Engaged listings</div>
+      <canvas id="sparkUniqueProperties" height="28"></canvas>
+    </div>
+
   </div>
 
-  <!-- ENGAGEMENT -->
-  <div class="card" id="propertyRanking">
-    <div class="kicker">Analytics</div>
-    <div class="h1">Property Engagement Ranking</div>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Property</th>
-          <th>Views</th>
-          <th>High Severity</th>
-          <th>Score</th>
-          <th>Last Seen</th>
-        </tr>
-      </thead>
-      <tbody id="engagementRankingBody"></tbody>
-    </table>
+  <div class="kpiFooter">
+    📩 Last alert sent:
+    <strong id="lastAlertTimestamp">Never</strong>
   </div>
 
-  <!-- HEATMAP -->
+</div>
+
+<!-- ADD: PROPERTY ENGAGEMENT RANKING -->
+<div class="card" id="propertyRanking">
+
+  <div class="kicker">Analytics</div>
+  <div class="h1">Property Engagement Ranking</div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Property</th>
+        <th>Views</th>
+        <th>High Severity</th>
+        <th>Engagement Score</th>
+        <th>Last Seen</th>
+      </tr>
+    </thead>
+    <tbody id="engagementRankingBody">
+      <!-- populated by app.js -->
+    </tbody>
+  </table>
+
+</div>
+  <!-- NEW: EVENT HEATMAP -->
   <div class="card" id="heatmap">
     <div class="kicker">Analytics</div>
     <div class="h1">Event Heatmap</div>
-    <div id="adminHeatmap" style="height:420px;border-radius:12px;"></div>
+    <div id="adminHeatmap" style="height:420px;border-radius:12px;overflow:hidden;"></div>
   </div>
+<!-- NEW: EVENT REPLAY TIMELINE -->
+<div class="card" id="eventReplayCard">
+  <div class="kicker">Analytics</div>
+  <div class="h1">Event Replay</div>
 
-  <!-- EVENTS -->
-  <div class="card" id="events">
-    <div class="kicker">Analytics</div>
-    <div class="h1">Tracked Events</div>
-    <div id="adminControls"></div>
-    <table class="table" id="eventsTable">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>Type</th>
-          <th>Property</th>
-          <th>Location</th>
-          <th>Severity</th>
-          <th>IP / ASN</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <div id="eventReplay" class="eventReplay">
+    <!-- populated by app.js -->
   </div>
+</div>
+  <!-- NEW: SEVERITY TUNING DASHBOARD -->
+  <div class="card">
+    <div class="kicker">Alerts</div>
+    <div class="h1">Severity Tuning</div>
 
-  <!-- AVAILABILITY -->
-  <div class="card" id="availability">
-    <div class="kicker">Admin</div>
-    <div class="h1">Rental Availability</div>
-    <div id="adminList" class="availabilityGrid"></div>
-    <div class="btnRow">
-      <button id="saveBtn" class="btn primary">Save availability</button>
+    <div class="form">
+      <label>
+        Minimum severity to trigger alerts
+        <select id="severityThreshold">
+          <option value="1">All events</option>
+          <option value="3">Severity ≥ 3</option>
+          <option value="4">Severity ≥ 4</option>
+          <option value="5">Severity ≥ 5 (High value only)</option>
+        </select>
+      </label>
+
+      <div class="small" style="opacity:.75;margin-top:6px;">
+        This controls email alerts and high-priority monitoring.
+      </div>
+
+      <div class="btnRow" style="margin-top:10px;">
+        <button id="saveSeverityBtn" class="btn primary">Save severity threshold</button>
+      </div>
     </div>
   </div>
 
-  <!-- AUDIT -->
+  <!-- EXISTING: AVAILABILITY (UNCHANGED) -->
+ <div class="card compactAvailability" id="availability">
+  <div class="kicker">Admin</div>
+  <div class="h1">Rental Availability</div>
+  <div class="card" id="propertyEditor">
+  <div class="kicker">Admin</div>
+  <div class="h1">Property Content Editor</div>
+
+  <div class="form">
+    <label>
+      Property
+      <select id="editorPropertySelect"></select>
+    </label>
+
+    <label>
+      Summary (short description)
+      <textarea id="editorSummary"></textarea>
+    </label>
+
+    <label>
+      Details (full description)
+      <textarea id="editorDetails"></textarea>
+    </label>
+
+    <label>
+      Photo URLs (one per line)
+      <textarea id="editorPhotos"></textarea>
+    </label>
+
+    <label>
+      Video Type
+      <select id="editorVideoType">
+        <option value="">None</option>
+        <option value="youtube">YouTube</option>
+        <option value="vimeo">Vimeo</option>
+        <option value="mp4">Direct MP4</option>
+      </select>
+    </label>
+
+    <label>
+      Video URL
+      <input id="editorVideoUrl" placeholder="https://…" />
+    </label>
+
+    <div class="btnRow">
+      <button id="savePropertyContent" class="btn primary">
+        Save Property Content
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- NEW: compact grid wrapper -->
+  <div id="adminList" class="availabilityGrid"></div>
+
+  <div class="btnRow">
+    <button id="saveBtn" class="btn primary">Save availability</button>
+  </div>
+</div>
+
+
+  <!-- EXISTING: AUDIT (UNCHANGED) -->
   <div class="card" id="audit">
     <div class="kicker">Audit</div>
     <div class="h1">Admin Activity</div>
@@ -248,31 +272,42 @@
       <tbody></tbody>
     </table>
   </div>
+  <!-- EVENT REPLAY TIMELINE -->
+<div class="card" id="eventReplay">
+  <div class="kicker">Analytics</div>
+  <div class="h1">Event Replay Timeline</div>
+  <div id="replayTimeline" class="replayTimeline"></div>
+</div>
+
+  <!-- EXISTING + EXTENDED: EVENTS -->
+  <div class="card" id="events">
+    <div class="kicker">Analytics</div>
+    <div class="h1">Tracked Events</div>
+
+    <!-- NEW: filter + CSV controls injected by /admin/ui.js -->
+    <div id="adminControls"></div>
+
+    <table class="table" id="eventsTable">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Type</th>
+          <th>Property</th>
+          <th>Location</th>
+          <th>Severity</th>
+          <th>IP / ASN</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
 </div>
 
 <script src="assets/data.js"></script>
+
+
 <script src="assets/app.js"></script>
-
-<!-- SIDEBAR TOGGLE -->
-<script>
-(function () {
-  const toggle = document.getElementById("sideToggle");
-  const sidebar = document.getElementById("adminSidebar");
-
-  toggle.addEventListener("click", () => {
-    sidebar.classList.toggle("open");
-    document.body.classList.toggle("sidebar-open");
-  });
-
-  sidebar.querySelectorAll("a").forEach(link => {
-    link.addEventListener("click", () => {
-      sidebar.classList.remove("open");
-      document.body.classList.remove("sidebar-open");
-    });
-  });
-})();
-</script>
 
 </body>
 </html>
