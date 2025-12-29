@@ -1168,3 +1168,87 @@ body.withSidebar .container {
     grid-template-columns: 1fr;
   }
 }
+/* ===============================
+   ADMIN KPI ENHANCEMENTS
+=============================== */
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 900px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overviewCard {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  background:
+    radial-gradient(600px 240px at 20% -10%, rgba(217,177,95,.10), transparent 55%),
+    rgba(23,26,33,.82);
+  box-shadow: var(--shadow2);
+}
+
+.overviewTitle {
+  font-size: 16px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.miniKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.miniKpi {
+  position: relative;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(0,0,0,.18);
+}
+
+.miniLabel {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.miniValue {
+  font-size: 26px;
+  font-weight: 950;
+}
+
+.miniValue.warn {
+  color: var(--bad);
+}
+
+.sparkline {
+  width: 100%;
+  height: 28px;
+  margin-top: 6px;
+  opacity: .85;
+}
+
+/* Hover drill-down */
+.miniKpi:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 110%;
+  left: 0;
+  background: #0b0f14;
+  color: #eef2ff;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: var(--shadow2);
+  z-index: 50;
+}
