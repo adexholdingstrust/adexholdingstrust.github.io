@@ -97,6 +97,40 @@ a:hover{opacity:.95}
 }
 .heroLogo img{width:min(320px,100%);height:auto}
 
+/* =========================================================
+   NEW HERO — MATCH IMAGE HEIGHT TO CONTENT CARD (OVERRIDE)
+========================================================= */
+
+/* Force both columns to stretch equally */
+.hero {
+  align-items: stretch;
+}
+
+/* Make right side stretch fully */
+.heroLogo {
+  justify-content: space-between;
+  min-height: unset;        /* remove height cap */
+  padding: 24px;
+}
+
+/* Make logo fill the card height */
+.heroLogo img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;      /* use cover if you prefer */
+}
+
+/* Keep caption at bottom */
+.heroLogo .small {
+  margin-top: 16px;
+  text-align: center;
+}
+
+/* =========================================================
+   END HERO — MATCH IMAGE HEIGHT TO CONTENT CARD (OVERRIDE)
+========================================================= */
+
 /* Grid used by rentals + lands */
 .grid{
   display:grid;
