@@ -6,6 +6,7 @@
   <title>Adex Holdings Trust | Privacy & Legal</title>
   <link rel="icon" href="assets/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
+
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -25,11 +26,59 @@
   ]
 }
 </script>
-  
+
+  <!-- =========================
+       MOBILE + IOS FIXES (ADD)
+  ========================== -->
+  <style>
+    /* Prevent iOS zoom-on-input */
+    input, textarea, select, button {
+      font-size: 16px;
+    }
+
+    /* Safe-area inset (iPhone notch) */
+    body {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    /* Mobile nav behavior */
+    @media (max-width: 860px) {
+      .nav {
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .navlinks {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .navlinks.open {
+        display: flex;
+      }
+
+      .navToggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,.05);
+        cursor: pointer;
+      }
+    }
+  </style>
 </head>
+
 <body>
   <div class="container">
-    
+
     <div class="nav">
       <a class="brand" href="index.html" aria-label="Home">
         <img src="assets/logo.png" alt="Adex Holdings Trust logo" />
@@ -38,60 +87,160 @@
           <div class="subtitle">Residential rentals & land holdings</div>
         </div>
       </a>
-      <div class="navlinks">
-        <a href="index.html" >About</a>
-        <a href="properties.html" >Rental Properties</a>
-        <a href="lands.html" >Lands</a>
-        <a href="tenant-portal.html" >Tenant Portal</a>
-        <a href="tenant-faq.html" >Tenant FAQ</a>
-        <a href="careers-vendors.html" >Careers / Vendors</a>
-        <a href="privacy.html" style='color:var(--text);border-color:var(--line)'>Privacy & Legal</a>
+
+      <!-- MOBILE ADD: HAMBURGER -->
+      <button
+        class="navToggle"
+        id="navToggle"
+        aria-label="Toggle navigation"
+        style="display:none"
+      >
+        ☰
+      </button>
+
+      <div class="navlinks" id="navLinks">
+        <a href="index.html">About</a>
+        <a href="properties.html">Rental Properties</a>
+        <a href="lands.html">Lands</a>
+        <a href="tenant-portal.html">Tenant Portal</a>
+        <a href="tenant-faq.html">Tenant FAQ</a>
+        <a href="careers-vendors.html">Careers / Vendors</a>
+        <a href="privacy.html" style="color:var(--text);border-color:var(--line)">
+          Privacy & Legal
+        </a>
       </div>
     </div>
-    
-    
-  <div class="card" style="margin-top:18px">
-    <div class="kicker">Privacy & Legal</div>
-    <div class="h1" style="font-size:30px">Privacy policy, terms, and disclaimers</div>
-    <div class="notice">Contact: <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a> • <a href="tel:+19494154633">949-415-4633</a></div>
-    <div class="sectionTitle" id="privacy">Privacy policy</div>
-    <ul class="meta">
-      <li><b>Tenant Portal submissions:</b> Your form submission (name, email, phone, property, message) is sent via Formspree and used only to respond.</li>
-      <li><b>Optional security logging:</b> If enabled, our logging endpoint may store visit metadata and IP (as seen by Cloudflare) for abuse prevention.</li>
-      <li><b>Retention:</b> Recommended 30–90 days unless needed for investigation.</li>
-    </ul>
-    <div class="sectionTitle" id="terms">Terms of use</div>
-    <ul class="meta">
-      <li>This website is provided “as-is” for informational purposes.</li>
-      <li>You agree not to misuse the site (spam, unauthorized access attempts, interference).</li>
-    </ul>
-    <div class="sectionTitle" id="disclaimer">Disclaimers</div>
-    <ul class="meta">
-      <li><b>No legal/financial advice:</b> Nothing here is legal, tax, or financial advice.</li>
-      <li><b>Availability:</b> Availability may change. A listing is not an offer until confirmed by Adex Holdings Trust.</li>
-      <li><b>Third-party links:</b> Maps and county parcel PDFs are provided for convenience; we do not control external content.</li>
-    </ul>
-  </div>
 
-    
+    <div class="card" style="margin-top:18px">
+      <div class="kicker">Privacy & Legal</div>
+      <div class="h1" style="font-size:30px">
+        Privacy policy, terms, and disclaimers
+      </div>
+
+      <div class="notice">
+        Contact:
+        <a href="mailto:tenantservices@adexholdings.com">
+          tenantservices@adexholdings.com
+        </a>
+        •
+        <a href="tel:+19494154633">949-415-4633</a>
+      </div>
+
+      <div class="sectionTitle" id="privacy">Privacy policy</div>
+      <ul class="meta">
+        <li>
+          <b>Tenant Portal submissions:</b>
+          Your form submission (name, email, phone, property, message) is sent via
+          Formspree and used only to respond.
+        </li>
+        <li>
+          <b>Optional security logging:</b>
+          If enabled, our logging endpoint may store visit metadata and IP (as seen
+          by Cloudflare) for abuse prevention.
+        </li>
+        <li>
+          <b>Retention:</b>
+          Recommended 30–90 days unless needed for investigation.
+        </li>
+      </ul>
+
+      <div class="sectionTitle" id="terms">Terms of use</div>
+      <ul class="meta">
+        <li>This website is provided “as-is” for informational purposes.</li>
+        <li>
+          You agree not to misuse the site (spam, unauthorized access attempts,
+          interference).
+        </li>
+      </ul>
+
+      <div class="sectionTitle" id="disclaimer">Disclaimers</div>
+      <ul class="meta">
+        <li>
+          <b>No legal/financial advice:</b>
+          Nothing here is legal, tax, or financial advice.
+        </li>
+        <li>
+          <b>Availability:</b>
+          Availability may change. A listing is not an offer until confirmed by
+          Adex Holdings Trust.
+        </li>
+        <li>
+          <b>Third-party links:</b>
+          Maps and county parcel PDFs are provided for convenience; we do not
+          control external content.
+        </li>
+      </ul>
+    </div>
+
     <div class="footer">
       <div class="hr"></div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between">
         <div>
           <div><b>Adex Holdings Trust</b></div>
-          <div class="small">Email: <a href="mailto:tenantservices@adexholdings.com">tenantservices@adexholdings.com</a> • Phone: <a href="tel:+19494154633">949-415-4633</a></div>
+          <div class="small">
+            Email:
+            <a href="mailto:tenantservices@adexholdings.com">
+              tenantservices@adexholdings.com
+            </a>
+            • Phone:
+            <a href="tel:+19494154633">949-415-4633</a>
+          </div>
           <div class="small">© 2025 Adex Holdings Trust. All rights reserved.</div>
         </div>
+
         <div class="small" style="text-align:right;max-width:520px">
-          <div><a href="privacy.html">Privacy</a> • <a href="privacy.html#terms">Terms</a> • <a href="privacy.html#disclaimer">Disclaimer</a></div>
-          <div>Information on this site is provided for general informational purposes and does not constitute legal or financial advice.</div>
+          <div>
+            <a href="privacy.html">Privacy</a> •
+            <a href="privacy.html#terms">Terms</a> •
+            <a href="privacy.html#disclaimer">Disclaimer</a>
+          </div>
+          <div>
+            Information on this site is provided for general informational purposes
+            and does not constitute legal or financial advice.
+          </div>
         </div>
       </div>
     </div>
-    
+
   </div>
-  <div id="toast" class="notice" style="display:none;position:fixed;right:18px;bottom:18px;max-width:520px"></div>
+
+  <div
+    id="toast"
+    class="notice"
+    style="display:none;position:fixed;right:18px;bottom:18px;max-width:520px"
+  ></div>
+
   <script src="assets/data.js"></script>
   <script src="assets/app.js"></script>
+
+  <!-- =========================
+       MOBILE NAV SCRIPT (ADD)
+  ========================== -->
+  <script>
+  (function () {
+    const toggle = document.getElementById("navToggle");
+    const links = document.getElementById("navLinks");
+
+    if (!toggle || !links) return;
+
+    function update() {
+      if (window.innerWidth <= 860) {
+        toggle.style.display = "inline-flex";
+        links.classList.remove("open");
+      } else {
+        toggle.style.display = "none";
+        links.classList.remove("open");
+      }
+    }
+
+    toggle.addEventListener("click", () => {
+      links.classList.toggle("open");
+    });
+
+    window.addEventListener("resize", update);
+    update();
+  })();
+  </script>
+
 </body>
 </html>
