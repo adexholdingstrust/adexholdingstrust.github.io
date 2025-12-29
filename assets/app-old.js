@@ -1319,7 +1319,8 @@ function renderPropertiesPage(avail) {
       const overlay = card.querySelector(".propertyOverlayLink");
 if (overlay) {
  overlay.addEventListener("click", e => {
-  if (IS_TOUCH && e.target.closest("a, button")) return;
+  // Allow inner links to work
+  if (e.target !== overlay && e.target.closest("a, button")) return;
 
   trackEvent("property_click", {
     id: p.id,
@@ -1328,6 +1329,7 @@ if (overlay) {
     country: p.country
   });
 });
+
 }
       // media area
       const media = qs(".media", card);
