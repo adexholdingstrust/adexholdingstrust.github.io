@@ -505,15 +505,27 @@ async function accessFetch(path, opts = {}) {
     ...fetchOpts
   });
 
-if (accessRedirected(res)) {
-  if (!silent && location.pathname.startsWith("/admin")) {
-    notify("Session expired. Please refresh and sign in again.", true);
+async function accessFetch(path, opts = {}) {
+  const { silent = false, ...fetchOpts } = opts;
+
+  const res = await fetch(`${CFG.WORKER_BASE}${path}`, {
+    credentials: "include",
+    redirect: "manual",
+    ...fetchOpts
+  });
+
+  if (accessRedirected(res)) {
+    if (!silent && location.pathname.startsWith("/admin")) {
+      notify("Session expired. Please refresh and sign in again.", true);
+    }
+
+    if (!location.pathname.startsWith("/admin")) {
+      return res; // allow public pages to continue
+    }
+
+    throw new Error("Access redirect");
   }
-  if (!location.pathname.startsWith("/admin")) {
-  return res; // allow public pages to continue
-}
-throw new Error("Access redirect");
-}
+
   return res;
 }
 /* =======================
