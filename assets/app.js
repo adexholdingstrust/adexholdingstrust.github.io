@@ -1,11 +1,11 @@
 /* =========================================================
-   ADEX HOLDINGS TRUST — app.js (CLOUDFLARE ACCESS SAFE)
-   FINAL + PUBLIC PAGES PATCH (UPGRADED)
+   ADEX HOLDINGS TRUST — app.js
 ========================================================= */
+"use strict";
+
 const CFG = {
   WORKER_BASE: "/api",
 
-  // injected at runtime from Cloudflare
   MAPBOX_TOKEN: null,
   GOOGLE_MAPS_KEY: null,
   GOOGLE_PLACES_KEY: null,
