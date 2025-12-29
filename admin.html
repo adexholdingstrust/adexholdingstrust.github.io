@@ -116,7 +116,7 @@
     <span>Admin</span>
   </div>
   <nav class="sideNav">
-    <a href="#adminKPI" class="active">Overview</a>
+    <a href="#kpiDashboard" class="active">Overview</a>
     <a href="#propertyRanking">Engagement</a>
     <a href="#adminHeatmap">Heatmap</a>
     <a href="#eventsTable">Events</a>
@@ -230,7 +230,7 @@
           <th>High Severity</th><th>Score</th><th>Last Seen</th>
         </tr>
       </thead>
-      <tbody id="engagementRankingBody"></tbody>
+      <tbody id="engagementRanking"></tbody>
     </table>
   </div>
 
@@ -261,6 +261,38 @@
   <div class="card" id="availability">
     <div class="kicker">Admin</div>
     <div class="h1">Rental Availability</div>
+    <!-- PROPERTY CONTENT EDITOR -->
+<div class="card" id="propertyEditor">
+  <div class="kicker">Admin</div>
+  <div class="h1">Edit Property Content</div>
+
+  <select id="editorPropertySelect"></select>
+
+  <label>Description / Summary</label>
+  <textarea id="editorSummary" rows="3"></textarea>
+
+  <label>Details</label>
+  <textarea id="editorDetails" rows="5"></textarea>
+
+  <label>Photo URLs (one per line)</label>
+  <textarea id="editorPhotos" rows="4"></textarea>
+
+  <label>Video Type</label>
+  <select id="editorVideoType">
+    <option value="">None</option>
+    <option value="youtube">YouTube</option>
+    <option value="vimeo">Vimeo</option>
+    <option value="mp4">MP4</option>
+  </select>
+
+  <label>Video URL</label>
+  <input id="editorVideoUrl" type="text"/>
+
+  <button id="savePropertyContent" class="btn primary">
+    Save Property Content
+  </button>
+</div>
+
     <div id="adminList" class="availabilityGrid"></div>
     <div class="btnRow">
       <button id="saveBtn" class="btn primary">Save availability</button>
