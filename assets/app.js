@@ -523,26 +523,30 @@ async function accessFetch(path, opts = {}) {
 /* =======================
    EVENT TRACKING (PRIVACY-SAFE)
 ======================= */
-const payload = JSON.stringify({
-  eventType,
-  path: location.pathname,
-  referrer: document.referrer || null,
-  userAgent: navigator.userAgent,
-  language: navigator.language,
-  screen: { w: window.screen.width, h: window.screen.height },
-  tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+function trackEvent(eventType, data = {}) {
+  try {
+    const payload = JSON.stringify({
+      eventType,
+      path: location.pathname,
+      referrer: document.referrer || null,
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      screen: {
+        w: window.screen.width,
+        h: window.screen.height
+      },
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
 
-  // 🔑 IMPORTANT: ALL custom fields go under `data`
-  data
-});
+      // ALL custom fields must be inside `data`
+      data
+    });
 
     const isAdmin = document.body.classList.contains("admin");
     const url = isAdmin
-        ? `${CFG.WORKER_BASE}/track`
-        : `${CFG.WORKER_BASE}/track-public`;
+      ? `${CFG.WORKER_BASE}/track`
+      : `${CFG.WORKER_BASE}/track-public`;
 
-
-    // Reliable for navigation + unload
+    // Best for unload/navigation
     if (navigator.sendBeacon) {
       navigator.sendBeacon(
         url,
