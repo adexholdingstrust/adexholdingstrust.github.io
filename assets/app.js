@@ -2119,8 +2119,6 @@ function initAdminSidebar() {
    INIT
 ======================= */
 document.addEventListener("DOMContentLoaded", async () => {
-
-  /* ---------- LOAD CONFIG ---------- */
   const secrets = await loadAdexConfig();
 
   CFG.MAPBOX_TOKEN = secrets.MAPBOX_TOKEN;
@@ -2131,14 +2129,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
   }
 
-  /* ---------- AUTH + AVAILABILITY ---------- */
   const who = await loadWhoAmI();
   const availability = await fetchAvailability();
-
-  // Mapbox global
-  if (CFG.MAPBOX_TOKEN && window.mapboxgl) {
-    mapboxgl.accessToken = CFG.MAPBOX_TOKEN;
-  }
 
   const onAdminPage =
     location.pathname === "/admin.html" ||
@@ -2148,7 +2140,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (who?.isAdmin === true && onAdminPage) {
     document.body.classList.add("admin");
-
     initAdminSidebar();
     loadAdminUIHelpers();
 
@@ -2168,11 +2159,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     trackEvent("page_view", { auth: !!who });
   }
 
-  // Render public rentals ONLY on public pages
-if (!document.body.classList.contains("admin")) {
-  renderRentals(availability);
-}
-  if (who?.isAdmin === true) renderAdmin(availability);
+  if (!document.body.classList.contains("admin")) {
+    renderRentals(availability);
+  }
+
+  if (who?.isAdmin === true) {
+    renderAdmin(availability);
+  }
 
   renderPropertyDetailPage(availability);
   renderLandDetailPage();
@@ -2180,12 +2173,11 @@ if (!document.body.classList.contains("admin")) {
   renderLandsPage();
   initTenantPortalPropertyDropdown();
 
-   try {
-     await initLandsInteractiveMap();
-      } catch (err) {
-     console.warn("Interactive lands map failed:", err);
-      }
-
+  try {
+    await initLandsInteractiveMap();
+  } catch (err) {
+    console.warn("Interactive lands map failed:", err);
+  }
 
   setupLazy();
   resizeEmbeds();
