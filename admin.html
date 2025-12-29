@@ -151,7 +151,6 @@
 <div class="card" id="kpiDashboard">
   <div class="kicker">Analytics</div>
   <div class="h1">Overview Dashboard</div>
-
   <!-- 7 / 30 DAY WRAPPER -->
   <div class="overviewGrid">
 
@@ -369,7 +368,57 @@ function computeMetrics(days) {
     timeline: buildTimeline(slice, days)
   };
 }
+<script>
+/* ===============================
+   PROPERTY ENGAGEMENT RANKING
+================================ */
 
+const engagementBody = document.getElementById("engagementRankingBody");
+
+if (engagementBody && window.ADMIN_EVENTS) {
+  const map = {};
+
+  ADMIN_EVENTS.forEach(e => {
+    if (!map[e.property]) {
+      map[e.property] = {
+        views: 0,
+        high: 0,
+        lastSeen: e.ts
+      };
+    }
+
+    if (e.type === "view") map[e.property].views++;
+    if (e.severity >= 4) map[e.property].high++;
+
+    if (new Date(e.ts) > new Date(map[e.property].lastSeen)) {
+      map[e.property].lastSeen = e.ts;
+    }
+  });
+
+  const rows = Object.entries(map)
+    .map(([property, v]) => ({
+      property,
+      views: v.views,
+      high: v.high,
+      score: v.views + v.high * 2,
+      lastSeen: v.lastSeen
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  engagementBody.innerHTML = rows
+    .map((r, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${r.property}</td>
+        <td>${r.views}</td>
+        <td class="${r.high ? "warn" : ""}">${r.high}</td>
+        <td>${r.score}</td>
+        <td>${fmtPST(r.lastSeen)}</td>
+      </tr>
+    `)
+    .join("");
+}
+</script>
 /* ---------- Sparklines ---------- */
 function drawSparkline(canvas, data) {
   if (!canvas) return;
@@ -488,6 +537,29 @@ function fmtPST(ts) {
     timeZone: "America/Los_Angeles"
   });
 }
+<script>
+/* ===============================
+   AUDIT TABLE PST FIX
+================================ */
+
+const auditTable = document.querySelector("#auditTable tbody");
+
+if (auditTable) {
+  const auditObserver = new MutationObserver(() => {
+    auditTable.querySelectorAll("td").forEach(td => {
+      const t = td.textContent?.trim();
+      if (t && t.includes("T") && t.endsWith("Z")) {
+        td.textContent = fmtPST(t);
+      }
+    });
+  });
+
+  auditObserver.observe(auditTable, {
+    childList: true,
+    subtree: true
+  });
+}
+</script>
 
 // Auto-convert timestamps
 setTimeout(() => {
