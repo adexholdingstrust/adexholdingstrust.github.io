@@ -243,6 +243,24 @@ textarea{min-height:120px;resize:vertical}
   display:block;
   background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.10));
 }
+/* =========================================================
+   CLICKABLE PROPERTY / LAND CARD OVERLAY (REQUIRED)
+========================================================= */
+
+.propertyOverlayLink {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: pointer;
+}
+
+/* Ensure inner interactive elements stay clickable */
+.propertyCard .body a,
+.propertyCard button,
+.propertyCard iframe {
+  position: relative;
+  z-index: 3;
+}
 
 /* If image fails completely, keep layout clean */
 .propertyCard .media img[alt]{
