@@ -230,7 +230,7 @@
           <th>High Severity</th><th>Score</th><th>Last Seen</th>
         </tr>
       </thead>
-      <tbody id="engagementRanking"></tbody>
+      <tbody id="engagementRankingBody"></tbody>
     </table>
   </div>
 
@@ -373,12 +373,15 @@ function computeMetrics(days) {
    PROPERTY ENGAGEMENT RANKING
 ================================ */
 
-const engagementBody = document.getElementById("engagementRankingBody");
+async function renderEngagementRanking() {
+  const body = document.getElementById("engagementRankingBody");
+  if (!body || !ADMIN_EVENTS.length) return;
 
-if (engagementBody && window.ADMIN_EVENTS) {
   const map = {};
 
   ADMIN_EVENTS.forEach(e => {
+    if (!e.property) return;
+
     if (!map[e.property]) {
       map[e.property] = {
         views: 0,
@@ -405,7 +408,7 @@ if (engagementBody && window.ADMIN_EVENTS) {
     }))
     .sort((a, b) => b.score - a.score);
 
-  engagementBody.innerHTML = rows
+  body.innerHTML = rows
     .map((r, i) => `
       <tr>
         <td>${i + 1}</td>
@@ -419,6 +422,7 @@ if (engagementBody && window.ADMIN_EVENTS) {
     .join("");
 }
 </script>
+
 /* ---------- Sparklines ---------- */
 function drawSparkline(canvas, data) {
   if (!canvas) return;
@@ -458,6 +462,8 @@ function trend(curr, prev) {
 
   bind("kpi7", m7, p7);
   bind("kpi30", m30, p30);
+
+  renderEngagementRanking(); // 👈 ADD THIS LINE
 })();
 
 function bind(prefix, curr, prev) {
