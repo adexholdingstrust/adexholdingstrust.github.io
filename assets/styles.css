@@ -1252,3 +1252,29 @@ body.withSidebar .container {
   box-shadow: var(--shadow2);
   z-index: 50;
 }
+/* FORCE PROPER TABLE LAYOUT */
+.table table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  display: table-header-group;
+}
+
+.table tbody {
+  display: table-row-group;
+}
+
+.table tr {
+  display: table-row;
+}
+
+.table th,
+.table td {
+  display: table-cell;
+  padding: 10px 12px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
