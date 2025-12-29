@@ -535,19 +535,22 @@ if (themeBtn) {
 document.body.dataset.theme = localStorage.getItem("adminTheme") || "dark";
 
 // Breadcrumbs auto-update
-const sections = [...document.querySelectorAll(".card")];
 const bc = document.getElementById("breadcrumbs");
 
 const obs = new IntersectionObserver(
   entries => {
+    if (!bc) return;
+
     entries.forEach(e => {
       if (e.isIntersecting) {
         const title = e.target.querySelector(".h1")?.textContent;
-        if (title) bc.innerHTML = `Admin <span>›</span> ${title}`;
+        if (title) {
+          bc.innerHTML = `Admin <span>›</span> ${title}`;
+        }
       }
     });
   },
-  { threshold: .3 }
+  { threshold: 0.3 }
 );
 sections.forEach(s => obs.observe(s));
 
