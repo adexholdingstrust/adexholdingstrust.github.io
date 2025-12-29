@@ -511,22 +511,7 @@ async function accessFetch(path, opts = {}) {
     }
 
     if (!location.pathname.startsWith("/admin")) {
-      return res; // allow public pages to continue
-    }
-
-    throw new Error("Access redirect");
-  }
-
-  return res;
-}
-
-  if (accessRedirected(res)) {
-    if (!silent && location.pathname.startsWith("/admin")) {
-      notify("Session expired. Please refresh and sign in again.", true);
-    }
-
-    if (!location.pathname.startsWith("/admin")) {
-      return res; // allow public pages to continue
+      return res;
     }
 
     throw new Error("Access redirect");
