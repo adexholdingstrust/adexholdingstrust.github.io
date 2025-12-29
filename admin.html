@@ -323,21 +323,6 @@
    ADMIN KPI ENGINE (REAL DATA)
 ================================ */
 
-let ADMIN_EVENTS = [];
-
-async function loadAdminEventsForKPI() {
-  try {
-    const res = await fetch("/api/admin/events?limit=2000", {
-      credentials: "include"
-    });
-    if (!res.ok) return [];
-
-    const out = await res.json();
-    return out.events || [];
-  } catch {
-    return [];
-  }
-}
 const now = Date.now();
 const DAY = 86400000;
 
@@ -451,8 +436,13 @@ function trend(curr, prev) {
 }
 
 /* ---------- Render ---------- */
-(async () => {
-  ADMIN_EVENTS = await loadAdminEventsForKPI();
+(function waitForEvents() {
+  if (!window.ADMIN_EVENTS || !window.ADMIN_EVENTS.length) {
+    setTimeout(waitForEvents, 200);
+    return;
+  }
+
+  ADMIN_EVENTS = window.ADMIN_EVENTS;
 
   const m7 = computeMetrics(7);
   const m30 = computeMetrics(30);
@@ -462,7 +452,7 @@ function trend(curr, prev) {
   bind("kpi7", m7, p7);
   bind("kpi30", m30, p30);
 
-  renderEngagementRanking(); // 👈 ADD THIS LINE
+  renderEngagementRanking();
 })();
 
 function bind(prefix, curr, prev) {
