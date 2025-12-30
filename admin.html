@@ -375,9 +375,11 @@ async function renderEngagementRanking() {
     `<tr><td colspan="6" style="opacity:.6;text-align:center">Loading engagement data…</td></tr>`;
 
   try {
-    const res = await fetch("/api/admin/events?limit=1000", {
-      credentials: "include"
-    });
+    const res = await fetch(`/api/admin/events?limit=1000&_ts=${Date.now()}`, {
+  credentials: "include",
+  cache: "no-store"
+});
+
 
     if (!res.ok) throw new Error("events fetch failed");
 
