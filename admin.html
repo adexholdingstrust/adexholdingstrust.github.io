@@ -591,10 +591,15 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTrackedEvents();
   }
 });
-// Auto-refresh engagement ranking every 30 seconds
-setInterval(() => {
-  renderEngagementRanking();
-}, 30000);
+// Refresh every 30s
+setInterval(renderEngagementRanking, 30000);
+
+// Refresh when tab becomes active
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    renderEngagementRanking();
+  }
+});
 
 </script>
 
