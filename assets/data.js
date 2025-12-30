@@ -170,7 +170,7 @@ window.ADEX_DATA = {
       summary:
         "Spacious two-story single-family home in Fallbrook, California, with a quiet suburban feel.",
       details:
-        "Enjoy Great Mountain Views from the backyard!! The house sits atop all other houses in the neighborhood. Impeccably maintained Beautiful Westbury Model home. High-end upgrades and designer touches throughout. Stunning reclaimed wood entry wall.  Huge open kitchen with a large island, granite counters, and a beautifully tiled backsplash. All stainless steel appliances. Upgraded Edison bulb pendant lights and chandelier in the dining area. Luxury plank flooring and upgraded carpeting throughout. The master bedroom has he and she walk-in closet.  They are two other bedrooms upstairs that have a shared bathroom with the jack and jill style allowing both second and third bedrooms have direct access to the bathroom from their respective bedrooms. The 4th Bedroom is conveniently on the first floor for older adults that may not be able to access the stairs or young adults who may need some privacy from their parents with their own bathroom. There’s a private loft with a wood feature wall. Currently occupied.",
+        "Enjoy Great Mountain Views from the backyard!! The house sits atop all other houses in the neighborhood. Impeccably maintained Beautiful Westbury Model home. High-end upgrades and designer touches throughout. Stunning reclaimed wood entry wall.  Huge open kitchen with a large island, granite counters, and a beautifully tiled backsplash. All stainless steel appliances. Upgraded Edison bulb pendant lights and chandelier in the dining area. Luxury plank flooring and upgraded carpeting throughout. The master bedroom has he and she walk-in closet.  They are two other bedrooms upstairs that have a shared bathroom with the jack and jill style allowing both second and third bedrooms have direct access to the bathroom from their respective bedrooms. The 4th Bedroom is conveniently on the first floor for older adults that may not be able to access the stairs or young adults who may need some privacy from their parents with their own bathroom. There’s a private loft with a wood feature wall. Currently occupied. Please note that the video is for a comparison house right beside the same house.",
       embedQuery: "464 Calabrese St, Fallbrook, CA 92028",
       mapsLink:
         "https://www.google.com/maps?q=464+Calabrese+St+Fallbrook+CA+92028",
@@ -224,7 +224,7 @@ window.ADEX_DATA = {
 		"/assets/photos/calabrese/calabrese45.png"],
       video: {
         type: "youtube", // youtube | vimeo | mp4
-        url: "https://www.youtube.com/watch?v=Hy2a6Kan5E"
+        url: "https://www.youtube.com/watch?v=-Hy2a6Kan5E&t=5s"
          }
     },
 
