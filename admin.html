@@ -121,7 +121,7 @@
     <a href="#dwell" class="active">Per-Property Dwell Time</a>
     <a href="#funnels" class="active">Conversion Funnels</a>
     <a href="#realtime" class="active">Real-Time Event Stream</a>
-    <a href="#alerts">Anomaly Detection & Alert Thresholds</a>
+    <a href="#anomalyDetection">Anomaly Detection & Alert Thresholds</a>
     <a href="#trafficSources">Traffic Sources</a>
     <a href="#deviceInsights">Device & Browser</a>
     <a href="#propertyRanking">Property Engagement Ranking</a>
@@ -353,10 +353,12 @@
   </div>
 
   <!-- ANOMALIES + ALERT THRESHOLDS -->
-  <div class="card" id="alerts">
-    <div class="kicker">Security / Ops</div>
-    <div class="h1">Anomaly Detection & Alert Thresholds</div>
-    <div class="small muted">Flags unusual spikes and lets you define alert rules.</div>
+<!-- ANOMALY DETECTION -->
+<div class="card" id="anomalyDetection">
+  <div class="kicker">Analytics</div>
+  <div class="h1">Anomaly Detection</div>
+  <ul id="anomalyList" style="list-style:none;padding-left:0"></ul>
+</div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">
       <label class="small">Spike Z-Score ≥
@@ -860,6 +862,63 @@ async function renderConversionFunnel() {
     console.error(err);
   }
 }
+    /* ===============================
+   ANOMALY DETECTION RENDER
+================================ */
+
+async function renderAnomalies() {
+  const list = document.getElementById("anomalyList");
+  if (!list) return;
+
+  list.innerHTML = `<li style="opacity:.6">Scanning activity…</li>`;
+
+  try {
+    const res = await fetch("/api/admin/anomalies", {
+      credentials: "include",
+      cache: "no-store"
+    });
+
+    if (!res.ok) throw new Error("anomaly fetch failed");
+
+    const out = await res.json();
+    const anomalies = out.anomalies || [];
+
+    if (!anomalies.length) {
+      list.innerHTML = `<li style="opacity:.6">No anomalies detected</li>`;
+      return;
+    }
+
+    list.innerHTML = anomalies
+      .map(a => {
+        switch (a.type) {
+          case "traffic_spike":
+            return `
+              <li class="warn">
+                🚨 Traffic spike detected:
+                ${a.recent} events vs avg ${a.baselineAvg} (${a.ratio}×)
+              </li>`;
+          case "property_spike":
+            return `
+              <li class="warn">
+                🔥 Property spike:
+                ${a.properties.map(p => `${p.id} (${p.count})`).join(", ")}
+              </li>`;
+          case "severity_spike":
+            return `
+              <li class="warn">
+                ⚠️ High-severity activity spike detected
+              </li>`;
+          default:
+            return `<li>Unknown anomaly</li>`;
+        }
+      })
+      .join("");
+  } catch (err) {
+    list.innerHTML =
+      `<li style="color:#ff6b6b">Failed to load anomalies</li>`;
+    console.error(err);
+  }
+}
 /* ===============================
    SESSION / TRAFFIC / DEVICE ANALYTICS
 ================================ */
@@ -941,12 +1000,16 @@ async function loadAdminBehaviorInsights() {
 
 /* ---------- Bootstrap ---------- */
 document.addEventListener("DOMContentLoaded", () => {
-  loadAdminBehaviorInsights();
 });
+loadAdminBehaviorInsights();
+setInterval(renderAnomalies, 30000);
 
 // Refresh with engagement ranking
 setInterval(loadAdminBehaviorInsights, 30000);
-
+    
+document.addEventListener("DOMContentLoaded", () => {
+  renderAnomalies();
+});
 </script>
 
 
