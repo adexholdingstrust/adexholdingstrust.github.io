@@ -686,7 +686,7 @@ window.ADEX_DATA = {
       links: {
         maps: "https://www.google.com/maps?q=Rio+Grande+Estates+Valencia+County+NM"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R016363", zoning: null, assessedValue: "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R016363&doc=AccountValue" },
       geo: null,
       photos: ["/assets/photos/valencia/valencia1.png",
 		"/assets/photos/valencia/valencia2.png",
@@ -712,13 +712,13 @@ window.ADEX_DATA = {
       county: "Valencia County",
       country: "USA",
       currency: "USD",
-      parcelId: "015-029-264-264-141100",
+      parcelId: "1-015-029-264-264-141100",
       embedQuery: "Rancho Rio Grande Belen NM",
       center: [-106.6894, 34.6582],
       links: {
         maps: "https://www.google.com/maps?q=Rancho+Rio+Grande+Belen+NM"
       },
-      assessor: { deepLink: null, zoning: null, assessedValue: null },
+      assessor: { deepLink: "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R016363", zoning: null, assessedValue: "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R016363&doc=AccountValue" },
       geo: null,
 	  photos: ["/assets/photos/valencia/valencia1.png",
 		"/assets/photos/valencia/valencia2.png",
