@@ -642,7 +642,7 @@ window.ADEX_DATA = {
     {
       id: "lancaster-ca-210",
       name: "Lancaster, CA (Parcel 3322-023-014)",
-      acres: 2.1,
+      acres: 2.54,
       address: "E Ave D 6, Lancaster, CA 93535",
       state: "CA",
       county: "Los Angeles County",
