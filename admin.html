@@ -165,7 +165,84 @@
     </div>
   </div>
 </div>
+  <!-- KPI 
+  <div class="card" id="adminKPI">
+    <div class="kicker">Analytics</div>
+    <div class="h1">Key Performance Indicators</div>
+  </div> -->
+<!-- KPI ANCHOR (JS dependency only, no UI) -->
+<div id="adminKPI" hidden></div>
+  <!-- OVERVIEW DASHBOARD -->
+<div class="card" id="kpiDashboard">
+  <div class="kicker">Analytics</div>
+  <div class="h1">Overview Dashboard</div>
+  <!-- 7 / 30 DAY WRAPPER -->
+  <div class="overviewGrid">
 
+    <!-- LAST 7 DAYS -->
+    <div class="overviewCard">
+      <div class="overviewTitle">Last 7 Days</div>
+
+      <div class="miniKpiGrid">
+        <div class="miniKpi">
+          <div class="miniLabel">Total Events</div>
+          <div class="miniValue" id="kpi7Total">291</div>
+          <canvas class="sparkline"></canvas>
+        </div>
+
+        <div class="miniKpi">
+          <div class="miniLabel">Property Views</div>
+          <div class="miniValue" id="kpi7Views">46</div>
+          <canvas class="sparkline"></canvas>
+        </div>
+
+        <div class="miniKpi">
+          <div class="miniLabel">High Severity</div>
+          <div class="miniValue warn" id="kpi7High">37</div>
+          <canvas class="sparkline"></canvas>
+        </div>
+
+        <div class="miniKpi">
+          <div class="miniLabel">Unique Properties</div>
+          <div class="miniValue" id="kpi7Unique">7</div>
+          <canvas class="sparkline"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAST 30 DAYS -->
+    <div class="overviewCard">
+      <div class="overviewTitle">Last 30 Days</div>
+
+      <div class="miniKpiGrid">
+        <div class="miniKpi">
+          <div class="miniLabel">Total Events</div>
+          <div class="miniValue" id="kpi30Total">291</div>
+          <canvas class="sparkline"></canvas>
+        </div>
+
+        <div class="miniKpi">
+          <div class="miniLabel">Property Views</div>
+          <div class="miniValue" id="kpi30Views">46</div>
+          <canvas class="sparkline"></canvas>
+        </div>
+
+        <div class="miniKpi">
+          <div class="miniLabel">High Severity</div>
+          <div class="miniValue warn" id="kpi30High">37</div>
+          <canvas class="sparkline"></canvas>
+        </div>
+
+        <div class="miniKpi">
+          <div class="miniLabel">Unique Properties</div>
+          <div class="miniValue" id="kpi30Unique">7</div>
+          <canvas class="sparkline"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
   <!-- DWELL TIME (PER PROPERTY) -->
   <div class="card" id="dwell">
     <div class="kicker">Analytics</div>
@@ -313,85 +390,6 @@
     </thead>
     <tbody id="uaBody"></tbody>
   </table>
-</div>
-
-  <!-- KPI 
-  <div class="card" id="adminKPI">
-    <div class="kicker">Analytics</div>
-    <div class="h1">Key Performance Indicators</div>
-  </div> -->
-<!-- KPI ANCHOR (JS dependency only, no UI) -->
-<div id="adminKPI" hidden></div>
-  <!-- OVERVIEW DASHBOARD -->
-<div class="card" id="kpiDashboard">
-  <div class="kicker">Analytics</div>
-  <div class="h1">Overview Dashboard</div>
-  <!-- 7 / 30 DAY WRAPPER -->
-  <div class="overviewGrid">
-
-    <!-- LAST 7 DAYS -->
-    <div class="overviewCard">
-      <div class="overviewTitle">Last 7 Days</div>
-
-      <div class="miniKpiGrid">
-        <div class="miniKpi">
-          <div class="miniLabel">Total Events</div>
-          <div class="miniValue" id="kpi7Total">291</div>
-          <canvas class="sparkline"></canvas>
-        </div>
-
-        <div class="miniKpi">
-          <div class="miniLabel">Property Views</div>
-          <div class="miniValue" id="kpi7Views">46</div>
-          <canvas class="sparkline"></canvas>
-        </div>
-
-        <div class="miniKpi">
-          <div class="miniLabel">High Severity</div>
-          <div class="miniValue warn" id="kpi7High">37</div>
-          <canvas class="sparkline"></canvas>
-        </div>
-
-        <div class="miniKpi">
-          <div class="miniLabel">Unique Properties</div>
-          <div class="miniValue" id="kpi7Unique">7</div>
-          <canvas class="sparkline"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- LAST 30 DAYS -->
-    <div class="overviewCard">
-      <div class="overviewTitle">Last 30 Days</div>
-
-      <div class="miniKpiGrid">
-        <div class="miniKpi">
-          <div class="miniLabel">Total Events</div>
-          <div class="miniValue" id="kpi30Total">291</div>
-          <canvas class="sparkline"></canvas>
-        </div>
-
-        <div class="miniKpi">
-          <div class="miniLabel">Property Views</div>
-          <div class="miniValue" id="kpi30Views">46</div>
-          <canvas class="sparkline"></canvas>
-        </div>
-
-        <div class="miniKpi">
-          <div class="miniLabel">High Severity</div>
-          <div class="miniValue warn" id="kpi30High">37</div>
-          <canvas class="sparkline"></canvas>
-        </div>
-
-        <div class="miniKpi">
-          <div class="miniLabel">Unique Properties</div>
-          <div class="miniValue" id="kpi30Unique">7</div>
-          <canvas class="sparkline"></canvas>
-        </div>
-      </div>
-    </div>
-
-  </div>
 </div>
 
   <!-- ENGAGEMENT -->
