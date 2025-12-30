@@ -325,6 +325,8 @@
       <span class="badge" id="sseStatus">Disconnected</span>
       <button class="btn" id="sseConnect">Connect</button>
       <button class="btn" id="sseDisconnect">Disconnect</button>
+      <button id="connectStreamBtn" onclick="connectEventStream()"> Connect2 </button>
+       <div id="realtimeStream" class="streamLog"></div>
       <label class="small" style="display:flex;gap:6px;align-items:center;">
         <input type="checkbox" id="sseAutoScroll" checked />
         Auto-scroll
@@ -935,7 +937,38 @@ if (bc && sections.length) {
 
   sections.forEach(s => obs.observe(s));
 }
+/* ===============================
+   REAL-TIME EVENT STREAM (SSE)
+================================ */
 
+let adminEventSource = null;
+
+function connectEventStream() {
+  if (adminEventSource) return;
+
+  const output = document.getElementById("realtimeStream");
+  const btn = document.getElementById("connectStreamBtn");
+
+  adminEventSource = new EventSource("/api/admin/stream");
+
+  btn.textContent = "Connected";
+  btn.disabled = true;
+
+  adminEventSource.addEventListener("event", e => {
+    const data = JSON.parse(e.data);
+    const row = document.createElement("div");
+    row.textContent =
+      `${fmtPST(data.ts)} | ${data.eventType} | ${data.data?.name || data.path}`;
+    output.prepend(row);
+  });
+
+  adminEventSource.onerror = () => {
+    btn.textContent = "Disconnected";
+    btn.disabled = false;
+    adminEventSource.close();
+    adminEventSource = null;
+  };
+}
 /* ===============================
    AUDIT TABLE PST FIX
 ================================ */
