@@ -282,6 +282,58 @@ const coords = extractCoords(l.geo.geometry);
     map.fitBounds(bounds, { padding: 40 });
   });
 }
+/* ================================
+   PROPERTY PAGE ENTER (DWELL START)
+   ================================ */
+(function trackPageEnter() {
+  try {
+    fetch("/api/track-public", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        eventType: "page_enter",
+        path: location.pathname,
+        id: window.PROPERTY_ID || null
+      })
+    });
+  } catch (e) {
+    // fail silently
+  }
+})();
+/* ================================
+   PROPERTY PAGE ENTER (DWELL START)
+   ================================ */
+(function trackPageEnter() {
+  try {
+    fetch("/api/track-public", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        eventType: "page_enter",
+        path: location.pathname,
+        id: window.PROPERTY_ID || null
+      })
+    });
+  } catch (e) {}
+})();
+
+/* ================================
+   PROPERTY PAGE EXIT (DWELL END)
+   ================================ */
+window.addEventListener("beforeunload", () => {
+  try {
+    navigator.sendBeacon(
+      "/api/track-public",
+      JSON.stringify({
+        eventType: "page_exit",
+        path: location.pathname,
+        id: window.PROPERTY_ID || null
+      })
+    );
+  } catch (e) {}
+});
 
 /* =======================
    MAPBOX RESIZE FIX (MOBILE)
