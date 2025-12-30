@@ -803,6 +803,12 @@ document.addEventListener("visibilitychange", () => {
     renderEngagementRanking();
   }
 });
+    document.addEventListener("DOMContentLoaded", () => {
+  renderConversionFunnel();
+  setInterval(renderConversionFunnel, 60000);
+
+});
+
     /* ===============================
    CONVERSION FUNNEL RENDER
 ================================ */
