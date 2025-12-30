@@ -314,6 +314,22 @@
       <tbody></tbody>
     </table>
   </div>
+<!-- CONVERSION FUNNEL -->
+<div class="card" id="conversionFunnel">
+  <div class="kicker">Analytics</div>
+  <div class="h1">Conversion Funnel</div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Stage</th>
+        <th>Count</th>
+        <th>Conversion</th>
+      </tr>
+    </thead>
+    <tbody id="funnelBody"></tbody>
+  </table>
+</div>
 
   <!-- REAL-TIME STREAM (SSE) -->
   <div class="card" id="realtime">
@@ -787,6 +803,57 @@ document.addEventListener("visibilitychange", () => {
     renderEngagementRanking();
   }
 });
+    /* ===============================
+   CONVERSION FUNNEL RENDER
+================================ */
+
+async function renderConversionFunnel() {
+  const body = document.getElementById("funnelBody");
+  if (!body) return;
+
+  body.innerHTML =
+    `<tr><td colspan="3" style="opacity:.6;text-align:center">Loading funnel…</td></tr>`;
+
+  try {
+    const res = await fetch("/api/admin/funnel", {
+      credentials: "include",
+      cache: "no-store"
+    });
+
+    if (!res.ok) throw new Error("funnel fetch failed");
+
+    const { funnel } = await res.json();
+
+    const stages = [
+      ["Page Views", funnel.page_view],
+      ["Property Views", funnel.property_view],
+      ["Contact Clicks", funnel.contact],
+      ["Inquiries", funnel.inquiry],
+      ["Downloads", funnel.download]
+    ];
+
+    const base = stages[0][1] || 1;
+
+    body.innerHTML = stages
+      .map(([label, count], i) => {
+        const prev = i === 0 ? base : stages[i - 1][1];
+        const pct = prev ? ((count / prev) * 100).toFixed(1) : "0.0";
+
+        return `
+          <tr>
+            <td>${label}</td>
+            <td>${count}</td>
+            <td>${pct}%</td>
+          </tr>
+        `;
+      })
+      .join("");
+  } catch (err) {
+    body.innerHTML =
+      `<tr><td colspan="3" style="color:#ff6b6b;text-align:center">Failed to load funnel</td></tr>`;
+    console.error(err);
+  }
+}
 /* ===============================
    SESSION / TRAFFIC / DEVICE ANALYTICS
 ================================ */
