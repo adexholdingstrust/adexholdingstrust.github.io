@@ -574,6 +574,25 @@ function trackEvent(eventType, data = {}) {
     // fail silently
   }
 }
+/* ================================
+   PROPERTY DWELL / EXIT TRACKING
+   ================================ */
+
+window.addEventListener("beforeunload", () => {
+  try {
+    navigator.sendBeacon(
+      "/api/track-public",
+      JSON.stringify({
+        eventType: "page_exit",
+        path: location.pathname,
+        id: window.PROPERTY_ID || null
+      })
+    );
+  } catch (e) {
+    // fail silently – unload must never block navigation
+  }
+});
+
 function initPerPropertyDwellTracking() {
   // Only on property/land detail pages
   const isProperty = !!qs("#propertyDetail");
