@@ -139,7 +139,6 @@
     <div id="whoami" class="badge">Loading identity…</div>
   </div>
 
-  
      <!-- TOP BAR -->
 <!-- EVENTS -->
 <div class="card" id="events">
@@ -166,6 +165,124 @@
     </div>
   </div>
 </div>
+
+  <!-- DWELL TIME (PER PROPERTY) -->
+  <div class="card" id="dwell">
+    <div class="kicker">Analytics</div>
+    <div class="h1">Per-Property Dwell Time</div>
+    <div class="small muted">Average time users spend on each property detail page.</div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">
+      <select id="dwellWindow">
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="">All time</option>
+      </select>
+      <button id="dwellRefresh" class="btn">Refresh</button>
+    </div>
+
+    <table class="table" id="dwellTable">
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Avg Dwell</th>
+          <th>Median</th>
+          <th>Sessions</th>
+          <th>Last Seen</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- FUNNELS -->
+  <div class="card" id="funnels">
+    <div class="kicker">Analytics</div>
+    <div class="h1">Conversion Funnels</div>
+    <div class="small muted">Define a funnel and see step-to-step drop-off.</div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">
+      <select id="funnelPreset">
+        <option value="rental_interest">Rental Interest (View → Maps → Contact)</option>
+        <option value="land_interest">Land Interest (View → Maps → Assessor)</option>
+        <option value="tenant_intent">Tenant Intent (View → Tenant Portal → Submit)</option>
+      </select>
+      <select id="funnelWindow">
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="">All time</option>
+      </select>
+      <button id="funnelRefresh" class="btn">Refresh</button>
+    </div>
+
+    <table class="table" id="funnelTable">
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Users</th>
+          <th>Conversion</th>
+          <th>Drop-off</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- REAL-TIME STREAM (SSE) -->
+  <div class="card" id="realtime">
+    <div class="kicker">Live</div>
+    <div class="h1">Real-Time Event Stream</div>
+    <div class="small muted">Streams events as they happen (requires SSE endpoint).</div>
+
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0;">
+      <span class="badge" id="sseStatus">Disconnected</span>
+      <button class="btn" id="sseConnect">Connect</button>
+      <button class="btn" id="sseDisconnect">Disconnect</button>
+      <label class="small" style="display:flex;gap:6px;align-items:center;">
+        <input type="checkbox" id="sseAutoScroll" checked />
+        Auto-scroll
+      </label>
+    </div>
+
+    <div id="sseLog" style="height:220px;overflow:auto;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px;"></div>
+  </div>
+
+  <!-- ANOMALIES + ALERT THRESHOLDS -->
+  <div class="card" id="alerts">
+    <div class="kicker">Security / Ops</div>
+    <div class="h1">Anomaly Detection & Alert Thresholds</div>
+    <div class="small muted">Flags unusual spikes and lets you define alert rules.</div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">
+      <label class="small">Spike Z-Score ≥
+        <input id="zThresh" type="number" step="0.1" value="3.0" style="width:90px;margin-left:6px;">
+      </label>
+      <label class="small">Window (mins)
+        <input id="alertWindowMin" type="number" step="1" value="10" style="width:90px;margin-left:6px;">
+      </label>
+      <label class="small">High severity count ≥
+        <input id="sevCountThresh" type="number" step="1" value="5" style="width:90px;margin-left:6px;">
+      </label>
+
+      <button class="btn" id="saveAlertCfg">Save</button>
+      <button class="btn" id="runAnomalyScan">Scan Now</button>
+    </div>
+
+    <table class="table" id="anomalyTable">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Signal</th>
+          <th>Property</th>
+          <th>Value</th>
+          <th>Expected</th>
+          <th>Z</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
 <!-- TRAFFIC SOURCES -->
 <div class="card" id="trafficSources">
   <div class="kicker">Attribution</div>
