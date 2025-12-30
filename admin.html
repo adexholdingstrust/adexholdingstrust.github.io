@@ -127,7 +127,63 @@
 
 <!-- MAIN -->
 <div class="container withSidebar">
+<!-- EVENTS -->
+<div class="card" id="events">
+</div> <!-- END EVENTS CARD -->
+<!-- SESSION INSIGHTS -->
+<div class="card" id="sessionInsights">
+  <div class="kicker">Behavior</div>
+  <div class="h1">Session Insights</div>
 
+  <div class="overviewGrid">
+    <div class="overviewCard">
+      <div class="miniLabel">Avg Session Duration</div>
+      <div class="miniValue" id="avgSessionTime">—</div>
+    </div>
+
+    <div class="overviewCard">
+      <div class="miniLabel">Pages per Session</div>
+      <div class="miniValue" id="pagesPerSession">—</div>
+    </div>
+
+    <div class="overviewCard">
+      <div class="miniLabel">Bounce Rate</div>
+      <div class="miniValue" id="bounceRate">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- TRAFFIC SOURCES -->
+<div class="card" id="trafficSources">
+  <div class="kicker">Attribution</div>
+  <div class="h1">Traffic Sources</div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Referrer</th>
+        <th>Visits</th>
+      </tr>
+    </thead>
+    <tbody id="trafficSourceBody"></tbody>
+  </table>
+</div>
+
+<!-- DEVICE INSIGHTS -->
+<div class="card" id="deviceInsights">
+  <div class="kicker">Environment</div>
+  <div class="h1">Device & Browser</div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>User Agent</th>
+        <th>Hits</th>
+      </tr>
+    </thead>
+    <tbody id="uaBody"></tbody>
+  </table>
+</div>
   <!-- TOP BAR -->
   <div class="nav">
     <div class="brand">
@@ -602,6 +658,92 @@ document.addEventListener("visibilitychange", () => {
     renderEngagementRanking();
   }
 });
+/* ===============================
+   SESSION / TRAFFIC / DEVICE ANALYTICS
+================================ */
+
+async function loadAdminBehaviorInsights() {
+  const res = await fetch(`/api/admin/events?limit=1000&_ts=${Date.now()}`, {
+    credentials: "include",
+    cache: "no-store"
+  });
+
+  if (!res.ok) return;
+  const { events } = await res.json();
+  if (!events?.length) return;
+
+  /* ---------- Session Metrics ---------- */
+  const sessions = {};
+  events.forEach(e => {
+    const key = `${e.ip}|${e.userAgent || ""}`;
+    sessions[key] ||= [];
+    sessions[key].push(e);
+  });
+
+  let totalTime = 0;
+  let pageCount = 0;
+  let bounces = 0;
+
+  Object.values(sessions).forEach(s => {
+    s.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+    const duration =
+      new Date(s[s.length - 1].ts) - new Date(s[0].ts);
+
+    totalTime += Math.max(duration, 0);
+    pageCount += s.length;
+    if (s.length === 1) bounces++;
+  });
+
+  const sessionCount = Object.keys(sessions).length || 1;
+
+  document.getElementById("avgSessionTime").textContent =
+    Math.round(totalTime / sessionCount / 1000) + "s";
+
+  document.getElementById("pagesPerSession").textContent =
+    (pageCount / sessionCount).toFixed(2);
+
+  document.getElementById("bounceRate").textContent =
+    Math.round((bounces / sessionCount) * 100) + "%";
+
+  /* ---------- Traffic Sources ---------- */
+  const sources = {};
+  events.forEach(e => {
+    const src = e.referrer || "Direct";
+    sources[src] = (sources[src] || 0) + 1;
+  });
+
+  document.getElementById("trafficSourceBody").innerHTML =
+    Object.entries(sources)
+      .sort((a, b) => b[1] - a[1])
+      .map(
+        ([src, n]) => `<tr><td>${src}</td><td>${n}</td></tr>`
+      )
+      .join("");
+
+  /* ---------- Device / UA ---------- */
+  const uas = {};
+  events.forEach(e => {
+    const ua = e.userAgent || "Unknown";
+    uas[ua] = (uas[ua] || 0) + 1;
+  });
+
+  document.getElementById("uaBody").innerHTML =
+    Object.entries(uas)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(
+        ([ua, n]) => `<tr><td>${ua}</td><td>${n}</td></tr>`
+      )
+      .join("");
+}
+
+/* ---------- Bootstrap ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  loadAdminBehaviorInsights();
+});
+
+// Refresh with engagement ranking
+setInterval(loadAdminBehaviorInsights, 30000);
 
 </script>
 
