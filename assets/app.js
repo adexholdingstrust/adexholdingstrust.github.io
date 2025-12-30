@@ -14,6 +14,14 @@ const CFG = {
   MAPBOX_STYLE_SAT: "mapbox://styles/mapbox/satellite-streets-v12",
   MAPBOX_STYLE_TERRAIN: "mapbox://styles/mapbox/outdoors-v12"
 };
+const ADMIN_ANALYTICS_CFG = {
+  EVENTS_LIMIT: 5000,          // how many events to pull for analytics views
+  DWELL_MIN_MS: 3000,          // ignore < 3s dwell (accidental bounces)
+  FUNNEL_SESSION_GAP_MS: 30 * 60 * 1000, // 30 min session boundary
+  SSE_PATH: "/admin/stream",   // will be accessed as `${CFG.WORKER_BASE}${SSE_PATH}`
+  ANOMALY_BUCKET_MIN: 60,      // bucket size for anomaly scan (minutes)
+  DEFAULT_Z: 3.0
+};
 /* ============================================================
    GLOBAL CONFIG LOADER (Cloudflare-backed)
    ============================================================ */
@@ -566,6 +574,51 @@ function trackEvent(eventType, data = {}) {
     // fail silently
   }
 }
+function initPerPropertyDwellTracking() {
+  // Only on property/land detail pages
+  const isProperty = !!qs("#propertyDetail");
+  const isLand = !!qs("#landTitle");
+
+  if (!isProperty && !isLand) return;
+
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+  if (!id) return;
+
+  const kind = isProperty ? "rental" : "land";
+  const key = `dwell:${kind}:${id}:${Date.now()}`;
+  const start = Date.now();
+
+  const flush = (reason) => {
+    const ms = Date.now() - start;
+    if (ms < ADMIN_ANALYTICS_CFG.DWELL_MIN_MS) return;
+
+    // Send as an event (same pipeline you already have)
+    trackEvent("dwell", {
+      kind,
+      id,
+      ms,
+      reason: reason || "unknown",
+      path: location.pathname
+    });
+  };
+
+  // Flush on hide/unload
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) flush("hidden");
+  });
+
+  window.addEventListener("pagehide", () => flush("pagehide"));
+  window.addEventListener("beforeunload", () => flush("unload"));
+
+  // Optional: heartbeat (helps when tabs stay open)
+  setInterval(() => {
+    if (document.hidden) return;
+    const ms = Date.now() - start;
+    // emit heartbeat-style dwell updates every 60s (optional)
+    // trackEvent("dwell_ping", { kind, id, ms });
+  }, 60000);
+}
 /* =======================
    AVAILABILITY
 ======================= */
@@ -804,6 +857,313 @@ const host = qs("#adminControls") || qs("#adminKPI");
   // Insert logically near KPIs or admin controls
   host.appendChild(btn);
 }
+async function fetchAdminEventsForAnalytics(days) {
+  const q = new URLSearchParams();
+  q.set("limit", String(ADMIN_ANALYTICS_CFG.EVENTS_LIMIT));
+  if (days) {
+    const since = new Date(Date.now() - Number(days) * 86400000).toISOString();
+    q.set("since", since);
+  }
+  const res = await accessFetch(`/admin/events?${q.toString()}`, { silent: true });
+  if (!res.ok) throw new Error("admin events fetch failed");
+  const out = await res.json();
+  return out.events || [];
+}
+
+function msToHuman(ms) {
+  if (!Number.isFinite(ms)) return "—";
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}m ${r}s`;
+}
+
+function median(nums) {
+  const a = nums.filter(Number.isFinite).sort((x, y) => x - y);
+  if (!a.length) return null;
+  const mid = Math.floor(a.length / 2);
+  return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
+}
+
+async function renderDwellTable() {
+  const tbody = qs("#dwellTable tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="5" style="opacity:.7;text-align:center">Loading…</td></tr>`;
+
+  try {
+    const days = qs("#dwellWindow")?.value || "";
+    const events = await fetchAdminEventsForAnalytics(days);
+
+    // dwell events you emitted: eventType === "dwell"
+    const dwell = events.filter(e => (e.eventType || e.type) === "dwell");
+
+    const byProp = new Map();
+    for (const e of dwell) {
+      const d = e.data || {};
+      const pid = d.id || e.property || "—";
+      if (!byProp.has(pid)) byProp.set(pid, []);
+      byProp.get(pid).push({ ms: Number(d.ms), ts: e.ts });
+    }
+
+    const rows = [...byProp.entries()].map(([pid, arr]) => {
+      const msArr = arr.map(x => x.ms).filter(Number.isFinite);
+      const avg = msArr.length ? msArr.reduce((a, b) => a + b, 0) / msArr.length : null;
+      const med = median(msArr);
+      const last = arr.reduce((m, x) => (x.ts > m ? x.ts : m), arr[0]?.ts || "");
+      return { pid, avg, med, n: msArr.length, last };
+    }).sort((a, b) => (b.avg || 0) - (a.avg || 0));
+
+    tbody.innerHTML = rows.length ? rows.map(r => `
+      <tr>
+        <td>${escapeHtml(propertyLabel(r.pid))}</td>
+        <td>${escapeHtml(msToHuman(r.avg))}</td>
+        <td>${escapeHtml(msToHuman(r.med))}</td>
+        <td>${escapeHtml(String(r.n))}</td>
+        <td>${escapeHtml(fmtPST(r.last))}</td>
+      </tr>
+    `).join("") : `<tr><td colspan="5" style="opacity:.7;text-align:center">No dwell data yet</td></tr>`;
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="5" style="color:#ff6b6b;text-align:center">Failed to load dwell data</td></tr>`;
+  }
+}
+
+function funnelPresets() {
+  return {
+    rental_interest: [
+      { name: "Viewed rental", match: (e) => (e.eventType || e.type) === "view_rental" },
+      { name: "Clicked Maps", match: (e) => (e.eventType || e.type) === "click_maps" },
+      { name: "Contact intent", match: (e) => (e.eventType || e.type) === "contact_intent" }
+    ],
+    land_interest: [
+      { name: "Viewed land", match: (e) => (e.eventType || e.type) === "view_land" },
+      { name: "Clicked Maps", match: (e) => (e.eventType || e.type) === "click_maps" },
+      { name: "Assessor click", match: (e) => (e.eventType || e.type) === "click_assessor" }
+    ],
+    tenant_intent: [
+      { name: "Viewed site", match: (e) => (e.eventType || e.type) === "page_view" },
+      { name: "Opened tenant portal", match: (e) => (e.eventType || e.type) === "tenant_portal_open" },
+      { name: "Submitted request", match: (e) => (e.eventType || e.type) === "tenant_submit" }
+    ]
+  };
+}
+
+function stableUserKey(e) {
+  // Best: you should add a pseudonymous visitorId in trackEvent data (recommended).
+  // Fallback: IP (admin-only visibility) + UA (still imperfect).
+  return (e.ip || "ip?") + "|" + (e.userAgent || e.ua || "ua?");
+}
+
+async function renderFunnel() {
+  const tbody = qs("#funnelTable tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="4" style="opacity:.7;text-align:center">Loading…</td></tr>`;
+
+  try {
+    const presetKey = qs("#funnelPreset")?.value || "rental_interest";
+    const days = qs("#funnelWindow")?.value || "";
+    const steps = funnelPresets()[presetKey] || [];
+
+    const events = await fetchAdminEventsForAnalytics(days);
+
+    // Group by user
+    const groups = new Map();
+    for (const e of events) {
+      const k = stableUserKey(e);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(e);
+    }
+
+    // Sort each user timeline by ts
+    for (const arr of groups.values()) {
+      arr.sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
+    }
+
+    // Count users reaching each step in order
+    const reached = new Array(steps.length).fill(0);
+
+    for (const arr of groups.values()) {
+      let idx = 0;
+      for (const ev of arr) {
+        if (idx >= steps.length) break;
+        if (steps[idx].match(ev)) {
+          reached[idx] += 1;
+          idx += 1;
+        }
+      }
+    }
+
+    const top = reached[0] || 0;
+    tbody.innerHTML = steps.map((s, i) => {
+      const users = reached[i] || 0;
+      const prev = i === 0 ? users : (reached[i - 1] || 0);
+      const conv = prev ? (users / prev) * 100 : 0;
+      const drop = prev ? ((prev - users) / prev) * 100 : 0;
+      return `
+        <tr>
+          <td>${escapeHtml(s.name)}</td>
+          <td>${escapeHtml(String(users))}</td>
+          <td>${escapeHtml(i === 0 ? "—" : `${conv.toFixed(1)}%`)}</td>
+          <td>${escapeHtml(i === 0 ? "—" : `${drop.toFixed(1)}%`)}</td>
+        </tr>
+      `;
+    }).join("");
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="4" style="color:#ff6b6b;text-align:center">Failed to load funnel</td></tr>`;
+  }
+}
+
+function bindDwellAndFunnelUI() {
+  const dBtn = qs("#dwellRefresh");
+  if (dBtn && !dBtn.dataset.bound) {
+    dBtn.dataset.bound = "1";
+    dBtn.addEventListener("click", renderDwellTable);
+  }
+  const fBtn = qs("#funnelRefresh");
+  if (fBtn && !fBtn.dataset.bound) {
+    fBtn.dataset.bound = "1";
+    fBtn.addEventListener("click", renderFunnel);
+  }
+
+  const dw = qs("#dwellWindow");
+  if (dw && !dw.dataset.bound) {
+    dw.dataset.bound = "1";
+    dw.addEventListener("change", renderDwellTable);
+  }
+
+  const fw = qs("#funnelWindow");
+  if (fw && !fw.dataset.bound) {
+    fw.dataset.bound = "1";
+    fw.addEventListener("change", renderFunnel);
+  }
+
+  const fp = qs("#funnelPreset");
+  if (fp && !fp.dataset.bound) {
+    fp.dataset.bound = "1";
+    fp.addEventListener("change", renderFunnel);
+  }
+}
+function loadAlertCfg() {
+  try {
+    return JSON.parse(localStorage.getItem("adexAlertCfgV1") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveAlertCfg(cfg) {
+  localStorage.setItem("adexAlertCfgV1", JSON.stringify(cfg));
+}
+
+function bucketKey(ts, bucketMin) {
+  const d = new Date(ts);
+  d.setSeconds(0, 0);
+  const m = d.getMinutes();
+  d.setMinutes(m - (m % bucketMin));
+  return d.toISOString();
+}
+
+function zScore(x, mean, sd) {
+  if (!Number.isFinite(sd) || sd <= 0) return 0;
+  return (x - mean) / sd;
+}
+
+async function runAnomalyDetection() {
+  const tbody = qs("#anomalyTable tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="6" style="opacity:.7;text-align:center">Scanning…</td></tr>`;
+
+  try {
+    const zT = Number(qs("#zThresh")?.value || ADMIN_ANALYTICS_CFG.DEFAULT_Z);
+    const bucketMin = ADMIN_ANALYTICS_CFG.ANOMALY_BUCKET_MIN;
+
+    const events = await fetchAdminEventsForAnalytics(30); // scan last 30d by default
+
+    // Example signal: views per property per hour
+    const views = events.filter(e => {
+      const t = (e.eventType || e.type);
+      return t === "view_rental" || t === "view_land";
+    });
+
+    const series = new Map(); // key: property -> map(bucket->count)
+    for (const e of views) {
+      const prop = e.property || e.data?.id || e.data?.parcelId || "—";
+      const bk = bucketKey(e.ts, bucketMin);
+      if (!series.has(prop)) series.set(prop, new Map());
+      const m = series.get(prop);
+      m.set(bk, (m.get(bk) || 0) + 1);
+    }
+
+    const anomalies = [];
+
+    for (const [prop, buckets] of series.entries()) {
+      const vals = [...buckets.values()];
+      if (vals.length < 10) continue;
+
+      const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const sd = Math.sqrt(vals.reduce((a, v) => a + Math.pow(v - mean, 2), 0) / vals.length);
+
+      for (const [bk, v] of buckets.entries()) {
+        const z = zScore(v, mean, sd);
+        if (z >= zT) {
+          anomalies.push({ ts: bk, prop, v, mean, z });
+        }
+      }
+    }
+
+    anomalies.sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
+
+    tbody.innerHTML = anomalies.length ? anomalies.slice(0, 120).map(a => `
+      <tr>
+        <td>${escapeHtml(fmtPST(a.ts))}</td>
+        <td>Views spike</td>
+        <td>${escapeHtml(propertyLabel(a.prop))}</td>
+        <td>${escapeHtml(String(a.v))}</td>
+        <td>${escapeHtml(a.mean.toFixed(2))}</td>
+        <td class="warn">${escapeHtml(a.z.toFixed(2))}</td>
+      </tr>
+    `).join("") : `<tr><td colspan="6" style="opacity:.7;text-align:center">No anomalies detected</td></tr>`;
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="6" style="color:#ff6b6b;text-align:center">Anomaly scan failed</td></tr>`;
+  }
+}
+
+function bindAlertUI() {
+  const btnSave = qs("#saveAlertCfg");
+  const btnScan = qs("#runAnomalyScan");
+  if (!btnSave || !btnScan) return;
+
+  // hydrate
+  const cfg = loadAlertCfg();
+  if (cfg.zThresh != null) qs("#zThresh").value = cfg.zThresh;
+  if (cfg.alertWindowMin != null) qs("#alertWindowMin").value = cfg.alertWindowMin;
+  if (cfg.sevCountThresh != null) qs("#sevCountThresh").value = cfg.sevCountThresh;
+
+  if (!btnSave.dataset.bound) {
+    btnSave.dataset.bound = "1";
+    btnSave.addEventListener("click", () => {
+      const next = {
+        zThresh: Number(qs("#zThresh")?.value || 3),
+        alertWindowMin: Number(qs("#alertWindowMin")?.value || 10),
+        sevCountThresh: Number(qs("#sevCountThresh")?.value || 5)
+      };
+      saveAlertCfg(next);
+      notify("Alert thresholds saved ✓");
+    });
+  }
+
+  if (!btnScan.dataset.bound) {
+    btnScan.dataset.bound = "1";
+    btnScan.addEventListener("click", runAnomalyDetection);
+  }
+}
+
 /* =======================
    FILTER UI (PUBLIC)
 ======================= */
@@ -2106,6 +2466,111 @@ host.appendChild(wrap);
     }
   });
 }
+let __sse = null;
+
+function setSseStatus(text, ok) {
+  const el = qs("#sseStatus");
+  if (!el) return;
+  el.textContent = text;
+  el.style.borderColor = ok ? "#3ddc97" : "#ff6b6b";
+}
+
+function logSse(line) {
+  const box = qs("#sseLog");
+  if (!box) return;
+  const div = document.createElement("div");
+  div.textContent = line;
+  box.appendChild(div);
+
+  if (qs("#sseAutoScroll")?.checked) {
+    box.scrollTop = box.scrollHeight;
+  }
+
+  // Keep last ~300 lines
+  while (box.childNodes.length > 300) box.removeChild(box.firstChild);
+}
+
+function initAdminSSE() {
+  const btnOn = qs("#sseConnect");
+  const btnOff = qs("#sseDisconnect");
+
+  if (!btnOn || !btnOff) return;
+
+  const connect = () => {
+    if (__sse) return;
+
+    const url = `${CFG.WORKER_BASE}${ADMIN_ANALYTICS_CFG.SSE_PATH}`;
+
+    // EventSource sends cookies for same-origin; with Access this should be OK
+    __sse = new EventSource(url);
+
+    setSseStatus("Connecting…", true);
+
+    __sse.onopen = () => {
+      setSseStatus("Connected", true);
+      logSse(`[open] ${new Date().toISOString()}`);
+    };
+
+    __sse.onmessage = (evt) => {
+      // Expect JSON per line: { ts, eventType, severity, property, ip, asn, ... }
+      logSse(evt.data);
+
+      // Optional: update tables in place without waiting for refresh
+      // You can parse and append to events table:
+      try {
+        const e = JSON.parse(evt.data);
+        appendEventRowIfVisible(e);
+      } catch {}
+    };
+
+    __sse.onerror = () => {
+      setSseStatus("Disconnected (error)", false);
+      logSse(`[error] ${new Date().toISOString()}`);
+      // Let browser auto-retry; keep object
+    };
+  };
+
+  const disconnect = () => {
+    if (!__sse) return;
+    __sse.close();
+    __sse = null;
+    setSseStatus("Disconnected", false);
+    logSse(`[close] ${new Date().toISOString()}`);
+  };
+
+  if (!btnOn.dataset.bound) {
+    btnOn.dataset.bound = "1";
+    btnOn.addEventListener("click", connect);
+  }
+  if (!btnOff.dataset.bound) {
+    btnOff.dataset.bound = "1";
+    btnOff.addEventListener("click", disconnect);
+  }
+
+  setSseStatus("Disconnected", false);
+}
+
+function appendEventRowIfVisible(e) {
+  const tbody = qs("#eventsTable tbody");
+  if (!tbody) return;
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${escapeHtml(fmtPST(e.ts || new Date().toISOString()))}</td>
+    <td>${escapeHtml(e.eventType || e.type || "—")}</td>
+    <td>${escapeHtml(propertyLabel(e.property || e.data?.id || "—"))}</td>
+    <td>${escapeHtml(e.location || e.data?.location || "—")}</td>
+    <td class="${Number(e.severity) >= 4 ? "warn" : ""}">
+      ${escapeHtml(String(e.severity ?? "—"))}
+    </td>
+    <td>${escapeHtml(e.ip || "—")} ${e.asn ? `(${escapeHtml(String(e.asn))})` : ""}</td>
+  `;
+
+  tbody.insertBefore(tr, tbody.firstChild);
+
+  // Keep last 250 rows
+  while (tbody.children.length > 250) tbody.removeChild(tbody.lastChild);
+}
 /* =======================
    ADMIN SIDEBAR
 ======================= */
@@ -2191,6 +2656,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.warn("Interactive lands map failed:", err);
   }
 
+  initAdminSSE();
+  bindDwellAndFunnelUI();
+  renderDwellTable();
+  renderFunnel();
+  initPerPropertyDwellTracking();  
   setupLazy();
   resizeEmbeds();
 });
