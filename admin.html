@@ -384,7 +384,46 @@
     <tbody id="uaBody"></tbody>
   </table>
 </div>
+  
+  <!-- ANOMALIES + ALERT THRESHOLDS -->
+<!-- ANOMALY DETECTION -->
+<div class="card" id="anomalyDetection">
+  <div class="kicker">Analytics</div>
+  <div class="h1">Anomaly Detection</div>
+  <ul id="anomalyList" style="list-style:none;padding-left:0"></ul>
+</div>
 
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">
+      <label class="small">Spike Z-Score ≥
+        <input id="zThresh" type="number" step="0.1" value="3.0" style="width:90px;margin-left:6px;">
+      </label>
+      <label class="small">Window (mins)
+        <input id="alertWindowMin" type="number" step="1" value="10" style="width:90px;margin-left:6px;">
+      </label>
+      <label class="small">High severity count ≥
+        <input id="sevCountThresh" type="number" step="1" value="5" style="width:90px;margin-left:6px;">
+      </label>
+
+      <button class="btn" id="saveAlertCfg">Save</button>
+      <button class="btn" id="runAnomalyScan">Scan Now</button>
+    </div>
+
+    <table class="table" id="anomalyTable">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Signal</th>
+          <th>Property</th>
+          <th>Value</th>
+          <th>Expected</th>
+          <th>Z</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <!-- ANOMALY DETECTION ENDS-->
+  
   <!-- ENGAGEMENT -->
   <div class="card" id="propertyRanking">
     <div class="kicker">Analytics</div>
