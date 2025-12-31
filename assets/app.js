@@ -635,19 +635,14 @@ async function accessFetch(path, opts = {}) {
     ...fetchOpts
   });
 
-  if (accessRedirected(res)) {
-    if (!silent && location.pathname.startsWith("/admin")) {
-      notify("Session expired. Please refresh and sign in again.", true);
-    }
-
-    // Public pages can continue even if auth redirects
-    if (!location.pathname.startsWith("/admin")) {
-      return res;
-    }
-
-    throw new Error("Access redirect");
+if (accessRedirected(res)) {
+  // Only whoami determines session validity
+  if (path === "/whoami") {
+    notify("Session expired. Please refresh and sign in again.", true);
+    throw new Error("Auth expired");
   }
 
+  // All other admin endpoints fail softly
   return res;
 }
 /* =======================
