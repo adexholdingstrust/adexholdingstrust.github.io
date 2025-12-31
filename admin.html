@@ -406,6 +406,12 @@
     <div class="h1">Event Heatmap</div>
     <div id="adminHeatmap" style="height:420px;border-radius:12px;"></div>
   </div>
+<!-- ALERT THRESHOLDS -->
+<div class="card" id="alertThresholds">
+  <div class="kicker">System</div>
+  <div class="h1">Alert Thresholds</div>
+  <ul id="thresholdList" style="list-style:none;padding-left:0"></ul>
+</div>
 
   <!-- EVENTS -->
   <div class="card" id="events">
@@ -628,7 +634,35 @@ function propertyLabel(val) {
 
   return val;
 }
+/* ===============================
+   ALERT THRESHOLD DISPLAY
+================================ */
 
+async function renderThresholds() {
+  const list = document.getElementById("thresholdList");
+  if (!list) return;
+
+  try {
+    const res = await fetch("/api/admin/thresholds", {
+      credentials: "include",
+      cache: "no-store"
+    });
+
+    if (!res.ok) throw new Error("threshold fetch failed");
+
+    const out = await res.json();
+    const t = out.thresholds;
+
+    list.innerHTML = `
+      <li>📈 Traffic spike ratio: <b>${t.trafficSpikeRatio}×</b></li>
+      <li>🏠 Property spike count: <b>${t.propertySpikeCount}</b></li>
+      <li>⚠️ Severity spike count: <b>${t.severitySpikeCount}</b></li>
+    `;
+  } catch (e) {
+    list.innerHTML =
+      `<li style="color:#ff6b6b">Failed to load thresholds</li>`;
+  }
+}
 /* ===============================
    TRACKED EVENTS TABLE
 ================================ */
@@ -772,6 +806,9 @@ document.addEventListener("visibilitychange", () => {
   renderConversionFunnel();
   setInterval(renderConversionFunnel, 60000);
 
+});
+document.addEventListener("DOMContentLoaded", () => {
+  renderThresholds();
 });
 
     /* ===============================
