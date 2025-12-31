@@ -691,7 +691,10 @@ async function renderEngagementRanking() {
 });
 
 
-    if (!res.ok) throw new Error("events fetch failed");
+    if (!res.ok) {
+  console.warn("Admin events unavailable:", res.status);
+  return { events: [] };
+}
 
     const out = await res.json();
     const events = out.events || [];
@@ -1011,7 +1014,10 @@ async function renderTrackedEvents() {
       credentials: "include"
     });
 
-    if (!res.ok) throw new Error("events fetch failed");
+   if (!res.ok) {
+  console.warn("Admin events unavailable:", res.status);
+  return { events: [] };
+}
 
     const out = await res.json();
     const events = out.events || [];
@@ -1069,24 +1075,6 @@ function trend(curr, prev) {
 }
 
 /* ---------- Render ---------- */
-
-(function waitForAdminEvents() {
-  if (!window.ADMIN_EVENTS || !window.ADMIN_EVENTS.length) {
-    setTimeout(waitForAdminEvents, 200);
-    return;
-  }
-
-  const ADMIN_EVENTS = window.ADMIN_EVENTS;
-
-  const m7 = computeMetrics(7);
-  const m30 = computeMetrics(30);
-  const p7 = computeMetrics(14);
-  const p30 = computeMetrics(60);
-
-  bind("kpi7", m7, p7);
-  bind("kpi30", m30, p30);
-})();
-
 
 function bind(prefix, curr, prev) {
   const map = {
@@ -1413,7 +1401,34 @@ if (bc && sections.length) {
 let adminEventSource = null;
 
 function connectEventStream() {
+  function connectEventStream() {
   if (adminEventSource) return;
+
+  const output = document.getElementById("realtimeStream");
+  const btn = document.getElementById("connectStreamBtn");
+
+  adminEventSource = new EventSource("/api/admin/stream", {
+    withCredentials: true
+  });
+
+  btn.textContent = "Connected";
+  btn.disabled = true;
+
+  adminEventSource.onmessage = e => {
+    const data = JSON.parse(e.data);
+    const row = document.createElement("div");
+    row.textContent =
+      `${fmtPST(data.ts)} | ${data.eventType} | ${data.property || data.path}`;
+    output.prepend(row);
+  };
+
+  adminEventSource.onerror = () => {
+    btn.textContent = "Disconnected";
+    btn.disabled = false;
+    adminEventSource.close();
+    adminEventSource = null;
+  };
+}
 
   const output = document.getElementById("realtimeStream");
   const btn = document.getElementById("connectStreamBtn");
