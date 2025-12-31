@@ -283,28 +283,42 @@ const coords = extractCoords(l.geo.geometry);
   });
 }
 /* ================================
-   PROPERTY PAGE ENTER (DWELL START)
-   ================================ */
-(function trackPageEnter() {
-  try {
-    fetch("/api/track-public", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      keepalive: true,
-      body: JSON.stringify({
-        eventType: "page_enter",
-        path: location.pathname,
-        id: window.PROPERTY_ID || null
-      })
-    });
-  } catch (e) {
-    // fail silently
+   PROPERTY ID RESOLUTION
+================================ */
+
+(function resolvePropertyId() {
+  // Already set? Respect it.
+  if (window.PROPERTY_ID) return;
+
+  const path = location.pathname.toLowerCase();
+
+  // Rental pages
+  const rental = window.ADEX_DATA?.rentals?.find(r =>
+    path.includes(r.slug || r.id)
+  );
+  if (rental) {
+    window.PROPERTY_ID = rental.id;
+    window.PROPERTY_TYPE = "rental";
+    return;
+  }
+
+  // Land pages
+  const land = window.ADEX_DATA?.lands?.find(l =>
+    path.includes(l.slug || l.id)
+  );
+  if (land) {
+    window.PROPERTY_ID = land.id;
+    window.PROPERTY_TYPE = "land";
+    return;
   }
 })();
 /* ================================
    PROPERTY PAGE ENTER (DWELL START)
-   ================================ */
+================================ */
+
 (function trackPageEnter() {
+  if (!window.PROPERTY_ID) return;
+
   try {
     fetch("/api/track-public", {
       method: "POST",
@@ -313,11 +327,29 @@ const coords = extractCoords(l.geo.geometry);
       body: JSON.stringify({
         eventType: "page_enter",
         path: location.pathname,
-        id: window.PROPERTY_ID || null
+        id: window.PROPERTY_ID
       })
     });
-  } catch (e) {}
+  } catch {}
 })();
+/* ================================
+   PROPERTY PAGE EXIT (DWELL END)
+================================ */
+
+window.addEventListener("pagehide", () => {
+  if (!window.PROPERTY_ID) return;
+
+  try {
+    navigator.sendBeacon(
+      "/api/track-public",
+      JSON.stringify({
+        eventType: "page_exit",
+        path: location.pathname,
+        id: window.PROPERTY_ID
+      })
+    );
+  } catch {}
+});
 
 /* ================================
    PROPERTY PAGE EXIT (DWELL END)
@@ -2641,6 +2673,19 @@ function appendEventRowIfVisible(e) {
 
   // Keep last 250 rows
   while (tbody.children.length > 250) tbody.removeChild(tbody.lastChild);
+}
+/* ================================
+   PROPERTY ID SAFETY CHECK
+================================ */
+
+if (
+  location.pathname.includes("/property") &&
+  !window.PROPERTY_ID
+) {
+  console.warn(
+    "[ADEX] Property page loaded without PROPERTY_ID:",
+    location.pathname
+  );
 }
 /* =======================
    ADMIN SIDEBAR
