@@ -137,6 +137,27 @@
   font-size: 13px;
   min-height: 16px;
 }
+    .funnelTable td,
+.funnelTable th {
+  text-align: left;
+  padding: 8px;
+}
+
+.funnelTable .pct {
+  font-weight: 600;
+}
+
+.funnelTable .drop {
+  color: #ff6b6b;
+}
+
+.funnelTable .ok {
+  color: #4cd964;
+}
+
+.muted {
+  opacity: 0.65;
+}
   </style>
 </head>
 
@@ -316,10 +337,25 @@
   </div>
 
   <!-- FUNNELS -->
-  <div class="card" id="funnels">
-    <div class="kicker">Analytics</div>
-    <div class="h1">Conversion Funnels</div>
-    <div class="small muted">Define a funnel and see step-to-step drop-off.</div>
+<div class="card" id="conversionFunnels">
+  <div class="kicker">Analytics</div>
+  <div class="h1">Conversion Funnels</div>
+
+  <table class="table funnelTable">
+    <thead>
+      <tr>
+        <th>Step</th>
+        <th>Event</th>
+        <th>Count</th>
+        <th>Conversion</th>
+        <th>Drop-off</th>
+      </tr>
+    </thead>
+    <tbody id="funnelBody"></tbody>
+  </table>
+
+  <div id="funnelDebug" class="small muted"></div>
+</div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;">
       <select id="funnelPreset">
@@ -695,6 +731,80 @@ function propertyLabel(val) {
   return val;
 }
     /* ===============================
+   CONVERSION FUNNELS
+================================ */
+
+async function renderConversionFunnels() {
+  const body = document.getElementById("funnelBody");
+  const debug = document.getElementById("funnelDebug");
+
+  if (!body) return;
+
+  body.innerHTML =
+    `<tr><td colspan="5">Loading funnel data…</td></tr>`;
+
+  try {
+    const res = await fetch("/api/admin/events?limit=2000", {
+      credentials: "include",
+      cache: "no-store"
+    });
+
+    if (!res.ok) throw new Error("fetch failed");
+
+    const { events } = await res.json();
+
+    // Define funnel steps (order matters)
+    const steps = [
+      { label: "View Property", type: "view_rental" },
+      { label: "Inquiry Started", type: "contact_click" },
+      { label: "Inquiry Submitted", type: "inquiry_submit" }
+    ];
+
+    const counts = steps.map(step => ({
+      ...step,
+      count: events.filter(e => e.eventType === step.type).length
+    }));
+
+    const rows = [];
+    let prev = counts[0]?.count || 0;
+
+    counts.forEach((s, i) => {
+      const conv =
+        i === 0 || prev === 0
+          ? "—"
+          : `${Math.round((s.count / prev) * 100)}%`;
+
+      const drop =
+        i === 0
+          ? "—"
+          : `${prev - s.count}`;
+
+      rows.push(`
+        <tr>
+          <td>${i + 1}</td>
+          <td>${s.label}</td>
+          <td>${s.count}</td>
+          <td class="pct ${s.count ? "ok" : "drop"}">${conv}</td>
+          <td class="drop">${drop}</td>
+        </tr>
+      `);
+
+      prev = s.count;
+    });
+
+    body.innerHTML = rows.join("");
+
+    debug.textContent =
+      `Events analyzed: ${events.length} | Funnel steps: ${steps.length}`;
+
+  } catch (e) {
+    body.innerHTML =
+      `<tr><td colspan="5">Failed to load funnel data</td></tr>`;
+    debug.textContent = e.message;
+  }
+}
+
+    /* ===============================
    ALERT THRESHOLD EDITOR
 ================================ */
 
@@ -950,6 +1060,8 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", saveThresholds);
   }
 });
+renderConversionFunnels();
+setInterval(renderConversionFunnels, 60000);
 
     /* ===============================
    CONVERSION FUNNEL RENDER
