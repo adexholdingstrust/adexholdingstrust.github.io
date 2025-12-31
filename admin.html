@@ -394,23 +394,6 @@
 
   <!-- END NEW CONVERSION FUNNELS -->
   
-<!-- CONVERSION FUNNEL -->
-<div class="card" id="conversionFunnel">
-  <div class="kicker">Analytics</div>
-  <div class="h1">Conversion Funnel</div>
-
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Stage</th>
-        <th>Count</th>
-        <th>Conversion</th>
-      </tr>
-    </thead>
-    <tbody id="funnelBody"></tbody>
-  </table>
-</div>
-  
   <!-- REAL-TIME STREAM (SSE) -->
   <div class="card" id="realtime">
     <div class="kicker">Live</div>
@@ -964,6 +947,25 @@ async function saveThresholds(e) {
     status.textContent = "Failed to save thresholds";
   }
 }
+    // ===============================
+// ANOMALY CONTROLS WIRING
+// ===============================
+
+document.addEventListener("DOMContentLoaded", () => {
+  const scanBtn = document.getElementById("runAnomalyScan");
+  if (scanBtn) {
+    scanBtn.addEventListener("click", () => {
+      scanBtn.textContent = "Scanning…";
+      scanBtn.disabled = true;
+
+      renderAnomalies().finally(() => {
+        scanBtn.textContent = "Scan Now";
+        scanBtn.disabled = false;
+      });
+    });
+  }
+});
+
 /* ===============================
    ALERT THRESHOLD DISPLAY
 ================================ */
@@ -1132,11 +1134,6 @@ document.addEventListener("visibilitychange", () => {
     renderEngagementRanking();
   }
 });
-    document.addEventListener("DOMContentLoaded", () => {
-  renderConversionFunnel();
-  setInterval(renderConversionFunnel, 60000);
-
-});
 document.addEventListener("DOMContentLoaded", () => {
   renderThresholds();
 });
@@ -1154,57 +1151,6 @@ document
   .getElementById("funnelPreset")
   ?.addEventListener("change", renderConversionFunnels);
 
-    /* ===============================
-   CONVERSION FUNNEL RENDER
-================================ */
-
-async function renderConversionFunnel() {
-  const body = document.getElementById("funnelBody");
-  if (!body) return;
-
-  body.innerHTML =
-    `<tr><td colspan="3" style="opacity:.6;text-align:center">Loading funnel…</td></tr>`;
-
-  try {
-    const res = await fetch("/api/admin/funnel", {
-      credentials: "include",
-      cache: "no-store"
-    });
-
-    if (!res.ok) throw new Error("funnel fetch failed");
-
-    const { funnel } = await res.json();
-
-    const stages = [
-      ["Page Views", funnel.page_view],
-      ["Property Views", funnel.property_view],
-      ["Contact Clicks", funnel.contact],
-      ["Inquiries", funnel.inquiry],
-      ["Downloads", funnel.download]
-    ];
-
-    const base = stages[0][1] || 1;
-
-    body.innerHTML = stages
-      .map(([label, count], i) => {
-        const prev = i === 0 ? base : stages[i - 1][1];
-        const pct = prev ? ((count / prev) * 100).toFixed(1) : "0.0";
-
-        return `
-          <tr>
-            <td>${label}</td>
-            <td>${count}</td>
-            <td>${pct}%</td>
-          </tr>
-        `;
-      })
-      .join("");
-  } catch (err) {
-    body.innerHTML =
-      `<tr><td colspan="3" style="color:#ff6b6b;text-align:center">Failed to load funnel</td></tr>`;
-    console.error(err);
-  }
-}
     /* ===============================
    ANOMALY DETECTION RENDER
 ================================ */
@@ -1226,10 +1172,19 @@ async function renderAnomalies() {
     const out = await res.json();
     const anomalies = out.anomalies || [];
 
-    if (!anomalies.length) {
-      list.innerHTML = `<li style="opacity:.6">No anomalies detected</li>`;
-      return;
-    }
+ if (!anomalies.length) {
+  list.innerHTML = `
+    <li class="muted">
+      ✅ No anomalies detected.
+      <br>
+      <span class="small">
+        Activity is within expected thresholds based on recent traffic patterns.
+      </span>
+    </li>
+  `;
+  return;
+}
+
 
     list.innerHTML = anomalies
       .map(a => {
@@ -1416,6 +1371,41 @@ if (bc && sections.length) {
 
   sections.forEach(s => obs.observe(s));
 }
+      document.addEventListener("DOMContentLoaded", () => {
+  const saveBtn = document.getElementById("saveAlertCfg");
+  if (!saveBtn) return;
+
+  saveBtn.addEventListener("click", async () => {
+    saveBtn.textContent = "Saving…";
+    saveBtn.disabled = true;
+
+    const payload = {
+      zScore: Number(document.getElementById("zThresh")?.value || 3),
+      windowMinutes: Number(document.getElementById("alertWindowMin")?.value || 10),
+      severityCount: Number(document.getElementById("sevCountThresh")?.value || 5)
+    };
+
+    try {
+      const res = await fetch("/api/admin/thresholds", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error("save failed");
+
+      // Immediately re-run anomalies with new thresholds
+      renderAnomalies();
+
+    } catch (e) {
+      alert("Failed to save anomaly thresholds");
+    } finally {
+      saveBtn.textContent = "Save";
+      saveBtn.disabled = false;
+    }
+  });
+});
 /* ===============================
    REAL-TIME EVENT STREAM (SSE)
 ================================ */
