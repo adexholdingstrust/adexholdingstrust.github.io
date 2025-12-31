@@ -347,7 +347,53 @@
     </table>
   </div>
 
+<!-- NEW CONVERSION FUNNELS -->
+<div class="card" id="funnels">
+  <div class="kicker">Analytics</div>
+  <div class="h1">Conversion Funnels</div>
 
+  <!-- Controls -->
+  <div class="funnelControls">
+    <label>
+      Funnel Preset:
+      <select id="funnelPreset">
+        <option value="all">All Properties</option>
+        <option value="rental">Rental Funnel</option>
+        <option value="land">Land Funnel</option>
+      </select>
+    </label>
+
+    <label>
+      Window:
+      <select id="funnelWindow">
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="">All time</option>
+      </select>
+    </label>
+
+    <button id="funnelRefresh" class="btn">Refresh</button>
+  </div>
+
+  <!-- Funnel Table -->
+  <table class="table funnelTable">
+    <thead>
+      <tr>
+        <th>Step</th>
+        <th>Event</th>
+        <th>Count</th>
+        <th>Conversion</th>
+        <th>Drop-off</th>
+      </tr>
+    </thead>
+    <tbody id="funnelBody"></tbody>
+  </table>
+
+  <div id="funnelDebug" class="small muted"></div>
+</div>
+
+  <!-- END NEW CONVERSION FUNNELS -->
+  
 <!-- CONVERSION FUNNEL -->
 <div class="card" id="conversionFunnel">
   <div class="kicker">Analytics</div>
