@@ -108,11 +108,10 @@ const escapeHtml = s =>
     .replace(/'/g, "&#039;");
 
 function accessRedirected(res) {
-  const ct = res.headers.get("content-type") || "";
   return (
     res.type === "opaqueredirect" ||
-    res.status === 302 ||
-    ct.includes("text/html")
+    res.status === 401 ||
+    res.status === 403
   );
 }
 
