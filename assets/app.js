@@ -283,6 +283,45 @@ const coords = extractCoords(l.geo.geometry);
   });
 }
 /* ================================
+   PROPERTY CONTEXT RESOLUTION
+   (Single Source of Truth)
+================================ */
+
+(function resolvePropertyContext() {
+  // Do not overwrite if already set explicitly
+  if (window.PROPERTY_ID && window.PROPERTY_NAME) return;
+
+  const params = new URLSearchParams(location.search);
+  const idFromUrl = params.get("id");
+
+  // Only property / land detail pages should resolve context
+  const isPropertyPage = location.pathname.includes("property.html");
+  const isLandPage = location.pathname.includes("land.html");
+
+  if (!idFromUrl || (!isPropertyPage && !isLandPage)) return;
+  if (!window.ADEX_DATA) return;
+
+  if (isPropertyPage) {
+    const p = window.ADEX_DATA.rentals?.find(x => x.id === idFromUrl);
+    if (!p) return;
+
+    window.PROPERTY_ID = p.id;
+    window.PROPERTY_NAME = p.name;
+    window.PROPERTY_TYPE = "rental";
+    return;
+  }
+
+  if (isLandPage) {
+    const l = window.ADEX_DATA.lands?.find(x => x.id === idFromUrl);
+    if (!l) return;
+
+    window.PROPERTY_ID = l.id;
+    window.PROPERTY_NAME = l.name;
+    window.PROPERTY_TYPE = "land";
+  }
+})();
+
+/* ================================
    PROPERTY ID RESOLUTION
 ================================ */
 
@@ -620,6 +659,9 @@ function trackEvent(eventType, data = {}) {
     const payload = JSON.stringify({
       eventType,
       path: location.pathname,
+      property: window.PROPERTY_ID || null,
+      propertyName: window.PROPERTY_NAME || null,
+      propertyType: window.PROPERTY_TYPE || null,
       referrer: document.referrer || null,
       userAgent: navigator.userAgent,
       language: navigator.language,
@@ -2674,6 +2716,17 @@ function appendEventRowIfVisible(e) {
   // Keep last 250 rows
   while (tbody.children.length > 250) tbody.removeChild(tbody.lastChild);
 }
+if (
+  (location.pathname.includes("property.html") ||
+   location.pathname.includes("land.html")) &&
+  !window.PROPERTY_ID
+) {
+  console.warn(
+    "[ADEX] Property detail page loaded without resolved PROPERTY_ID",
+    location.href
+  );
+}
+
 /* ================================
    PROPERTY ID SAFETY CHECK
 ================================ */
