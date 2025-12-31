@@ -13,7 +13,7 @@
     if (
       location.protocol !== "https:" ||
       location.hostname !== "adexholdings.com" ||
-      location.pathname !== "/admin.html"
+      !location.pathname.endsWith("/admin.html")
     ) {
       document.open();
       document.write(`
@@ -1418,7 +1418,7 @@ function connectEventStream() {
   const output = document.getElementById("realtimeStream");
   const btn = document.getElementById("connectStreamBtn");
 
-  adminEventSource = new EventSource("/api/admin/stream");
+
 
   btn.textContent = "Connected";
   btn.disabled = true;
