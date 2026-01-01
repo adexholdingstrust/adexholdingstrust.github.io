@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Financial Editor</title>
+</head>
+<body>
+
+<h2>Add Maintenance Cost</h2>
+
+<select id="property"></select>
+<input id="amount" type="number" placeholder="Amount">
+<input id="note" placeholder="Description">
+<button onclick="save()">Save</button>
+
+<script src="/assets/financials.js"></script>
+<script>
+ADEX_DATA.rentals.concat(ADEX_DATA.lands).forEach(p => {
+  const o = document.createElement("option");
+  o.value = p.id;
+  o.textContent = p.name;
+  property.appendChild(o);
+});
+
+async function save() {
+  await fetch("/api/admin/finance/maintenance", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      propertyId: property.value,
+      entry: {
+        amount: Number(amount.value),
+        note: note.value
+      }
+    })
+  });
+  alert("Saved");
+}
+</script>
+</body>
+</html>
