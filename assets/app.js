@@ -635,14 +635,18 @@ async function accessFetch(path, opts = {}) {
     ...fetchOpts
   });
 
-if (accessRedirected(res)) {
-  // Only whoami determines session validity
-  if (path === "/whoami") {
-    notify("Session expired. Please refresh and sign in again.", true);
-    throw new Error("Auth expired");
+  if (accessRedirected(res)) {
+    // Only whoami determines session validity
+    if (path === "/whoami") {
+      notify("Session expired. Please refresh and sign in again.", true);
+      throw new Error("Auth expired");
+    }
+
+    // All other admin endpoints fail softly
+    return res;
   }
 
-  // All other admin endpoints fail softly
+  // ✅ NORMAL SUCCESS PATH (THIS WAS MISSING)
   return res;
 }
 /* =======================
