@@ -358,18 +358,23 @@ const coords = extractCoords(l.geo.geometry);
   if (!window.PROPERTY_ID) return;
 
   try {
-    fetch("/api/track-public", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      keepalive: true,
-      body: JSON.stringify({
-        eventType: "page_enter",
-        path: location.pathname,
-        id: window.PROPERTY_ID
-      })
-    });
-  } catch {}
-})();
+  fetch("/api/track-public", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  keepalive: true,
+  body: JSON.stringify({
+    eventType: "view_rental",
+    path: location.pathname,
+
+    id: window.ADEX_PROPERTY?.id,
+    name: window.ADEX_PROPERTY?.name,
+    propertyType: window.ADEX_PROPERTY?.type,
+    state: window.ADEX_PROPERTY?.state,
+    county: window.ADEX_PROPERTY?.county,
+    parcelId: window.ADEX_PROPERTY?.parcelId,
+    acres: window.ADEX_PROPERTY?.acres
+  })
+});
 /* ================================
    PROPERTY PAGE EXIT (DWELL END)
 ================================ */
