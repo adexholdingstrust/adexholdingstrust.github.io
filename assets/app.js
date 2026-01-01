@@ -40,14 +40,14 @@ async function loadAdexConfig() {
   }
 
   try {
-    const res = await fetch("/api/config", {
-  method: "GET",
-  credentials: "omit",
-  cache: "no-store",
-  headers: {
-    "Accept": "application/json"
-  }
-});
+  const res = await fetch("/api/config", {
+    method: "GET",
+    credentials: "omit",
+    cache: "no-store",
+    headers: {
+      "Accept": "application/json"
+    }
+  });
 
    if (!res.ok) {
   console.error("Config endpoint unavailable:", res.status);
