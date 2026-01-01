@@ -1,110 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Adex Holdings – Property Financials</title>
+  <meta charset="utf-8" />
+  <title>Adex Holdings Trust — Financial Overview</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" href="assets/logo.png" />
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="assets/admin.css" />
+
   <style>
     body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      margin: 0;
-      background: #f6f7f9;
-      color: #222;
+      background: #0f1115;
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
     }
+
     header {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
       padding: 16px 24px;
-      background: #111;
-      color: #fff;
+      border-bottom: 1px solid #1f2937;
+      background: #0b0d12;
     }
+
     header img {
-      height: 42px;
+      height: 36px;
     }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
     main {
       padding: 24px;
-      max-width: 1400px;
-      margin: auto;
     }
-    h2 {
-      margin-top: 40px;
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
     }
+
+    select, input {
+      background: #111827;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+      padding: 8px 10px;
+      border-radius: 6px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
-      border-radius: 10px;
-      overflow: hidden;
+      margin-top: 16px;
     }
+
     th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #eee;
+      padding: 10px 8px;
+      border-bottom: 1px solid #1f2937;
       text-align: right;
     }
+
     th {
-      background: #fafafa;
-      font-size: 13px;
       text-transform: uppercase;
-      color: #555;
+      font-size: 11px;
+      color: #9ca3af;
     }
-    td:first-child, th:first-child {
+
+    td:first-child,
+    th:first-child {
       text-align: left;
-      font-weight: 600;
     }
-    input {
-      width: 100%;
-      padding: 6px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 13px;
-      text-align: right;
+
+    .positive {
+      color: #22c55e;
     }
-    .badge {
-      padding: 4px 8px;
-      border-radius: 6px;
+
+    .negative {
+      color: #ef4444;
+    }
+
+    .note {
       font-size: 12px;
-      font-weight: 600;
-      display: inline-block;
+      color: #9ca3af;
+      margin-top: 8px;
     }
-    .ok { background: #e6f6ee; color: #116b3a; }
-    .warn { background: #fff3cd; color: #856404; }
-    .danger { background: #fdecea; color: #842029; }
-    .profit { color: #116b3a; font-weight: 700; }
-    .loss { color: #842029; font-weight: 700; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: #0b0d12;
+      border: 1px solid #1f2937;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .card h3 {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 6px;
+    }
+
+    .card .value {
+      font-size: 20px;
+      font-weight: 600;
+    }
   </style>
 </head>
 
 <body>
+
 <header>
   <img src="assets/logo.png" alt="Adex Holdings Trust" />
-  <div>
-    <strong>Adex Holdings Trust</strong><br />
-    Property Financial Overview
-  </div>
+  <h1>Financial Overview — United States Properties</h1>
 </header>
 
 <main>
-  <table id="financeTable">
+
+  <!-- FILTER CONTROLS -->
+  <div class="controls">
+    <label>
+      Select Properties
+      <select id="propertySelect" multiple size="5"></select>
+    </label>
+
+    <label>
+      Monthly Maintenance ($)
+      <input id="maintenanceInput" type="number" min="0" step="1" placeholder="Optional" />
+    </label>
+
+    <button id="saveMaintenance">Save Maintenance</button>
+  </div>
+
+  <!-- SUMMARY -->
+  <section class="summary" id="summaryCards"></section>
+
+  <!-- TABLE -->
+  <table>
     <thead>
       <tr>
         <th>Property</th>
-        <th>Rent</th>
+        <th>Rent / Mo</th>
         <th>Mortgage</th>
         <th>HOA</th>
         <th>Maintenance</th>
-        <th>Total Cost</th>
-        <th>Net</th>
-        <th>Lease Ends</th>
-        <th>Status</th>
+        <th>Net / Mo</th>
+        <th>Net / Yr</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="financeTable"></tbody>
   </table>
+
+  <p class="note">
+    * Security deposits are excluded from income. Maintenance is editable and saved locally.
+  </p>
+
 </main>
 
-<script src="finance.js"></script>
 <script src="assets/data.js"></script>
+<script src="finance.js"></script>
 </body>
 </html>
