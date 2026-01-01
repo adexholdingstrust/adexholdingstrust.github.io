@@ -1,97 +1,131 @@
-"use strict";
+/* ======================================================
+   FINANCE DASHBOARD — ADEX HOLDINGS TRUST
+   ====================================================== */
 
-/* ===========================
-   PROPERTY FINANCIAL DATA
-=========================== */
+const MAINT_KEY = "adex_finance_maintenance_v1";
 
-const PROPERTIES = [
-  {
-    id: "co-townhouse",
-    name: "Colorado Townhouse",
-    leaseStart: "2024-03-01",
-    leaseEnd: "2025-03-01",
-    rent: 2400,
-    mortgage: 1650,
-    hoa: {
-      name: "Pine Ridge HOA",
-      contact: "hoa@pineridge.org",
-      monthly: 280
-    },
-    securityDeposit: 2400,
-    maintenance: 0
-  }
-];
+const maintenanceStore = JSON.parse(
+  localStorage.getItem(MAINT_KEY) || "{}"
+);
 
-/* ===========================
-   HELPERS
-=========================== */
+/* -----------------------
+   UTILITIES
+----------------------- */
 
-function daysUntil(date) {
-  return Math.ceil((new Date(date) - new Date()) / 86400000);
+const usd = n =>
+  `$${Number(n || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 0
+  })}`;
+
+function isUSProperty(p) {
+  return (
+    p?.country === "US" ||
+    p?.country === "United States" ||
+    p?.state
+  );
 }
 
-function leaseStatus(days) {
-  if (days <= 30) return ["30 Days", "danger"];
-  if (days <= 60) return ["60 Days", "warn"];
-  if (days <= 90) return ["90 Days", "warn"];
-  return ["Active", "ok"];
-}
+/* -----------------------
+   LOAD PROPERTIES
+----------------------- */
 
-function money(n) {
-  return `$${Number(n || 0).toLocaleString()}`;
-}
+const allProperties = (window.ADEX_PROPERTIES || [])
+  .filter(isUSProperty);
 
-/* ===========================
-   RENDER TABLE
-=========================== */
+const select = document.getElementById("propertySelect");
 
-function render() {
-  const body = document.querySelector("#financeTable tbody");
-  body.innerHTML = "";
-
-  PROPERTIES.forEach(p => {
-    const days = daysUntil(p.leaseEnd);
-    const [label, cls] = leaseStatus(days);
-
-    const totalCost =
-      Number(p.mortgage) +
-      Number(p.hoa.monthly) +
-      Number(p.maintenance || 0);
-
-    const net = Number(p.rent) - totalCost;
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${p.name}</td>
-      <td>${money(p.rent)}</td>
-      <td>${money(p.mortgage)}</td>
-      <td>${money(p.hoa.monthly)}</td>
-      <td>
-        <input type="number" value="${p.maintenance}"
-               data-id="${p.id}" />
-      </td>
-      <td>${money(totalCost)}</td>
-      <td class="${net >= 0 ? "profit" : "loss"}">
-        ${money(net)}
-      </td>
-      <td>${new Date(p.leaseEnd).toLocaleDateString()}</td>
-      <td><span class="badge ${cls}">${label}</span></td>
-    `;
-
-    body.appendChild(tr);
-  });
-}
-
-/* ===========================
-   EVENTS
-=========================== */
-
-document.addEventListener("input", e => {
-  if (e.target.matches("input[data-id]")) {
-    const p = PROPERTIES.find(x => x.id === e.target.dataset.id);
-    p.maintenance = Number(e.target.value || 0);
-    render();
-  }
+allProperties.forEach(p => {
+  const opt = document.createElement("option");
+  opt.value = p.id;
+  opt.textContent = `${p.name} (${p.state || "US"})`;
+  select.appendChild(opt);
 });
 
+/* -----------------------
+   MAINTENANCE
+----------------------- */
+
+document.getElementById("saveMaintenance").onclick = () => {
+  const val = Number(document.getElementById("maintenanceInput").value || 0);
+  [...select.selectedOptions].forEach(o => {
+    maintenanceStore[o.value] = val;
+  });
+  localStorage.setItem(MAINT_KEY, JSON.stringify(maintenanceStore));
+  render();
+};
+
+/* -----------------------
+   RENDER
+----------------------- */
+
+function render() {
+  const selectedIds = [...select.selectedOptions].map(o => o.value);
+
+  const rows = [];
+  let totals = {
+    rent: 0,
+    mortgage: 0,
+    hoa: 0,
+    maintenance: 0,
+    net: 0
+  };
+
+  allProperties
+    .filter(p => selectedIds.length === 0 || selectedIds.includes(p.id))
+    .forEach(p => {
+      const rent = p.rent || 0;
+      const mortgage = p.mortgage || 0;
+      const hoa = p.hoa?.monthly || 0;
+      const maintenance = maintenanceStore[p.id] || 0;
+
+      const net = rent - mortgage - hoa - maintenance;
+
+      totals.rent += rent;
+      totals.mortgage += mortgage;
+      totals.hoa += hoa;
+      totals.maintenance += maintenance;
+      totals.net += net;
+
+      rows.push(`
+        <tr>
+          <td>${p.name}</td>
+          <td>${usd(rent)}</td>
+          <td>${usd(mortgage)}</td>
+          <td>${usd(hoa)}</td>
+          <td>${usd(maintenance)}</td>
+          <td class="${net >= 0 ? "positive" : "negative"}">${usd(net)}</td>
+          <td class="${net * 12 >= 0 ? "positive" : "negative"}">${usd(net * 12)}</td>
+        </tr>
+      `);
+    });
+
+  document.getElementById("financeTable").innerHTML = rows.join("");
+
+  document.getElementById("summaryCards").innerHTML = `
+    <div class="card">
+      <h3>Total Monthly Rent</h3>
+      <div class="value">${usd(totals.rent)}</div>
+    </div>
+    <div class="card">
+      <h3>Total Monthly Costs</h3>
+      <div class="value">${usd(
+        totals.mortgage + totals.hoa + totals.maintenance
+      )}</div>
+    </div>
+    <div class="card">
+      <h3>Net Monthly Cash Flow</h3>
+      <div class="value ${totals.net >= 0 ? "positive" : "negative"}">
+        ${usd(totals.net)}
+      </div>
+    </div>
+    <div class="card">
+      <h3>Net Annual Cash Flow</h3>
+      <div class="value ${totals.net * 12 >= 0 ? "positive" : "negative"}">
+        ${usd(totals.net * 12)}
+      </div>
+    </div>
+  `;
+}
+
+select.onchange = render;
 render();
