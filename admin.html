@@ -1401,11 +1401,12 @@ if (bc && sections.length) {
 let adminEventSource = null;
 
 function connectEventStream() {
-  function connectEventStream() {
   if (adminEventSource) return;
 
   const output = document.getElementById("realtimeStream");
   const btn = document.getElementById("connectStreamBtn");
+
+  if (!output || !btn) return;
 
   adminEventSource = new EventSource("/api/admin/stream", {
     withCredentials: true
@@ -1415,11 +1416,15 @@ function connectEventStream() {
   btn.disabled = true;
 
   adminEventSource.onmessage = e => {
-    const data = JSON.parse(e.data);
-    const row = document.createElement("div");
-    row.textContent =
-      `${fmtPST(data.ts)} | ${data.eventType} | ${data.property || data.path}`;
-    output.prepend(row);
+    try {
+      const data = JSON.parse(e.data);
+      const row = document.createElement("div");
+      row.textContent =
+        `${fmtPST(data.ts)} | ${data.eventType} | ${data.property || data.path || "—"}`;
+      output.prepend(row);
+    } catch (err) {
+      console.warn("Bad SSE payload", err);
+    }
   };
 
   adminEventSource.onerror = () => {
@@ -1430,28 +1435,16 @@ function connectEventStream() {
   };
 }
 
-  const output = document.getElementById("realtimeStream");
+function disconnectEventStream() {
+  if (!adminEventSource) return;
+  adminEventSource.close();
+  adminEventSource = null;
+
   const btn = document.getElementById("connectStreamBtn");
-
-
-
-  btn.textContent = "Connected";
-  btn.disabled = true;
-
-  adminEventSource.addEventListener("event", e => {
-    const data = JSON.parse(e.data);
-    const row = document.createElement("div");
-    row.textContent =
-      `${fmtPST(data.ts)} | ${data.eventType} | ${data.data?.name || data.path}`;
-    output.prepend(row);
-  });
-
-  adminEventSource.onerror = () => {
-    btn.textContent = "Disconnected";
+  if (btn) {
+    btn.textContent = "Connect";
     btn.disabled = false;
-    adminEventSource.close();
-    adminEventSource = null;
-  };
+  }
 }
 /* ===============================
    AUDIT TABLE PST FIX
