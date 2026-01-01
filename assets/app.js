@@ -1836,19 +1836,18 @@ function renderPropertiesPage(avail) {
           <div style="opacity:.75;font-size:12px;margin-top:6px;">Map</div>
         </div>
       `;
-      const overlay = card.querySelector(".propertyOverlayLink");
+     const overlay = card.querySelector(".propertyOverlayLink");
 if (overlay) {
- overlay.addEventListener("click", () => {
-  trackEvent("view_rental", {
-  id: p.id,
-  name: p.name,
-  state: p.state,
-  county: p.county,
-  country: p.country,
-  status: available ? "available" : "rented"
-});
-});
-
+  overlay.addEventListener("click", () => {
+    trackEvent("view_rental", {
+      id: p.id,
+      name: p.name,
+      state: p.state,
+      county: p.county,
+      country: p.country,
+      status: available ? "available" : "rented"
+    });
+  });
 }
       // media area
       const media = qs(".media", card);
