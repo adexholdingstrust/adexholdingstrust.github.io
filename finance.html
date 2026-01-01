@@ -1,1 +1,109 @@
-Test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Adex Holdings – Property Financials</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="assets/logo.png" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 0;
+      background: #f6f7f9;
+      color: #222;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 24px;
+      background: #111;
+      color: #fff;
+    }
+    header img {
+      height: 42px;
+    }
+    main {
+      padding: 24px;
+      max-width: 1400px;
+      margin: auto;
+    }
+    h2 {
+      margin-top: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+      text-align: right;
+    }
+    th {
+      background: #fafafa;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: #555;
+    }
+    td:first-child, th:first-child {
+      text-align: left;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 13px;
+      text-align: right;
+    }
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .ok { background: #e6f6ee; color: #116b3a; }
+    .warn { background: #fff3cd; color: #856404; }
+    .danger { background: #fdecea; color: #842029; }
+    .profit { color: #116b3a; font-weight: 700; }
+    .loss { color: #842029; font-weight: 700; }
+  </style>
+</head>
+
+<body>
+<header>
+  <img src="assets/logo.png" alt="Adex Holdings Trust" />
+  <div>
+    <strong>Adex Holdings Trust</strong><br />
+    Property Financial Overview
+  </div>
+</header>
+
+<main>
+  <table id="financeTable">
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Rent</th>
+        <th>Mortgage</th>
+        <th>HOA</th>
+        <th>Maintenance</th>
+        <th>Total Cost</th>
+        <th>Net</th>
+        <th>Lease Ends</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
+
+<script src="finance.js"></script>
+</body>
+</html>
