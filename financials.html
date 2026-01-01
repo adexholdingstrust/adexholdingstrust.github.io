@@ -1,41 +1,268 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Financial Editor</title>
+  <meta charset="utf-8" />
+  <title>Financials Admin – Adex Holdings Trust</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="/assets/styles.css" />
+
+  <style>
+    body {
+      background: #020617;
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    header img {
+      height: 44px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    select, input {
+      background: #020617;
+      color: #e5e7eb;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+      width: 100%;
+    }
+
+    label {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .card h3 {
+      margin-top: 0;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #1e293b;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .notice {
+      margin-top: 16px;
+      font-size: 13px;
+      opacity: 0.75;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    .success {
+      color: #22c55e;
+    }
+
+    .error {
+      color: #ef4444;
+    }
+  </style>
 </head>
+
 <body>
+  <header>
+    <img src="/assets/logo.png" alt="Adex Holdings Trust" />
+    <div>
+      <h1>Financials Administration</h1>
+      <div class="subtitle">
+        Secure • Editable • KV-backed • Admin Only
+      </div>
+    </div>
+  </header>
 
-<h2>Add Maintenance Cost</h2>
+  <!-- PROPERTY SELECTOR -->
+  <div class="card">
+    <label for="propertySelect">Select U.S. Property</label>
+    <select id="propertySelect">
+      <option value="">Loading properties…</option>
+    </select>
+  </div>
 
-<select id="property"></select>
-<input id="amount" type="number" placeholder="Amount">
-<input id="note" placeholder="Description">
-<button onclick="save()">Save</button>
+  <!-- EDIT FORM -->
+  <div id="editor" class="grid" style="display:none;">
+    <div class="card">
+      <h3>Income</h3>
+      <label>Monthly Rent</label>
+      <input id="rentAmount" type="number" />
+    </div>
 
-<script src="/assets/financials.js"></script>
-<script>
-ADEX_DATA.rentals.concat(ADEX_DATA.lands).forEach(p => {
-  const o = document.createElement("option");
-  o.value = p.id;
-  o.textContent = p.name;
-  property.appendChild(o);
-});
+    <div class="card">
+      <h3>Mortgage</h3>
+      <label>Monthly Mortgage</label>
+      <input id="mortgageAmount" type="number" />
+    </div>
 
-async function save() {
-  await fetch("/api/admin/finance/maintenance", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      propertyId: property.value,
-      entry: {
-        amount: Number(amount.value),
-        note: note.value
+    <div class="card">
+      <h3>HOA</h3>
+      <label>Monthly HOA</label>
+      <input id="hoaAmount" type="number" />
+    </div>
+
+    <div class="card">
+      <h3>Taxes / Payments</h3>
+      <label>Monthly Cost</label>
+      <input id="taxAmount" type="number" />
+    </div>
+
+    <div class="card">
+      <h3>Lease Term</h3>
+      <label>Lease End Date</label>
+      <input id="leaseEnd" type="date" />
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="row">
+    <button id="saveBtn">Save Changes</button>
+    <button class="secondary" id="resetBtn">Reset</button>
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <div class="notice">
+    Changes are stored securely and audited. Static asset files are never modified directly.
+  </div>
+
+  <!-- DATA + LOGIC -->
+  <script src="/assets/financials.js"></script>
+
+  <script>
+    const select = document.getElementById("propertySelect");
+    const editor = document.getElementById("editor");
+    const statusEl = document.getElementById("status");
+
+    const fields = {
+      rent: document.getElementById("rentAmount"),
+      mortgage: document.getElementById("mortgageAmount"),
+      hoa: document.getElementById("hoaAmount"),
+      tax: document.getElementById("taxAmount"),
+      leaseEnd: document.getElementById("leaseEnd")
+    };
+
+    const properties = [
+      ...window.ADEX_DATA.rentals,
+      ...window.ADEX_DATA.lands
+    ].filter(p => p.country === "USA");
+
+    select.innerHTML = `<option value="">Select property…</option>`;
+    properties.forEach(p => {
+      const o = document.createElement("option");
+      o.value = p.id;
+      o.textContent = p.name;
+      select.appendChild(o);
+    });
+
+    select.addEventListener("change", () => {
+      const p = properties.find(x => x.id === select.value);
+      if (!p) {
+        editor.style.display = "none";
+        return;
       }
-    })
-  });
-  alert("Saved");
-}
-</script>
+
+      editor.style.display = "grid";
+
+      fields.rent.value = p.rent?.amount || "";
+      fields.mortgage.value = p.Mortgage?.amount || "";
+      fields.hoa.value = p.HOA?.amount || "";
+      fields.tax.value =
+        p.Taxes?.amount || p.Payments?.amount || "";
+      fields.leaseEnd.value = p.leaseEnd || "";
+    });
+
+    document.getElementById("resetBtn").onclick = () => {
+      select.dispatchEvent(new Event("change"));
+      statusEl.textContent = "";
+    };
+
+    document.getElementById("saveBtn").onclick = async () => {
+      statusEl.textContent = "Saving…";
+      statusEl.className = "status";
+
+      try {
+        const payload = {
+          propertyId: select.value,
+          rent: Number(fields.rent.value),
+          mortgage: Number(fields.mortgage.value),
+          hoa: Number(fields.hoa.value),
+          tax: Number(fields.tax.value),
+          leaseEnd: fields.leaseEnd.value
+        };
+
+        const res = await fetch("/api/admin/financials/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error("Save failed");
+
+        statusEl.textContent = "Saved successfully.";
+        statusEl.classList.add("success");
+      } catch (e) {
+        statusEl.textContent = "Error saving data.";
+        statusEl.classList.add("error");
+      }
+    };
+  </script>
 </body>
 </html>
