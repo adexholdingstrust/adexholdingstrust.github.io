@@ -31,10 +31,11 @@ const usd = (v) =>
     currency: "USD"
   });
 
-const daysUntil = (iso) => {
-   function getActiveMonth() {
+function getActiveMonth() {
   return $("activeMonth")?.value || null;
 }
+
+const daysUntil = (iso) => {
   if (!iso) return null;
   return Math.ceil(
     (new Date(iso).getTime() - Date.now()) / 86400000
@@ -179,6 +180,11 @@ async function loadFinancials() {
 
   const json = await res.json();
   FINANCIALS = json.financials || {};
+
+Object.values(FINANCIALS).forEach(f => {
+  f.maintenanceActuals ||= {};
+});
+
 }
 
 /* ---------------- SELECTOR ---------------- */
@@ -418,15 +424,41 @@ function renderTable() {
   PROPERTIES.filter((p) => SELECTED.has(p.id)).forEach((p) => {
     const f = FINANCIALS[p.id] || {};
     const month = getActiveMonth();
+    const isMonthly = Boolean(month);
+if ($("rentHeader")) {
+  $("rentHeader").textContent = isMonthly ? "Monthly Rent" : "Annual Rent";
+}
+if ($("expenseHeader")) {
+  $("expenseHeader").textContent = isMonthly ? "Monthly Expenses" : "Annual Expenses";
+}
+if ($("netHeader")) {
+  $("netHeader").textContent = isMonthly ? "Monthly Net" : "Annual Net";
+}
 
-const pl = month
-  ? computeMonthlyPL(p, f, month)
-  : computeAnnualPL(p, f);
 
+let pl;
+let rentVal = 0;
+let expenseVal = 0;
+let netVal = 0;
+let cashFlowVal = 0;
 
-totals.rent += pl.rentAnnual;
-totals.expenses += pl.expensesAnnual;
-totals.net += pl.netAnnual;
+if (month) {
+  pl = computeMonthlyPL(p, f, month);
+  rentVal = pl.rent;
+  expenseVal = pl.expenses;
+  netVal = pl.net;
+  cashFlowVal = pl.net;
+} else {
+  pl = computeAnnualPL(p, f);
+  rentVal = pl.rentAnnual;
+  expenseVal = pl.expensesAnnual;
+  netVal = pl.netAnnual;
+  cashFlowVal = pl.cashFlowMonthly;
+}
+
+totals.rent += rentVal;
+totals.expenses += expenseVal;
+totals.net += netVal;
 totals.deposits += Number(f.deposit || 0);
 
     const tr = document.createElement("tr");
@@ -434,16 +466,14 @@ totals.deposits += Number(f.deposit || 0);
    tr.onclick = () => openPropertyModal(p);
     tr.innerHTML = `
   <td>${p.name}</td>
-  <td>${usd(pl.rentAnnual)}</td>
-  <td>${usd(pl.expensesAnnual)}</td>
-  <td class="${pl.netAnnual >= 0 ? "pos" : "neg"}">
-    ${usd(pl.netAnnual)}
-  </td>
-  <td>${usd(pl.cashFlowMonthly)}</td>
+  <td>${usd(rentVal)}</td>
+<td>${usd(expenseVal)}</td>
+<td class="${netVal >= 0 ? "pos" : "neg"}">
+  ${usd(netVal)}
+</td>
+<td>${usd(cashFlowVal)}</td>
 
-  <!-- ✅ NEW: Cash Reserve Stress -->
-  <td>${reserveStress(pl.cashFlowMonthly)}</td>
-
+<td>${reserveStress(cashFlowVal)}</td>
   <td>
     ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
     <div style="margin-top:4px">
