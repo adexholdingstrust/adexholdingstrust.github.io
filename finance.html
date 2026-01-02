@@ -297,6 +297,20 @@ tfoot td{font-weight:700}
 
 <body>
 <div class="wrap">
+<!-- PDF WATERMARK (PRINT ONLY) -->
+<div class="watermark">CONFIDENTIAL</div>
+
+<!-- PDF HEADER (PRINT ONLY) -->
+<div class="pdfHeader">
+  <img src="/assets/logo.png" alt="Adex Holdings Trust" />
+  <div>
+    <div class="pdfTitle">ADEX HOLDINGS TRUST</div>
+    <div class="pdfSub">Portfolio Financial Disclosure</div>
+    <div class="pdfSub">
+      Generated: <span id="pdfDate"></span>
+    </div>
+  </div>
+</div>
 
 <!-- HEADER -->
 <div class="top">
@@ -341,7 +355,7 @@ tfoot td{font-weight:700}
 <div class="card">
   <div class="cardHead">
     <span>Portfolio Snapshot</span>
-    <button onclick="window.print()">Download PDF</button>
+    <button onclick="downloadFinancePDF()">Download PDF</button>
   </div>
   <div class="cardBody kpis">
     <div class="kpi"><label>Monthly Rent</label><div id="kpiRent">$0</div></div>
@@ -351,6 +365,15 @@ tfoot td{font-weight:700}
     <div class="kpi"><label>Annual P&amp;L</label><div id="kpiAnnual">$0</div></div>
     <div class="kpi"><label>Portfolio Stress</label><div id="kpiStress">—</div></div>
   </div>
+</div>
+<!-- PDF PORTFOLIO SUMMARY (PRINT ONLY) -->
+<div class="pdfSummary">
+  <div class="pdfKpi">Monthly Rent<strong id="pdfRent">$0</strong></div>
+  <div class="pdfKpi">Monthly Expenses<strong id="pdfExpenses">$0</strong></div>
+  <div class="pdfKpi">Net Cash Flow<strong id="pdfNet">$0</strong></div>
+  <div class="pdfKpi">Security Deposits<strong id="pdfDeposits">$0</strong></div>
+  <div class="pdfKpi">Annual P&amp;L<strong id="pdfAnnual">$0</strong></div>
+  <div class="pdfKpi">Portfolio Stress<strong id="pdfStress">—</strong></div>
 </div>
 
 <!-- FINANCIAL BREAKDOWN -->
@@ -389,6 +412,9 @@ tfoot td{font-weight:700}
     </table>
   </div>
 </div>
+<footer>
+  Page <span class="pageNumber"></span> • Confidential • Adex Holdings Trust
+</footer>
 
 </div>
 
@@ -470,6 +496,19 @@ renderTable = function(){
   kpiDeposits.textContent=`$${totals.dep.toFixed(2)}`;
   kpiStress.textContent=stress(totals.net,reserve,totals.dep);
 };
+  function downloadFinancePDF(){
+  // Sync live KPIs into PDF summary
+  document.getElementById("pdfRent").textContent = kpiRent.textContent;
+  document.getElementById("pdfExpenses").textContent = kpiExpenses.textContent;
+  document.getElementById("pdfNet").textContent = kpiNet.textContent;
+  document.getElementById("pdfDeposits").textContent = kpiDeposits.textContent;
+  document.getElementById("pdfAnnual").textContent = kpiAnnual.textContent;
+  document.getElementById("pdfStress").textContent = kpiStress.textContent;
+  document.getElementById("pdfDate").textContent =
+    new Date().toLocaleDateString();
+
+  window.print();
+}
 </script>
 
 </body>
