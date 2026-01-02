@@ -296,18 +296,6 @@ tfoot td{font-weight:700}
 </head>
 
 <body>
-   <div class="watermark">CONFIDENTIAL</div>
-
-<div class="pdfHeader">
-  <img src="/assets/logo.png" alt="Adex Holdings Trust" />
-  <div>
-    <div class="pdfTitle">ADEX HOLDINGS TRUST</div>
-    <div class="pdfSub">Portfolio Financial Disclosure</div>
-    <div class="pdfSub">
-      Generated: <span id="pdfDate"></span>
-    </div>
-  </div>
-</div>
 <div class="wrap">
  
 <!-- HEADER -->
@@ -493,20 +481,6 @@ renderTable = function(){
   kpiDeposits.textContent=`$${totals.dep.toFixed(2)}`;
   kpiStress.textContent=stress(totals.net,reserve,totals.dep);
 };
-  function downloadFinancePDF(){
-  // Sync live KPIs into PDF summary
-  document.getElementById("pdfRent").textContent = kpiRent.textContent;
-  document.getElementById("pdfExpenses").textContent = kpiExpenses.textContent;
-  document.getElementById("pdfNet").textContent = kpiNet.textContent;
-  document.getElementById("pdfDeposits").textContent = kpiDeposits.textContent;
-  document.getElementById("pdfAnnual").textContent = kpiAnnual.textContent;
-  document.getElementById("pdfStress").textContent = kpiStress.textContent;
-  document.getElementById("pdfDate").textContent =
-    new Date().toLocaleDateString();
-
-  window.print();
-}
-
 </script>
 
 </body>
