@@ -54,7 +54,20 @@ function clearAllProperties() {
   Array.from(sel.options).forEach(o => (o.selected = false));
   onPropertySelect();
 }
+// --- LOAD FINANCIALS ---
+   function loadFinancialsIntoForm(propertyId) {
+  const f = FINANCIALS[propertyId] || {};
 
+  if ($("editId")) $("editId").value = propertyId;
+  if ($("rent")) $("rent").value = f.rent || "";
+  if ($("mortgage")) $("mortgage").value = f.mortgage || "";
+  if ($("hoa")) $("hoa").value = f.hoa || "";
+  if ($("maintenance")) $("maintenance").value = f.maintenance || "";
+  if ($("tax")) $("tax").value = f.tax || "";
+  if ($("rentStart")) $("rentStart").value = f.rentStartDate || "";
+  if ($("rentEnd")) $("rentEnd").value = f.rentEndDate || "";
+  if ($("deposit")) $("deposit").value = f.deposit || "";
+}
 /* ---------------- lease-risk helper function---------------- */
 function leaseRiskChip(endDate) {
   if (!endDate) return "—";
@@ -141,14 +154,16 @@ function renderPropertySelector() {
 
 function onPropertySelect() {
   const sel = $("propertySelect");
-  SELECTED = new Set(
-    Array.from(sel.selectedOptions).map((o) => o.value)
-  );
+  const values = Array.from(sel.selectedOptions).map(o => o.value);
+
+  SELECTED = new Set(values);
+
+  // Auto-load editor fields if exactly one property is selected
+  if (values.length === 1) {
+    loadFinancialsIntoForm(values[0]);
+  }
+
   renderTable();
-}
-if (PROPERTIES.length > 0) {
-  $("propertySelect").selectedIndex = 0;
-  onPropertySelect();
 }
 /* ---------------- CALCULATIONS ---------------- */
 
@@ -264,7 +279,9 @@ function openPropertyModal(property) {
 }
 
 function closePropertyModal() {
-  document.getElementById("propertyModal").style.display = "none";
+  const m = $("propertyModal");
+  if (!m) return;
+  m.style.display = "none";
 }
 
 function leaseBadge(end) {
@@ -295,22 +312,8 @@ function updateDelta(id, prev, curr) {
   el.textContent = `${up ? "↑" : "↓"} $${Math.abs(diff)}`;
   el.className = `kpiDelta ${up ? "up" : "down"} show`;
 }
-// --- KPI VALUES ---
-const current = {
-  rent: totals.rent,
-  expenses: totals.expenses,
-  net: totals.net,
-  annual: totals.net * 12
-};
-
-updateDelta("kpiRentDelta", previousKpis.rent, current.rent);
-updateDelta("kpiExpensesDelta", previousKpis.expenses, current.expenses);
-updateDelta("kpiNetDelta", previousKpis.net, current.net);
-updateDelta("kpiAnnualDelta", previousKpis.annual, current.annual);
 
 // Store for next comparison
-previousKpis = { ...current };
-
 
 function renderTable() {
   const body = $("financeBody");
@@ -357,23 +360,36 @@ function renderTable() {
     body.appendChild(tr);
   });
 
+// ---- Totals UI ----
 if ($("totalRent")) $("totalRent").textContent = usd(totals.rent);
 if ($("totalExpenses")) $("totalExpenses").textContent = usd(totals.expenses);
 if ($("totalNet")) $("totalNet").textContent = usd(totals.net);
-}
-document.getElementById("kpiRent").textContent = `$${totals.rent}`;
-document.getElementById("kpiExpenses").textContent = `$${totals.expenses}`;
-document.getElementById("kpiNet").textContent = `$${totals.net}`;
-document.getElementById("kpiAnnual").textContent = `$${totals.net * 12}`;
 
+// ---- KPI values ----
+if ($("kpiRent")) $("kpiRent").textContent = usd(totals.rent);
+if ($("kpiExpenses")) $("kpiExpenses").textContent = usd(totals.expenses);
+if ($("kpiNet")) $("kpiNet").textContent = usd(totals.net);
+if ($("kpiAnnual")) $("kpiAnnual").textContent = usd(totals.net * 12);
+
+// ---- KPI deltas ----
+const current = {
+  rent: totals.rent,
+  expenses: totals.expenses,
+  net: totals.net,
+  annual: totals.net * 12
+};
+
+updateDelta("kpiRentDelta", previousKpis.rent, current.rent);
+updateDelta("kpiExpensesDelta", previousKpis.expenses, current.expenses);
+updateDelta("kpiNetDelta", previousKpis.net, current.net);
+updateDelta("kpiAnnualDelta", previousKpis.annual, current.annual);
+// ✅ NEW: persist baseline for next render
+previousKpis = { ...current };
 /* ---------------- EDITOR ---------------- */
 function openEditor(id) {
-  if (!$("modal") || !$("editId")) {
-    console.error("Editor modal not found in DOM");
-    return;
-  }
-function openEditor(id) {
   const f = FINANCIALS[id] || {};
+
+  if (!$("modal") || !$("editId")) return;
 
   $("editId").value = id;
   $("rent").value = f.rent || "";
@@ -389,18 +405,16 @@ function openEditor(id) {
 }
 
 function closeEditor() {
-  $("modal").style.display = "none";
+  const m = $("modal");
+  if (!m) return;
+  m.style.display = "none";
 }
 
    document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closePropertyModal();
 });
 
-/* ---------------- SAVE ---------------- */
-if (READ_ONLY) {
-  alert("You are in read-only mode.");
-  return;
-}
+
 async function saveFinancials() {
   // --- HARD GUARD: ensure required DOM elements exist ---
   const requiredIds = [
@@ -423,6 +437,7 @@ async function saveFinancials() {
       return;
     }
   }
+
 
   // --- SAFE VALUE EXTRACTION ---
   const payload = {
@@ -493,6 +508,16 @@ async function initFinance() {
   loadProperties();
   await loadFinancials();
   renderPropertySelector();
+
+  // ✅ NEW: auto-select first property
+  const sel = $("propertySelect");
+  if (sel && sel.options.length) {
+    sel.options[0].selected = true;
+    onPropertySelect();
+  }
+
+  renderTable();
 }
+
 
 document.addEventListener("DOMContentLoaded", initFinance);
