@@ -62,7 +62,7 @@ body{
   align-items:center;
 }
 .cardBody{
-  padding:18px;
+  padding:18px
   overflow-x:auto;
 }
   .cardBody::-webkit-scrollbar {
@@ -118,20 +118,17 @@ table{
   border-collapse:collapse;
   font-size:13px;
 }
-
 th,td{
   padding:10px;
   border-bottom:1px solid var(--line);
   white-space:nowrap;
 }
-
-/* Allow wrapping where needed */
+  /* Allow wrapping where needed */
 td:first-child,
 td:nth-child(11){
   white-space:normal;
   max-width:260px;
 }
-
 th{color:var(--muted);text-align:right}
 th:first-child,td:first-child{text-align:left}
 td{text-align:right}
@@ -156,7 +153,6 @@ tfoot td{font-weight:700}
 @media print{
   .controls,.cardHead button{display:none}
 }
-
   /* ===========================
    PRINT / PDF LAYOUT
 =========================== */
@@ -277,28 +273,32 @@ tfoot td{font-weight:700}
   .pageNumber::after {
     content: counter(page);
   }
-/* Watermark */ 
-  .watermark { 
-    position: fixed; 
-    inset: 0; display: 
-    flex; align-items: center; 
-    justify-content: center; 
-    font-size: 96px; 
-    font-weight: 700; 
-    color: rgba(0,0,0,0.06); 
-    transform: rotate(-30deg); 
-    pointer-events: none; 
-    z-index: -1; }
+  .pdfHeader img {
+  display: block !important;
+  visibility: visible !important;
+}
+  /* Watermark */
+  .watermark {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 96px;
+    font-weight: 700;
+    color: rgba(0,0,0,0.08);
+    transform: rotate(-30deg);
+    pointer-events: none;
+    z-index: 9999;        /* 🔑 MUST be high */
+  }
 }
 </style>
 </head>
 
 <body>
 <div class="wrap">
-<!-- PDF WATERMARK (PRINT ONLY) -->
-<div class="watermark">CONFIDENTIAL</div>
+  <div class="watermark">CONFIDENTIAL</div>
 
-<!-- PDF HEADER (PRINT ONLY) -->
 <div class="pdfHeader">
   <img src="/assets/logo.png" alt="Adex Holdings Trust" />
   <div>
@@ -309,6 +309,7 @@ tfoot td{font-weight:700}
     </div>
   </div>
 </div>
+
 
 <!-- HEADER -->
 <div class="top">
@@ -410,11 +411,10 @@ tfoot td{font-weight:700}
     </table>
   </div>
 </div>
+</div>
 <footer>
   Page <span class="pageNumber"></span> • Confidential • Adex Holdings Trust
 </footer>
-
-</div>
 
 <script src="/assets/financials.js"></script>
 <script src="/finance.js"></script>
@@ -507,6 +507,7 @@ renderTable = function(){
 
   window.print();
 }
+
 </script>
 
 </body>
