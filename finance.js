@@ -66,6 +66,10 @@ function clearAllProperties() {
   if ($("rent")) $("rent").value = f.rent || "";
   if ($("mortgage")) $("mortgage").value = f.mortgage || "";
   if ($("hoa")) $("hoa").value = f.hoa || "";
+  if ($("hoaCompany")) $("hoaCompany").value = f.hoaCompany || "";
+  if ($("hoaWebsite")) $("hoaWebsite").value = f.hoaWebsite || "";
+  if ($("hoaPhone")) $("hoaPhone").value = f.hoaPhone || "";
+  if ($("hoaEmail")) $("hoaEmail").value = f.hoaEmail || "";
   if ($("maintenance")) $("maintenance").value = f.maintenance || "";
   if ($("tax")) $("tax").value = f.tax || "";
   if ($("rentStart")) $("rentStart").value = f.rentStartDate || "";
@@ -557,6 +561,10 @@ async function saveFinancials() {
     "rent",
     "mortgage",
     "hoa",
+    "hoaCompany",
+    "hoaWebsite",
+    "hoaPhone",
+    "hoaEmail",
     "maintenance",
     "tax",
     "rentStart",
@@ -576,18 +584,26 @@ async function saveFinancials() {
 
   // --- SAFE VALUE EXTRACTION ---
   const payload = {
-    propertyId: $("editId").value,
+  propertyId: $("editId").value,
 
-    rent: num($("rent").value),
-    mortgage: num($("mortgage").value),
-    hoa: num($("hoa").value),
-    maintenance: num($("maintenance").value),
-    tax: num($("tax").value),
-    deposit: num($("deposit").value),
-    rentStartDate: $("rentStart").value || null,
-    rentEndDate: $("rentEnd").value || null,
+  // Financials
+  rent: num($("rent").value),
+  mortgage: num($("mortgage").value),
+  hoa: num($("hoa").value),
+  maintenance: num($("maintenance").value),
+  tax: num($("tax").value),
+  deposit: num($("deposit").value),
 
-  };
+  // Lease
+  rentStartDate: $("rentStart").value || null,
+  rentEndDate: $("rentEnd").value || null,
+
+  // HOA Metadata (NEW)
+  hoaCompany: $("hoaCompany").value || null,
+  hoaWebsite: $("hoaWebsite").value || null,
+  hoaPhone: $("hoaPhone").value || null,
+  hoaEmail: $("hoaEmail").value || null
+};
 
   // --- BASIC SANITY CHECK ---
   if (!payload.propertyId) {
