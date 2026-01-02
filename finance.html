@@ -131,6 +131,173 @@
 #propertySelect {
   min-height: 140px;
 }
+    tbody tr {
+  transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+  background: rgba(29, 78, 216, 0.12);
+}
+thead th {
+  position: sticky;
+  top: 0;
+  background: #0f1625;
+  z-index: 2;
+}
+    .kpiChip {
+  background: #101c33;
+  border: 1px solid #23355c;
+  border-radius: 14px;
+  padding: 14px 16px;
+  min-width: 180px;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.kpiValue {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.cardBody.tableScroll {
+  max-height: 520px;
+  overflow: auto;
+}
+    .riskChip {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+.risk-safe {
+  background: rgba(76,217,100,.15);
+  color: #4cd964;
+}
+
+.risk-90 {
+  background: rgba(255,204,102,.18);
+  color: #ffcc66;
+}
+
+.risk-60 {
+  background: rgba(255,149,0,.18);
+  color: #ff9500;
+}
+
+.risk-30 {
+  background: rgba(255,107,107,.18);
+  color: #ff6b6b;
+}
+
+.risk-expired {
+  background: rgba(255,255,255,.15);
+  color: #bbb;
+}
+/* ---- Drill-down modal ---- */
+
+#propertyModal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+.modalOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+}
+
+.modalCard {
+  position: relative;
+  background: #0f1625;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  max-width: 720px;
+  margin: 6vh auto;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  font-weight: 700;
+}
+
+.modalHead button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.modalBody {
+  padding: 20px;
+  max-height: 60vh;
+  overflow: auto;
+  font-size: 14px;
+}
+
+.modalGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.modalItem {
+  background: #101c33;
+  border: 1px solid #23355c;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.modalLabel {
+  font-size: 12px;
+  opacity: .6;
+}
+
+.modalValue {
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+@media print {
+  #propertyModal { display: none !important; }
+}
+.kpiDelta {
+  font-size: 12px;
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+
+.kpiDelta.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.kpiDelta.up {
+  color: var(--ok);
+}
+
+.kpiDelta.down {
+  color: var(--bad);
+}
   </style>
 </head>
 
@@ -150,21 +317,54 @@
   <div class="card">
     <div class="cardHead">View Options</div>
     <div class="cardBody controls">
-      <select id="propertySelect" multiple onchange="onPropertySelect()"></select>
+  <div>
+    <select id="propertySelect" multiple onchange="onPropertySelect()"></select>
 
-      <select id="viewMode" onchange="renderTable()">
-        <option value="month">Monthly</option>
-        <option value="year">Yearly</option>
-      </select>
-
-      <input type="month" id="monthSelect" onchange="renderTable()" />
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button onclick="selectAllProperties()">Select All</button>
+      <button onclick="clearAllProperties()">Clear All</button>
     </div>
   </div>
 
+  <select id="viewMode" onchange="renderTable()">
+    <option value="month">Monthly</option>
+    <option value="year">Yearly</option>
+  </select>
+
+  <input type="month" id="monthSelect" onchange="renderTable()" />
+</div>
+  </div>
+
   <!-- TABLE -->
+<div class="card">
+  <div class="cardHead">Portfolio Snapshot</div>
+  <div class="cardBody" style="display:flex;gap:14px;flex-wrap:wrap">
+    <div class="kpiChip">
+      <div class="kpiLabel">Monthly Rent</div>
+      <div class="kpiValue" id="kpiRent">$0</div>
+      <div class="kpiDelta" id="kpiRentDelta"></div>
+    </div>
+
+    <div class="kpiChip">
+      <div class="kpiLabel">Monthly Expenses</div>
+      <div class="kpiValue" id="kpiExpenses">$0</div>
+    </div>
+
+    <div class="kpiChip">
+      <div class="kpiLabel">Net Cash Flow</div>
+      <div class="kpiValue" id="kpiNet">$0</div>
+    </div>
+
+    <div class="kpiChip">
+      <div class="kpiLabel">Annual P&L</div>
+      <div class="kpiValue" id="kpiAnnual">$0</div>
+    </div>
+  </div>
+</div>
+
   <div class="card">
     <div class="cardHead">Financial Breakdown</div>
-    <div class="cardBody">
+    <div class="cardBody tableScroll">
       <table>
         <thead>
           <tr>
@@ -178,7 +378,7 @@
             <th>Monthly Cash Flow</th>
             <th>Annual P&L</th>
             <th>Deposit</th>
-            <th>Lease</th>
+            <th>Lease / Risk</th>
           </tr>
         </thead>
 
@@ -260,8 +460,27 @@ renderTable = function () {
   document.getElementById("totalRent").textContent = `$${totals.rent}`;
   document.getElementById("totalExpenses").textContent = `$${totals.expenses}`;
   document.getElementById("totalNet").textContent = `$${totals.net}`;
+  if (document.getElementById("kpiRent"))
+  document.getElementById("kpiRent").textContent = `$${totals.rent}`;
+  document.getElementById("kpiExpenses").textContent = `$${totals.expenses}`;
+  document.getElementById("kpiNet").textContent = `$${totals.net}`;
+  document.getElementById("kpiAnnual").textContent = `$${totals.net * 12}`;
+
 };
 </script>
+<!-- DRILL-DOWN MODAL -->
+<div id="propertyModal" style="display:none">
+  <div class="modalOverlay" onclick="closePropertyModal()"></div>
+
+  <div class="modalCard">
+    <div class="modalHead">
+      <div id="modalTitle">Property Details</div>
+      <button onclick="closePropertyModal()">✕</button>
+    </div>
+
+    <div class="modalBody" id="modalContent"></div>
+  </div>
+</div>
 
 </body>
 </html>
