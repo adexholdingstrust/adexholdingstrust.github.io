@@ -520,6 +520,7 @@ updateDelta("kpiNetDelta", previousKpis.net, current.net);
 updateDelta("kpiAnnualDelta", previousKpis.annual, current.annual);
 // ✅ NEW: persist baseline for next render
 previousKpis = { ...current };
+   } // ✅ CLOSE renderTable() HERE
 /* ---------------- EDITOR ---------------- */
 function openEditor(id) {
   const f = FINANCIALS[id] || {};
