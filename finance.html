@@ -357,7 +357,23 @@ td:nth-child(11) {
 
   <!-- TABLE -->
 <div class="card">
-  <div class="cardHead">Portfolio Snapshot</div>
+  <div class="cardHead" style="display:flex;justify-content:space-between;align-items:center">
+  <span>Portfolio Snapshot</span>
+
+  <button onclick="downloadFinancePDF()"
+    style="
+      background:#153a2a;
+      border:1px solid #1d4b34;
+      color:#eafff3;
+      border-radius:10px;
+      padding:6px 14px;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
+    ">
+    Download PDF
+  </button>
+</div>
   <div class="cardBody" style="display:flex;gap:14px;flex-wrap:wrap">
     <div class="kpiChip">
       <div class="kpiLabel">Monthly Rent</div>
@@ -583,6 +599,134 @@ if (stressEl) stressEl.textContent =
     <div class="modalBody" id="modalContent"></div>
   </div>
 </div>
+<script>
+function downloadFinancePDF() {
+  const selected = PROPERTIES.filter(p => SELECTED.has(p.id));
+
+  if (!selected.length) {
+    alert("Please select at least one property.");
+    return;
+  }
+
+  let html = `
+<!doctype html>
+<html>
+<head>
+  <title>Adex Holdings Trust – Financial Disclosure</title>
+  <meta charset="utf-8" />
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 40px;
+      color: #000;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .header img {
+      height: 48px;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0;
+    }
+
+    .sub {
+      font-size: 12px;
+      color: #555;
+    }
+
+    h2 {
+      margin-top: 36px;
+      font-size: 16px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 12px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: right;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    th {
+      background: #f2f2f2;
+      font-weight: 700;
+    }
+
+    .pos { color: green; }
+    .neg { color: red; }
+
+    .meta {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #555;
+    }
+
+    @media print {
+      body { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <img src="${location.origin}/assets/logo.png" />
+  <div>
+    <h1>ADEX HOLDINGS TRUST</h1>
+    <div class="sub">Property Financial Disclosure Statement</div>
+    <div class="meta">Generated: ${new Date().toLocaleDateString()}</div>
+  </div>
+</div>
+`;
+
+  selected.forEach(p => {
+    const f = FINANCIALS[p.id] || {};
+
+    const rent = Number(f.rent || 0);
+    const mortgage = Number(f.mortgage || 0);
+    const hoa = Number(f.hoa || 0);
+    const maintenance = Number(f.maintenance || 0);
+    const tax = Number(f.tax || 0);
+    const expenses = mortgage + hoa + maintenance + tax;
+    const monthlyNet = rent - expenses;
+    const annualNet = monthlyNet * 12;
+
+    html += `
+<h2>${p.name}</h2>
+
+<table>
+  <tr><th>Monthly Rent</th><td>$${rent}</td></tr>
+  <tr><th>Mortgage</th><td>$${mortgage}</td></tr>
+  <tr><th>HOA</th><td>$${hoa}</td></tr>
+  <tr><th>Maintenance</th><td>$${maintenance}</td></tr>
+  <tr><th>Taxes</th><td>$${tax}</td></tr>
+  <tr><th>Total Expenses</th><td>$${expenses}</td></tr>
+  <tr>
+    <th>Monthly Net</th>
+    <td class="${monthlyNet >= 0 ? "pos" : "neg"}">$${monthlyNet}</td>
+  </tr>
+  <tr>
+    <th>Annual Net</th>
+    <td class="${annualNet >= 0 ? "pos" : "neg"}">$${
 
 </body>
 </html>
