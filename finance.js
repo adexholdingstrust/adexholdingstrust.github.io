@@ -165,6 +165,18 @@ function onPropertySelect() {
 
   renderTable();
 }
+
+/* ✅ ADD THIS FUNCTION RIGHT HERE */
+function bindFinancialsSelect() {
+  const sel = $("propertySelect");
+  if (!sel) return;
+
+  sel.addEventListener("change", () => {
+    if (sel.value) {
+      loadFinancialsIntoForm(sel.value);
+    }
+  });
+}
 /* ---------------- CALCULATIONS ---------------- */
 
 function annualize(value, period) {
@@ -508,6 +520,7 @@ async function initFinance() {
   loadProperties();
   await loadFinancials();
   renderPropertySelector();
+  bindFinancialsSelect(); 
 
   // ✅ NEW: auto-select first property
   const sel = $("propertySelect");
