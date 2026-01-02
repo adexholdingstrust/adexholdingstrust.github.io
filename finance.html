@@ -1,732 +1,267 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Adex Holdings Trust | Finance</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Adex Holdings Trust | Finance</title>
+<link rel="icon" href="/assets/logo.png" />
 
-  <link rel="icon" href="/assets/logo.png" />
-
-  <style>
-    :root{
-      --bg:#0b0f14;
-      --card:#0f1625;
-      --line:rgba(255,255,255,.08);
-      --txt:#ffffff;
-      --muted:rgba(255,255,255,.65);
-      --ok:#4cd964;
-      --bad:#ff6b6b;
-      --radius:16px;
-    }
-
-    *{box-sizing:border-box}
-
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--txt);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-    }
-
-    .wrap{
-      max-width:1300px;
-      margin:0 auto;
-      padding:24px 20px 60px;
-    }
-
-    /* Top bar */
-    .top{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      margin-bottom:24px;
-    }
-
-    .top img{
-      height:42px;
-    }
-
-    .top .title{
-      font-weight:700;
-      letter-spacing:.05em;
-    }
-
-    .top .sub{
-      font-size:12px;
-      opacity:.6;
-    }
-
-    .card{
-      background:var(--card);
-      border-radius:var(--radius);
-      border:1px solid var(--line);
-      margin-bottom:20px;
-    }
-
-    .cardHead{
-      padding:14px 18px;
-      border-bottom:1px solid var(--line);
-      font-weight:700;
-    }
-
-    .cardBody{
-      padding:18px;
-    }
-
-    select,input,button{
-      background:#101c33;
-      border:1px solid #23355c;
-      color:#fff;
-      border-radius:10px;
-      padding:8px 10px;
-    }
-
-    button{
-      cursor:pointer;
-    }
-
-    .controls{
-      display:grid;
-      grid-template-columns:1fr 1fr 1fr;
-      gap:12px;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:13px;
-    }
-
-    th,td{
-      padding:10px;
-      border-bottom:1px solid var(--line);
-      text-align:left;
-      white-space:nowrap;
-    }
-
-    th{
-      color:var(--muted);
-      font-weight:600;
-    }
-
-    .pos{color:var(--ok)}
-    .neg{color:var(--bad)}
-
-    tfoot td{
-      font-weight:700;
-    }
-
-    @media print{
-      .controls{display:none}
-    }
-    .controls {
-  align-items: stretch;
+<style>
+:root{
+  --bg:#0b0f14;
+  --card:#0f1625;
+  --line:rgba(255,255,255,.08);
+  --txt:#ffffff;
+  --muted:rgba(255,255,255,.65);
+  --ok:#4cd964;
+  --bad:#ff6b6b;
+  --radius:16px;
 }
 
-.controls > * {
-  width: 100%;
-  height: 100%;
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--txt);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
 }
 
-#propertySelect {
-  min-height: 140px;
-}
-    tbody tr {
-  transition: background 0.15s ease;
-}
-
-tbody tr:hover {
-  background: rgba(29, 78, 216, 0.12);
-}
-thead th {
-  position: sticky;
-  top: 0;
-  background: #0f1625;
-  z-index: 2;
-}
-    .kpiChip {
-  background: #101c33;
-  border: 1px solid #23355c;
-  border-radius: 14px;
-  padding: 14px 16px;
-  min-width: 180px;
+.wrap{
+  max-width:1300px;
+  margin:0 auto;
+  padding:24px 20px 60px;
 }
 
-.kpiLabel {
-  font-size: 12px;
-  opacity: 0.6;
+.top{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:24px;
 }
 
-.kpiValue {
-  font-size: 18px;
-  font-weight: 700;
-  margin-top: 4px;
-}
-.cardBody.tableScroll {
-  max-height: 520px;
-  overflow: auto;
-}
-    .riskChip {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .02em;
+.top img{height:42px}
+
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  border:1px solid var(--line);
+  margin-bottom:20px;
 }
 
-.risk-safe {
-  background: rgba(76,217,100,.15);
-  color: #4cd964;
+.cardHead{
+  padding:14px 18px;
+  border-bottom:1px solid var(--line);
+  font-weight:700;
 }
 
-.risk-90 {
-  background: rgba(255,204,102,.18);
-  color: #ffcc66;
+.cardBody{padding:18px}
+
+.controls{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
 }
 
-.risk-60 {
-  background: rgba(255,149,0,.18);
-  color: #ff9500;
+select,input,button{
+  background:#101c33;
+  border:1px solid #23355c;
+  color:#fff;
+  border-radius:10px;
+  padding:8px 10px;
 }
 
-.risk-30 {
-  background: rgba(255,107,107,.18);
-  color: #ff6b6b;
+button{cursor:pointer}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
 }
 
-.risk-expired {
-  background: rgba(255,255,255,.15);
-  color: #bbb;
-}
-/* ---- Drill-down modal ---- */
-
-#propertyModal {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
+th,td{
+  padding:10px;
+  border-bottom:1px solid var(--line);
+  text-align:right;
+  white-space:nowrap;
 }
 
-.modalOverlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.55);
+th:first-child,
+td:first-child{ text-align:left }
+
+thead th{
+  position:sticky;
+  top:0;
+  background:#0f1625;
+  z-index:2;
 }
 
-.modalCard {
-  position: relative;
-  background: #0f1625;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 18px;
-  max-width: 720px;
-  margin: 6vh auto;
-  box-shadow: 0 30px 80px rgba(0,0,0,.6);
-  display: flex;
-  flex-direction: column;
+tbody tr:hover{
+  background:rgba(29,78,216,.12);
 }
 
-.modalHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,.1);
-  font-weight: 700;
+.pos{color:var(--ok)}
+.neg{color:var(--bad)}
+
+.kpiChip{
+  background:#101c33;
+  border:1px solid #23355c;
+  border-radius:14px;
+  padding:14px 16px;
+  min-width:180px;
 }
 
-.modalHead button {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
+.kpiLabel{font-size:12px;opacity:.6}
+.kpiValue{font-size:18px;font-weight:700}
+
+.riskChip{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:600;
 }
 
-.modalBody {
-  padding: 20px;
-  max-height: 60vh;
-  overflow: auto;
-  font-size: 14px;
+.risk-safe{background:rgba(76,217,100,.15);color:#4cd964}
+.risk-90{background:rgba(255,204,102,.18);color:#ffcc66}
+.risk-60{background:rgba(255,149,0,.18);color:#ff9500}
+.risk-30{background:rgba(255,107,107,.18);color:#ff6b6b}
+.risk-expired{background:rgba(255,255,255,.15);color:#bbb}
+
+/* Print */
+@page{ margin:40px }
+
+footer{
+  position:fixed;
+  bottom:12px;
+  left:0;right:0;
+  text-align:center;
+  font-size:10px;
+  color:#666;
 }
 
-.modalGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+.pageNumber:after{ content:counter(page) }
+
+.watermark{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:96px;
+  font-weight:700;
+  color:rgba(0,0,0,.05);
+  transform:rotate(-30deg);
+  pointer-events:none;
 }
 
-.modalItem {
-  background: #101c33;
-  border: 1px solid #23355c;
-  border-radius: 12px;
-  padding: 12px;
+@media print{
+  .controls,button{display:none}
 }
-
-.modalLabel {
-  font-size: 12px;
-  opacity: .6;
-}
-
-.modalValue {
-  font-weight: 700;
-  margin-top: 4px;
-}
-
-@media print {
-  #propertyModal { display: none !important; }
-}
-.kpiDelta {
-  font-size: 12px;
-  margin-top: 4px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity .25s ease, transform .25s ease;
-}
-
-.kpiDelta.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.kpiDelta.up {
-  color: var(--ok);
-}
-
-.kpiDelta.down {
-  color: var(--bad);
-}
-    td:not(:first-child),
-th:not(:first-child) {
-  text-align: right;
-}
-td:nth-child(11) {
-  white-space: normal;
-}
-
-  </style>
+</style>
 </head>
 
 <body>
 <div class="wrap">
 
-  <!-- HEADER -->
-  <div class="top">
-    <img src="/assets/logo.png" alt="Adex Holdings Trust" />
-    <div>
-      <div class="title">ADEX HOLDINGS TRUST</div>
-      <div class="sub">Finance Overview</div>
-    </div>
-  </div>
-
-  <!-- CONTROLS -->
-  <div class="card">
-    <div class="cardHead">View Options</div>
-    <div class="cardBody controls">
-        <input
-          type="number"
-          id="reserveInput"
-          placeholder="Cash Reserves ($)"
-          value="5000"
-          onchange="renderTable()"
-/>
+<!-- HEADER -->
+<div class="top">
+  <img src="/assets/logo.png">
   <div>
-    <select id="propertySelect" multiple onchange="onPropertySelect()"></select>
-
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button onclick="selectAllProperties()">Select All</button>
-      <button onclick="clearAllProperties()">Clear All</button>
-    </div>
+    <div style="font-weight:700;letter-spacing:.05em">ADEX HOLDINGS TRUST</div>
+    <div style="font-size:12px;opacity:.6">Finance Overview</div>
   </div>
-      
+</div>
+
+<!-- CONTROLS -->
+<div class="card">
+  <div class="cardHead">View Options</div>
+  <div class="cardBody controls">
+    <input id="reserveInput" type="number" value="5000" placeholder="Cash Reserves ($)" onchange="renderTable()">
+
+    <div>
+      <select id="propertySelect" multiple onchange="onPropertySelect()"></select>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="selectAllProperties()">Select All</button>
+        <button onclick="clearAllProperties()">Clear All</button>
+      </div>
+    </div>
+
+    <div>
       <select id="modeToggle" onchange="renderTable()">
         <option value="operator">Operator View</option>
         <option value="investor">Investor View</option>
-     </select>
+      </select>
 
-  <select id="viewMode" onchange="renderTable()">
-    <option value="month">Monthly</option>
-    <option value="year">Yearly</option>
-  </select>
+      <select id="viewMode" onchange="renderTable()" style="margin-top:8px">
+        <option value="month">Monthly</option>
+        <option value="year">Yearly</option>
+      </select>
 
-  <input type="month" id="monthSelect" onchange="renderTable()" />
-</div>
+      <input type="month" id="monthSelect" onchange="renderTable()" style="margin-top:8px">
+    </div>
   </div>
+</div>
 
-  <!-- TABLE -->
+<!-- SNAPSHOT -->
 <div class="card">
-  <div class="cardHead" style="display:flex;justify-content:space-between;align-items:center">
-  <span>Portfolio Snapshot</span>
+  <div class="cardHead" style="display:flex;justify-content:space-between">
+    <span>Portfolio Snapshot</span>
+    <button onclick="downloadFinancePDF()">Download PDF</button>
+  </div>
 
-  <button onclick="downloadFinancePDF()"
-    style="
-      background:#153a2a;
-      border:1px solid #1d4b34;
-      color:#eafff3;
-      border-radius:10px;
-      padding:6px 14px;
-      font-size:12px;
-      font-weight:700;
-      cursor:pointer;
-    ">
-    Download PDF
-  </button>
-</div>
   <div class="cardBody" style="display:flex;gap:14px;flex-wrap:wrap">
-    <div class="kpiChip">
-      <div class="kpiLabel">Monthly Rent</div>
-      <div class="kpiValue" id="kpiRent">$0</div>
-      <div class="kpiDelta" id="kpiRentDelta"></div>
-    </div>
-
-    <div class="kpiChip">
-        <div class="kpiLabel">Portfolio Stress</div>
-        <div class="kpiValue" id="kpiStress">—</div>
-    </div>
-
-    <div class="kpiChip">
-      <div class="kpiLabel">Monthly Expenses</div>
-      <div class="kpiValue" id="kpiExpenses">$0</div>
-    </div>
-
-    <div class="kpiChip">
-      <div class="kpiLabel">Net Cash Flow</div>
-      <div class="kpiValue" id="kpiNet">$0</div>
-    </div>
-    
-    <div class="kpiChip">
-      <div class="kpiLabel">Security Deposits Held</div>
-      <div class="kpiValue" id="kpiDeposits">$0</div>
-    </div>
-
-    <div class="kpiChip">
-      <div class="kpiLabel">Annual P&L</div>
-      <div class="kpiValue" id="kpiAnnual">$0</div>
-    </div>
+    <div class="kpiChip"><div class="kpiLabel">Monthly Rent</div><div id="kpiRent" class="kpiValue">$0</div></div>
+    <div class="kpiChip"><div class="kpiLabel">Monthly Expenses</div><div id="kpiExpenses" class="kpiValue">$0</div></div>
+    <div class="kpiChip"><div class="kpiLabel">Net Cash Flow</div><div id="kpiNet" class="kpiValue">$0</div></div>
+    <div class="kpiChip"><div class="kpiLabel">Security Deposits</div><div id="kpiDeposits" class="kpiValue">$0</div></div>
+    <div class="kpiChip"><div class="kpiLabel">Annual P&L</div><div id="kpiAnnual" class="kpiValue">$0</div></div>
+    <div class="kpiChip"><div class="kpiLabel">Portfolio Stress</div><div id="kpiStress" class="kpiValue">—</div></div>
   </div>
 </div>
 
-  <div class="card">
-    <div class="cardHead">Financial Breakdown</div>
-    <div class="cardBody tableScroll">
-      <table>
-<thead>
-  <tr>
-    <th>Property</th>
-    <th>Rent</th>
-    <th>Mortgage</th>
-    <th>HOA</th>
-    <th>Maintenance</th>
-    <th>Taxes</th>
-    <th>Total Expenses</th>
-    <th>Monthly Net</th>
-    <th>Annual Net</th>
-    <th>Deposit</th>
-    <th>Lease Dates</th>
-    <th>DSCR</th>
-  </tr>
-</thead>
-        <tbody id="financeBody"></tbody>
-
-        <tfoot>
-          <tr>
-            <td>Totals</td>
-            <td id="totalRent">—</td>
-            <td colspan="4"></td>
-            <td id="totalExpenses">—</td>
-            <td></td>
-            <td id="totalNet">—</td>
-            <td colspan="2"></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
+<!-- TABLE -->
+<div class="card">
+  <div class="cardHead">Financial Breakdown</div>
+  <div class="cardBody" style="max-height:520px;overflow:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Rent</th>
+          <th>Mortgage</th>
+          <th>HOA</th>
+          <th>Maintenance</th>
+          <th>Taxes</th>
+          <th>Total Expenses</th>
+          <th>Monthly Net</th>
+          <th>Annual Net</th>
+          <th>Deposit</th>
+          <th>Lease Dates</th>
+          <th>DSCR</th>
+        </tr>
+      </thead>
+      <tbody id="financeBody"></tbody>
+    </table>
   </div>
+</div>
 
 </div>
+
+<footer>
+Page <span class="pageNumber"></span> • Confidential • Adex Holdings Trust
+</footer>
+
+<div class="watermark">CONFIDENTIAL</div>
 
 <script src="/assets/financials.js"></script>
 <script src="/finance.js"></script>
 
 <script>
-  function depositExposureChip(deposit, rent) {
-    if (!deposit || !rent) return "";
-
-    const ratio = deposit / rent;
-
-    if (ratio < 0.5) {
-      return `<span class="riskChip risk-safe">Low</span>`;
-    }
-    if (ratio < 1) {
-      return `<span class="riskChip risk-60">Moderate</span>`;
-    }
-    return `<span class="riskChip risk-30">High</span>`;
-  }
-
-  /* ✅ ADD THIS FUNCTION RIGHT BELOW */
-  function reserveStressLiabilityAware(netMonthly, reserve, deposits) {
-    if (netMonthly >= 0) return "🟢 Stable";
-
-    const usableReserve = Math.max(reserve - deposits, 0);
-
-    if (usableReserve === 0) return "🔴 No Buffer";
-
-    const months = Math.floor(usableReserve / Math.abs(netMonthly));
-
-    if (months >= 6) return "🟡 Watch";
-    if (months >= 3) return "🟠 Tight";
-    return "🔴 High Risk";
-  }
-/* ---------------------------------------
-   EXTEND RENDERING (FRONTEND ONLY)
---------------------------------------- */
-const _renderTable = renderTable;
-renderTable = function () {
-  const body = document.getElementById("financeBody");
-  if (!body) return;
-
-  body.innerHTML = "";
-const reserve = Number(
-  document.getElementById("reserveInput")?.value || 0
-);
-const userMode =
-  document.getElementById("modeToggle")?.value || "operator";
-
-  const mode = document.getElementById("viewMode")?.value || "month";
-
-  let totals = { rent:0, expenses:0, net:0, deposits:0 };
-
-  PROPERTIES
-    .filter(p => SELECTED.has(p.id))
-    .forEach(p => {
-      const f = FINANCIALS[p.id] || {};
-
-      const rent = Number(f.rent || 0);
-      const mortgage = Number(f.mortgage || 0);
-      const hoa = Number(f.hoa || 0);
-      const maintenance =
-  userMode === "operator"
-    ? Number(f.maintenance || 0)
-    : 0;
-      const tax = Number(f.tax || 0);
-
-      const expenses = mortgage + hoa + tax + maintenance;
-      const monthlyNet = rent - expenses;
-      const annualNet = monthlyNet * 12;
-
-      totals.rent += rent;
-      totals.expenses += expenses;
-      totals.net += mode === "year" ? annualNet : monthlyNet;
-      totals.deposits += Number(f.deposit || 0);
-
-      const tr = document.createElement("tr");
-tr.innerHTML = `
-  <td>${p.name}</td>
-
-  <td>${usd(rent)}</td>
-  <td>${usd(mortgage)}</td>
-  <td>${usd(hoa)}</td>
-  <td>${usd(maintenance)}</td>
-  <td>${usd(tax)}</td>
-
-  <td>${usd(expenses)}</td>
-
-  <td class="${monthlyNet >= 0 ? "pos" : "neg"}">
-    ${usd(monthlyNet)}
-  </td>
-
-  <td class="${annualNet >= 0 ? "pos" : "neg"}">
-    ${usd(annualNet)}
-  </td>
-
-  <td>${usd(f.deposit || 0)}</td>
-
-  <td>
-    ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
-    <div style="margin-top:4px">
-      ${leaseRiskChip(f.rentEndDate)}
-    </div>
-  </td>
-
-  <td>
-    ${
-      mortgage > 0
-        ? (rent / mortgage).toFixed(2)
-        : "—"
-    }
-  </td>
-`;
-      body.appendChild(tr);
-    });
-
-  document.getElementById("totalRent").textContent = `$${totals.rent}`;
-  document.getElementById("totalExpenses").textContent = `$${totals.expenses}`;
-  document.getElementById("totalNet").textContent = `$${totals.net}`;
-  if (document.getElementById("kpiRent"))
-  document.getElementById("kpiRent").textContent = `$${totals.rent}`;
-  document.getElementById("kpiExpenses").textContent = `$${totals.expenses}`;
-  document.getElementById("kpiNet").textContent = `$${totals.net}`;
-  document.getElementById("kpiAnnual").textContent =
-  `$${mode === "year" ? totals.net : totals.net * 12}`;
-  if (document.getElementById("kpiDeposits")) {
-  document.getElementById("kpiDeposits").textContent = `$${totals.deposits}`;
+function downloadFinancePDF(){
+  window.print();
 }
-  const stress = reserveStressLiabilityAware(
-  totals.net,
-  reserve,
-  totals.deposits
-);
-
-const stressEl = document.getElementById("kpiStress");
-if (stressEl) stressEl.textContent =
-  userMode === "operator" ? stress : "—";
-
-};
-
 </script>
-<!-- DRILL-DOWN MODAL -->
-<div id="propertyModal" style="display:none">
-  <div class="modalOverlay" onclick="closePropertyModal()"></div>
-
-  <div class="modalCard">
-    <div class="modalHead">
-      <div id="modalTitle">Property Details</div>
-      <button onclick="closePropertyModal()">✕</button>
-    </div>
-
-    <div class="modalBody" id="modalContent"></div>
-  </div>
-</div>
-<script>
-function downloadFinancePDF() {
-  const selected = PROPERTIES.filter(p => SELECTED.has(p.id));
-
-  if (!selected.length) {
-    alert("Please select at least one property.");
-    return;
-  }
-
-  let html = `
-<!doctype html>
-<html>
-<head>
-  <title>Adex Holdings Trust – Financial Disclosure</title>
-  <meta charset="utf-8" />
-  <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      padding: 40px;
-      color: #000;
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .header img {
-      height: 48px;
-    }
-
-    h1 {
-      font-size: 22px;
-      margin: 0;
-    }
-
-    .sub {
-      font-size: 12px;
-      color: #555;
-    }
-
-    h2 {
-      margin-top: 36px;
-      font-size: 16px;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 6px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 12px;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: right;
-    }
-
-    th:first-child,
-    td:first-child {
-      text-align: left;
-    }
-
-    th {
-      background: #f2f2f2;
-      font-weight: 700;
-    }
-
-    .pos { color: green; }
-    .neg { color: red; }
-
-    .meta {
-      margin-top: 8px;
-      font-size: 12px;
-      color: #555;
-    }
-
-    @media print {
-      body { padding: 24px; }
-    }
-  </style>
-</head>
-<body>
-
-<div class="header">
-  <img src="${location.origin}/assets/logo.png" />
-  <div>
-    <h1>ADEX HOLDINGS TRUST</h1>
-    <div class="sub">Property Financial Disclosure Statement</div>
-    <div class="meta">Generated: ${new Date().toLocaleDateString()}</div>
-  </div>
-</div>
-`;
-
-  selected.forEach(p => {
-    const f = FINANCIALS[p.id] || {};
-
-    const rent = Number(f.rent || 0);
-    const mortgage = Number(f.mortgage || 0);
-    const hoa = Number(f.hoa || 0);
-    const maintenance = Number(f.maintenance || 0);
-    const tax = Number(f.tax || 0);
-    const expenses = mortgage + hoa + maintenance + tax;
-    const monthlyNet = rent - expenses;
-    const annualNet = monthlyNet * 12;
-
-    html += `
-<h2>${p.name}</h2>
-
-<table>
-  <tr><th>Monthly Rent</th><td>$${rent}</td></tr>
-  <tr><th>Mortgage</th><td>$${mortgage}</td></tr>
-  <tr><th>HOA</th><td>$${hoa}</td></tr>
-  <tr><th>Maintenance</th><td>$${maintenance}</td></tr>
-  <tr><th>Taxes</th><td>$${tax}</td></tr>
-  <tr><th>Total Expenses</th><td>$${expenses}</td></tr>
-  <tr>
-    <th>Monthly Net</th>
-    <td class="${monthlyNet >= 0 ? "pos" : "neg"}">$${monthlyNet}</td>
-  </tr>
-  <tr>
-    <th>Annual Net</th>
-    <td class="${annualNet >= 0 ? "pos" : "neg"}">$${
 
 </body>
 </html>
