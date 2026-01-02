@@ -61,8 +61,18 @@ body{
   justify-content:space-between;
   align-items:center;
 }
-.cardBody{padding:18px}
+.cardBody{
+  padding:18px;
+  overflow-x:auto;
+}
+  .cardBody::-webkit-scrollbar {
+  height: 8px;
+}
 
+.cardBody::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.2);
+  border-radius: 4px;
+}
 /* Controls */
 .controls{
   display:grid;
@@ -104,14 +114,24 @@ button{cursor:pointer}
 /* Table */
 table{
   width:100%;
+  min-width:1100px; /* ensures proper column spacing */
   border-collapse:collapse;
   font-size:13px;
 }
+
 th,td{
   padding:10px;
   border-bottom:1px solid var(--line);
   white-space:nowrap;
 }
+
+/* Allow wrapping where needed */
+td:first-child,
+td:nth-child(11){
+  white-space:normal;
+  max-width:260px;
+}
+
 th{color:var(--muted);text-align:right}
 th:first-child,td:first-child{text-align:left}
 td{text-align:right}
