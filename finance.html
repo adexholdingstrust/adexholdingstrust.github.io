@@ -1,189 +1,141 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Adex Holdings Trust | Finance Dashboard</title>
-
-  <!-- Shared styling (same pattern as admin/report pages) -->
-  <link rel="stylesheet" href="/assets/style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Adex Holdings Trust — Finance Dashboard</title>
 
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      margin: 0;
-      background: #f6f7f9;
-      color: #1f2937;
+    :root{
+      --bg:#0b1220;
+      --card:#0f1a2d;
+      --line:rgba(255,255,255,.10);
+      --txt:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.65);
+      --ok:#3ddc97;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --shadow:0 16px 50px rgba(0,0,0,.45);
+      --radius:18px;
     }
 
-    header {
-      background: #0f172a;
-      color: #fff;
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: radial-gradient(1200px 700px at 10% 10%, #13213c 0%, var(--bg) 55%);
+      color:var(--txt);
     }
 
-    header img {
-      height: 42px;
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px 40px;}
+
+    .top{
+      display:flex;align-items:center;gap:16px;
+      padding:18px;border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(15,26,45,.85),rgba(10,18,32,.85));
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
     }
 
-    header h1 {
-      font-size: 20px;
-      margin: 0;
-      font-weight: 600;
+    .logo{
+      width:52px;height:52px;border-radius:12px;
+      overflow:hidden;border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .logo img{width:100%;height:100%;object-fit:cover}
+
+    h1{margin:0;font-size:20px}
+    .sub{font-size:13px;color:var(--muted)}
+
+    .card{
+      margin-top:16px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(15,26,45,.72),rgba(10,18,32,.72));
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
     }
 
-    .container {
-      max-width: 1400px;
-      margin: 24px auto;
-      padding: 0 20px;
+    .cardHead{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      font-weight:700;
     }
 
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 6px 20px rgba(0,0,0,.06);
+    .cardBody{padding:16px}
+
+    select,button{
+      background:rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      color:var(--txt);
+      padding:10px 12px;
+      border-radius:12px;
     }
 
-    .card h2 {
-      margin: 0 0 14px;
-      font-size: 18px;
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
     }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
+    th,td{
+      padding:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
     }
+    th{color:var(--muted);text-align:left}
 
-    select {
-      padding: 8px;
-      min-width: 280px;
-    }
+    .ok{color:var(--ok)}
+    .warn{color:var(--warn)}
+    .bad{color:var(--bad)}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-
-    th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
-      font-size: 14px;
-    }
-
-    th {
-      background: #f1f5f9;
-      font-weight: 600;
-    }
-
-    .positive {
-      color: #047857;
-      font-weight: 600;
-    }
-
-    .negative {
-      color: #b91c1c;
-      font-weight: 600;
-    }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      background: #e5e7eb;
-    }
-
-    .badge.warn { background: #fde68a; }
-    .badge.alert { background: #fecaca; }
-
-    footer {
-      text-align: center;
-      font-size: 12px;
-      opacity: .6;
-      margin: 30px 0;
+    @media print{
+      body{background:#fff;color:#000}
+      .top{display:none}
     }
   </style>
 </head>
 
 <body>
+<div class="wrap">
 
-<header>
-  <!-- SAME LOGO PATTERN AS OTHER PAGES -->
-  <img src="/assets/logo.png" alt="Adex Holdings Trust Logo" />
-  <h1>Finance Dashboard</h1>
-</header>
-
-<div class="container">
-
-  <!-- PROPERTY SELECTION -->
-  <div class="card">
-    <h2>Select Properties</h2>
-    <div class="controls">
-      <select id="propertySelect" multiple></select>
-      <span class="badge">United States Only</span>
-      <span id="viewMode" class="badge"></span>
+  <div class="top">
+    <div class="logo">
+      <img src="/assets/logo.png" onerror="this.style.display='none'">
+    </div>
+    <div>
+      <h1>Finance Dashboard</h1>
+      <div class="sub">Portfolio-level financial health & per-property P&L</div>
     </div>
   </div>
 
-  <!-- FINANCIAL TABLE -->
   <div class="card">
-    <h2>Per-Property Financial Summary</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Property</th>
-          <th>Annual Rent</th>
-          <th>Total Expenses</th>
-          <th>Net P&L</th>
-          <th>Monthly Cash Flow</th>
-          <th>Lease End</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="financeBody"></tbody>
-    </table>
+    <div class="cardHead">Select Properties</div>
+    <div class="cardBody">
+      <select id="propertySelect" multiple style="width:100%;min-height:160px"></select>
+    </div>
   </div>
 
-  <!-- AGGREGATE TOTALS -->
   <div class="card">
-    <h2>Portfolio Totals</h2>
-    <table>
-      <tr>
-        <th>Total Annual Rent</th>
-        <td id="totalRent"></td>
-      </tr>
-      <tr>
-        <th>Total Expenses</th>
-        <td id="totalExpenses"></td>
-      </tr>
-      <tr>
-        <th>Net Annual P&L</th>
-        <td id="totalNet"></td>
-      </tr>
-    </table>
+    <div class="cardHead">Per-Property Financial Summary</div>
+    <div class="cardBody">
+      <table id="financeTable">
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Annual Rent</th>
+            <th>Total Expenses</th>
+            <th>Net P&L</th>
+            <th>Monthly Cash Flow</th>
+            <th>Lease End</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
 </div>
 
-<footer>
-  © <span id="year"></span> Adex Holdings Trust — Financial Reporting
-</footer>
-
-<!-- REQUIRED LOAD ORDER -->
 <script src="/assets/financials.js"></script>
-<script src="/finance.js"></script>
-
-<script>
-  document.getElementById("year").textContent = new Date().getFullYear();
-</script>
-
+<script src="/assets/finance.js"></script>
 </body>
 </html>
