@@ -88,6 +88,7 @@ async function loadFinancials() {
 
 function renderPropertySelector() {
   const sel = $("propertySelect");
+  if (!sel) return;
   sel.innerHTML = "";
 
   PROPERTIES.forEach((p) => {
@@ -105,7 +106,10 @@ function onPropertySelect() {
   );
   renderTable();
 }
-
+if (PROPERTIES.length > 0) {
+  $("propertySelect").selectedIndex = 0;
+  onPropertySelect();
+}
 /* ---------------- CALCULATIONS ---------------- */
 
 function annualize(value, period) {
@@ -191,13 +195,17 @@ function renderTable() {
     body.appendChild(tr);
   });
 
-  $("totalRent").textContent = usd(totals.rent);
-  $("totalExpenses").textContent = usd(totals.expenses);
-  $("totalNet").textContent = usd(totals.net);
+if ($("totalRent")) $("totalRent").textContent = usd(totals.rent);
+if ($("totalExpenses")) $("totalExpenses").textContent = usd(totals.expenses);
+if ($("totalNet")) $("totalNet").textContent = usd(totals.net);
 }
 
 /* ---------------- EDITOR ---------------- */
-
+function openEditor(id) {
+  if (!$("modal") || !$("editId")) {
+    console.error("Editor modal not found in DOM");
+    return;
+  }
 function openEditor(id) {
   const f = FINANCIALS[id] || {};
 
@@ -219,7 +227,10 @@ function closeEditor() {
 }
 
 /* ---------------- SAVE ---------------- */
-
+if (READ_ONLY) {
+  alert("You are in read-only mode.");
+  return;
+}
 async function saveFinancials() {
   // --- HARD GUARD: ensure required DOM elements exist ---
   const requiredIds = [
