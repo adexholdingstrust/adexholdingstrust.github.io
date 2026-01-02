@@ -317,6 +317,13 @@ thead th {
   <div class="card">
     <div class="cardHead">View Options</div>
     <div class="cardBody controls">
+        <input
+          type="number"
+          id="reserveInput"
+          placeholder="Cash Reserves ($)"
+          value="5000"
+          onchange="renderTable()"
+/>
   <div>
     <select id="propertySelect" multiple onchange="onPropertySelect()"></select>
 
@@ -325,6 +332,11 @@ thead th {
       <button onclick="clearAllProperties()">Clear All</button>
     </div>
   </div>
+      
+      <select id="modeToggle" onchange="renderTable()">
+        <option value="operator">Operator View</option>
+        <option value="investor">Investor View</option>
+     </select>
 
   <select id="viewMode" onchange="renderTable()">
     <option value="month">Monthly</option>
@@ -346,6 +358,11 @@ thead th {
     </div>
 
     <div class="kpiChip">
+        <div class="kpiLabel">Portfolio Stress</div>
+        <div class="kpiValue" id="kpiStress">—</div>
+    </div>
+
+    <div class="kpiChip">
       <div class="kpiLabel">Monthly Expenses</div>
       <div class="kpiValue" id="kpiExpenses">$0</div>
     </div>
@@ -355,7 +372,7 @@ thead th {
       <div class="kpiValue" id="kpiNet">$0</div>
     </div>
     
-    <div class="kpi">
+    <div class="kpiChip">
       <div class="kpiLabel">Security Deposits Held</div>
       <div class="kpiValue" id="kpiDeposits">$0</div>
     </div>
@@ -380,12 +397,12 @@ thead th {
             <th>Maintenance</th>
             <th>Taxes</th>
             <th>Total Expenses</th>
-            <th>Monthly Cash Flow</th>
-            <th>Reserve Stress</th>
-            <th>Lease</th>
-            <th>Annual P&L</th>
+            <th>Monthly Net</th>
+            <th>Annual Net</th>
             <th>Deposit</th>
-            <th>Lease / Risk</th>
+            <th>Lease Dates</th>
+            <th>DSCR</th>
+
           </tr>
         </thead>
 
@@ -412,21 +429,52 @@ thead th {
 <script src="/finance.js"></script>
 
 <script>
+  function depositExposureChip(deposit, rent) {
+    if (!deposit || !rent) return "";
+
+    const ratio = deposit / rent;
+
+    if (ratio < 0.5) {
+      return `<span class="riskChip risk-safe">Low</span>`;
+    }
+    if (ratio < 1) {
+      return `<span class="riskChip risk-60">Moderate</span>`;
+    }
+    return `<span class="riskChip risk-30">High</span>`;
+  }
+
+  /* ✅ ADD THIS FUNCTION RIGHT BELOW */
+  function reserveStressLiabilityAware(netMonthly, reserve, deposits) {
+    if (netMonthly >= 0) return "🟢 Stable";
+
+    const usableReserve = Math.max(reserve - deposits, 0);
+
+    if (usableReserve === 0) return "🔴 No Buffer";
+
+    const months = Math.floor(usableReserve / Math.abs(netMonthly));
+
+    if (months >= 6) return "🟡 Watch";
+    if (months >= 3) return "🟠 Tight";
+    return "🔴 High Risk";
+  }
 /* ---------------------------------------
    EXTEND RENDERING (FRONTEND ONLY)
 --------------------------------------- */
-
 const _renderTable = renderTable;
-
 renderTable = function () {
   const body = document.getElementById("financeBody");
   if (!body) return;
 
   body.innerHTML = "";
+const reserve = Number(
+  document.getElementById("reserveInput")?.value || 0
+);
+const userMode =
+  document.getElementById("modeToggle")?.value || "operator";
 
   const mode = document.getElementById("viewMode")?.value || "month";
 
-  let totals = { rent:0, expenses:0, net:0 };
+  let totals = { rent:0, expenses:0, net:0, deposits:0 };
 
   PROPERTIES
     .filter(p => SELECTED.has(p.id))
@@ -436,31 +484,69 @@ renderTable = function () {
       const rent = Number(f.rent || 0);
       const mortgage = Number(f.mortgage || 0);
       const hoa = Number(f.hoa || 0);
-      const maintenance = Number(f.maintenance || 0);
+      const maintenance =
+  userMode === "operator"
+    ? Number(f.maintenance || 0)
+    : 0;
       const tax = Number(f.tax || 0);
 
-      const expenses = mortgage + hoa + tax;
+      const expenses = mortgage + hoa + tax + maintenance;
       const monthlyNet = rent - expenses;
       const annualNet = monthlyNet * 12;
 
       totals.rent += rent;
       totals.expenses += expenses;
       totals.net += mode === "year" ? annualNet : monthlyNet;
+      totals.deposits += Number(f.deposit || 0);
 
       const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${p.name}</td>
-        <td>$${rent}</td>
-        <td>$${mortgage}</td>
-        <td>$${hoa}</td>
-        <td>$${maintenance}</td>
-        <td>$${tax}</td>
-        <td>$${expenses}</td>
-        <td class="${monthlyNet>=0?"pos":"neg"}">$${monthlyNet}</td>
-        <td class="${annualNet>=0?"pos":"neg"}">$${annualNet}</td>
-        <td>$${f.deposit||0}</td>
-        <td>${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}</td>
-      `;
+tr.innerHTML = `
+ <td>${p.name}</td>
+<td>$${rent}</td>
+<td>$${mortgage}</td>
+<td>$${hoa}</td>
+<td>${userMode === "operator" ? `$${maintenance}` : "—"}</td>
+<td>$${tax}</td>
+<td>$${expenses}</td>
+
+<td class="${monthlyNet>=0?"pos":"neg"}">$${monthlyNet}</td>
+
+<td>
+  ${
+    userMode === "operator"
+      ? reserveStressLiabilityAware(monthlyNet, reserve, f.deposit || 0)
+      : "—"
+  }
+</td>
+<td>
+  ${
+    userMode === "operator" && mortgage > 0
+      ? (monthlyNet / mortgage).toFixed(2)
+      : "—"
+  }
+</td>
+
+<td>$${annualNet}</td>
+
+<td>
+  ${
+    userMode === "operator"
+      ? `
+        $${f.deposit || 0}
+        <div style="margin-top:4px">
+          ${depositExposureChip(f.deposit, rent)}
+        </div>
+      `
+      : "—"
+  }
+</td>
+
+<td>
+  ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
+  <div style="margin-top:4px">${leaseRiskChip(f.rentEndDate)}</div>
+</td>
+
+`;
       body.appendChild(tr);
     });
 
@@ -471,9 +557,23 @@ renderTable = function () {
   document.getElementById("kpiRent").textContent = `$${totals.rent}`;
   document.getElementById("kpiExpenses").textContent = `$${totals.expenses}`;
   document.getElementById("kpiNet").textContent = `$${totals.net}`;
-  document.getElementById("kpiAnnual").textContent = `$${totals.net * 12}`;
+  document.getElementById("kpiAnnual").textContent =
+  `$${mode === "year" ? totals.net : totals.net * 12}`;
+  if (document.getElementById("kpiDeposits")) {
+  document.getElementById("kpiDeposits").textContent = `$${totals.deposits}`;
+}
+  const stress = reserveStressLiabilityAware(
+  totals.net,
+  reserve,
+  totals.deposits
+);
+
+const stressEl = document.getElementById("kpiStress");
+if (stressEl) stressEl.textContent =
+  userMode === "operator" ? stress : "—";
 
 };
+
 </script>
 <!-- DRILL-DOWN MODAL -->
 <div id="propertyModal" style="display:none">
