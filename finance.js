@@ -38,6 +38,23 @@ const daysUntil = (iso) => {
   );
 };
 
+/* ---------------- HELPER TO SELECT PROPERTIES ---------------- */
+function selectAllProperties() {
+  const sel = document.getElementById("propertySelect");
+  if (!sel) return;
+
+  Array.from(sel.options).forEach(o => (o.selected = true));
+  onPropertySelect();
+}
+
+function clearAllProperties() {
+  const sel = document.getElementById("propertySelect");
+  if (!sel) return;
+
+  Array.from(sel.options).forEach(o => (o.selected = false));
+  onPropertySelect();
+}
+
 /* ---------------- ACCESS ---------------- */
 
 async function bootstrapFinance() {
@@ -201,6 +218,10 @@ if ($("totalRent")) $("totalRent").textContent = usd(totals.rent);
 if ($("totalExpenses")) $("totalExpenses").textContent = usd(totals.expenses);
 if ($("totalNet")) $("totalNet").textContent = usd(totals.net);
 }
+document.getElementById("kpiRent").textContent = `$${totals.rent}`;
+document.getElementById("kpiExpenses").textContent = `$${totals.expenses}`;
+document.getElementById("kpiNet").textContent = `$${totals.net}`;
+document.getElementById("kpiAnnual").textContent = `$${totals.net * 12}`;
 
 /* ---------------- EDITOR ---------------- */
 function openEditor(id) {
