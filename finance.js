@@ -420,9 +420,6 @@ function renderTable() {
   net: 0,
   deposits: 0
 };
-
-  PROPERTIES.filter((p) => SELECTED.has(p.id)).forEach((p) => {
-    const f = FINANCIALS[p.id] || {};
     const month = getActiveMonth();
     const isMonthly = Boolean(month);
 if ($("rentHeader")) {
@@ -435,6 +432,8 @@ if ($("netHeader")) {
   $("netHeader").textContent = isMonthly ? "Monthly Net" : "Annual Net";
 }
 
+  PROPERTIES.filter((p) => SELECTED.has(p.id)).forEach((p) => {
+    const f = FINANCIALS[p.id] || {};
 
 let pl;
 let rentVal = 0;
