@@ -169,6 +169,56 @@
 <!-- DATA + LOGIC -->
 <script src="/assets/financials.js"></script>
 <script src="/finance.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const select = document.getElementById("propertySelect");
+  if (!select || typeof PROPERTIES === "undefined") return;
+
+  select.innerHTML = `<option value="">Select property…</option>`;
+
+  PROPERTIES.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name;
+    select.appendChild(opt);
+  });
+
+  select.addEventListener("change", e => {
+    const id = e.target.value;
+    if (!id) {
+      clearForm();
+      return;
+    }
+
+    const f = FINANCIALS?.[id];
+    if (!f) {
+      clearForm();
+      return;
+    }
+
+    document.getElementById("editId").value = id;
+    document.getElementById("rent").value = f.rent ?? "";
+    document.getElementById("mortgage").value = f.mortgage ?? "";
+    document.getElementById("hoa").value = f.hoa ?? "";
+    document.getElementById("maintenance").value = f.maintenance ?? "";
+    document.getElementById("tax").value = f.tax ?? "";
+    document.getElementById("deposit").value = f.deposit ?? "";
+    document.getElementById("rentStart").value = f.rentStartDate ?? "";
+    document.getElementById("rentEnd").value = f.rentEndDate ?? "";
+  });
+});
+
+function clearForm() {
+  [
+    "rent","mortgage","hoa","maintenance",
+    "tax","deposit","rentStart","rentEnd","editId"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+}
+</script>
+
 
 </body>
 </html>
