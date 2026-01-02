@@ -212,6 +212,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("rent").value = f.rent ?? "";
     document.getElementById("mortgage").value = f.mortgage ?? "";
     document.getElementById("hoa").value = f.hoa ?? "";
+    document.getElementById("hoaCompany").value = f.hoaCompany ?? "";
+    document.getElementById("hoaWebsite").value = f.hoaWebsite ?? "";
+    document.getElementById("hoaPhone").value = f.hoaPhone ?? "";
+    document.getElementById("hoaEmail").value = f.hoaEmail ?? "";
     document.getElementById("maintenance").value = f.maintenance ?? "";
     document.getElementById("tax").value = f.tax ?? "";
     document.getElementById("deposit").value = f.deposit ?? "";
@@ -222,7 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function clearForm() {
   [
-    "rent","mortgage","hoa","maintenance",
+    "rent","mortgage","hoa","hoaCompany","hoaWebsite",
+    "hoaPhone","hoaEmail","maintenance",
     "tax","deposit","rentStart","rentEnd","editId"
   ].forEach(id => {
     const el = document.getElementById(id);
