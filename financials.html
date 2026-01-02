@@ -1,268 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Financials Admin – Adex Holdings Trust</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <title>Adex Holdings Trust | Financials</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <!-- Shared theme -->
+  <link rel="stylesheet" href="/assets/style.css" />
 
   <style>
     body {
-      background: #020617;
+      background: #0f172a;
       color: #e5e7eb;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
-      padding: 24px;
     }
 
     header {
+      padding: 20px 28px;
       display: flex;
       align-items: center;
       gap: 16px;
-      margin-bottom: 24px;
+      border-bottom: 1px solid #1f2937;
+      background: #020617;
     }
 
     header img {
-      height: 44px;
+      height: 38px;
     }
 
-    h1 {
+    header h1 {
+      font-size: 20px;
       margin: 0;
-      font-size: 22px;
       font-weight: 600;
     }
 
-    .subtitle {
-      font-size: 13px;
-      opacity: 0.7;
+    main {
+      padding: 28px;
+      max-width: 1400px;
+      margin: auto;
     }
 
-    select, input {
-      background: #020617;
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar button {
+      background: #1f2937;
       color: #e5e7eb;
-      border: 1px solid #1e293b;
+      border: 1px solid #334155;
       border-radius: 6px;
-      padding: 8px 10px;
-      font-size: 13px;
-      width: 100%;
-    }
-
-    label {
-      font-size: 12px;
-      opacity: 0.7;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-top: 18px;
-    }
-
-    .card {
-      background: #020617;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 16px;
-    }
-
-    .card h3 {
-      margin-top: 0;
-      font-size: 15px;
-      margin-bottom: 10px;
-    }
-
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 14px;
+      padding: 8px 14px;
       cursor: pointer;
     }
 
-    button.secondary {
-      background: #1e293b;
+    .toolbar button:hover {
+      background: #334155;
     }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      background: #020617;
     }
 
-    .row {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
     }
 
-    .notice {
-      margin-top: 16px;
-      font-size: 13px;
-      opacity: 0.75;
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #1f2937;
+      text-align: right;
+      white-space: nowrap;
     }
 
-    .status {
-      margin-top: 10px;
-      font-size: 13px;
+    th {
+      background: #020617;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: #9ca3af;
     }
 
-    .success {
+    th:first-child,
+    td:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: #020617;
+      z-index: 2;
+    }
+
+    tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .positive {
       color: #22c55e;
+      font-weight: 600;
     }
 
-    .error {
+    .negative {
       color: #ef4444;
+      font-weight: 600;
+    }
+
+    .muted {
+      color: #9ca3af;
+    }
+
+    footer {
+      margin-top: 28px;
+      font-size: 12px;
+      color: #6b7280;
+      text-align: center;
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <img src="/assets/logo.png" alt="Adex Holdings Trust" />
-    <div>
-      <h1>Financials Administration</h1>
-      <div class="subtitle">
-        Secure • Editable • KV-backed • Admin Only
-      </div>
-    </div>
-  </header>
 
-  <!-- PROPERTY SELECTOR -->
-  <div class="card">
-    <label for="propertySelect">Select U.S. Property</label>
-    <select id="propertySelect">
-      <option value="">Loading properties…</option>
-    </select>
+<header>
+  <img src="/assets/logo.svg" alt="Adex Holdings Trust" />
+  <h1>Financials Overview</h1>
+</header>
+
+<main>
+
+  <div class="toolbar">
+    <button id="refreshBtn">Refresh</button>
+    <button id="exportPdfBtn">Export PDF</button>
+    <button id="investorToggleBtn">Investor View</button>
   </div>
 
-  <!-- EDIT FORM -->
-  <div id="editor" class="grid" style="display:none;">
-    <div class="card">
-      <h3>Income</h3>
-      <label>Monthly Rent</label>
-      <input id="rentAmount" type="number" />
-    </div>
-
-    <div class="card">
-      <h3>Mortgage</h3>
-      <label>Monthly Mortgage</label>
-      <input id="mortgageAmount" type="number" />
-    </div>
-
-    <div class="card">
-      <h3>HOA</h3>
-      <label>Monthly HOA</label>
-      <input id="hoaAmount" type="number" />
-    </div>
-
-    <div class="card">
-      <h3>Taxes / Payments</h3>
-      <label>Monthly Cost</label>
-      <input id="taxAmount" type="number" />
-    </div>
-
-    <div class="card">
-      <h3>Lease Term</h3>
-      <label>Lease End Date</label>
-      <input id="leaseEnd" type="date" />
-    </div>
+  <div class="table-wrap">
+    <table id="financialTable">
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Annual Rent</th>
+          <th>Mortgage</th>
+          <th>HOA</th>
+          <th>Maintenance</th>
+          <th>Total Expenses</th>
+          <th>Net P&L</th>
+          <th>Monthly Cash Flow</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="8" class="muted">Loading financial data…</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
-  <!-- ACTIONS -->
-  <div class="row">
-    <button id="saveBtn">Save Changes</button>
-    <button class="secondary" id="resetBtn">Reset</button>
-  </div>
+  <footer>
+    Adex Holdings Trust • Financial data is Access-protected and server-calculated
+  </footer>
 
-  <div id="status" class="status"></div>
+</main>
 
-  <div class="notice">
-    Changes are stored securely and audited. Static asset files are never modified directly.
-  </div>
+<script>
+(async function initFinancials() {
+  const tbody = document.querySelector("#financialTable tbody");
 
-  <!-- DATA + LOGIC -->
-  <script src="/assets/financials.js"></script>
+  async function fetchData() {
+    tbody.innerHTML =
+      '<tr><td colspan="8" class="muted">Loading financial data…</td></tr>';
 
-  <script>
-    const select = document.getElementById("propertySelect");
-    const editor = document.getElementById("editor");
-    const statusEl = document.getElementById("status");
+    const res = await fetch("/api/admin/finance/pl", { cache: "no-store" });
+    if (!res.ok) {
+      tbody.innerHTML =
+        '<tr><td colspan="8" class="negative">Failed to load financial data</td></tr>';
+      return;
+    }
 
-    const fields = {
-      rent: document.getElementById("rentAmount"),
-      mortgage: document.getElementById("mortgageAmount"),
-      hoa: document.getElementById("hoaAmount"),
-      tax: document.getElementById("taxAmount"),
-      leaseEnd: document.getElementById("leaseEnd")
-    };
+    const data = await res.json();
+    renderRows(data.properties || []);
+  }
 
-    const properties = [
-      ...window.ADEX_DATA.rentals,
-      ...window.ADEX_DATA.lands
-    ].filter(p => p.country === "USA");
+  function money(n) {
+    return "$" + Number(n || 0).toLocaleString();
+  }
 
-    select.innerHTML = `<option value="">Select property…</option>`;
+  function renderRows(properties) {
+    if (!properties.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="8" class="muted">No properties found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = "";
+
     properties.forEach(p => {
-      const o = document.createElement("option");
-      o.value = p.id;
-      o.textContent = p.name;
-      select.appendChild(o);
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${p.name}</td>
+        <td>${money(p.annualRent)}</td>
+        <td>${money(p.annualMortgage)}</td>
+        <td>${money(p.annualHOA)}</td>
+        <td>${money(p.annualMaintenance)}</td>
+        <td>${money(p.totalExpenses)}</td>
+        <td class="${p.netPL >= 0 ? "positive" : "negative"}">
+          ${money(p.netPL)}
+        </td>
+        <td class="${p.monthlyCashFlow >= 0 ? "positive" : "negative"}">
+          ${money(p.monthlyCashFlow)}
+        </td>
+      `;
+
+      tbody.appendChild(tr);
     });
+  }
 
-    select.addEventListener("change", () => {
-      const p = properties.find(x => x.id === select.value);
-      if (!p) {
-        editor.style.display = "none";
-        return;
-      }
+  document.getElementById("refreshBtn").onclick = fetchData;
 
-      editor.style.display = "grid";
+  document.getElementById("exportPdfBtn").onclick = () => {
+    alert("PDF export will generate a CPA-ready snapshot (next step).");
+  };
 
-      fields.rent.value = p.rent?.amount || "";
-      fields.mortgage.value = p.Mortgage?.amount || "";
-      fields.hoa.value = p.HOA?.amount || "";
-      fields.tax.value =
-        p.Taxes?.amount || p.Payments?.amount || "";
-      fields.leaseEnd.value = p.leaseEnd || "";
-    });
+  document.getElementById("investorToggleBtn").onclick = () => {
+    alert("Investor View enabled (read-only).");
+  };
 
-    document.getElementById("resetBtn").onclick = () => {
-      select.dispatchEvent(new Event("change"));
-      statusEl.textContent = "";
-    };
+  await fetchData();
+})();
+</script>
 
-    document.getElementById("saveBtn").onclick = async () => {
-      statusEl.textContent = "Saving…";
-      statusEl.className = "status";
-
-      try {
-        const payload = {
-          propertyId: select.value,
-          rent: Number(fields.rent.value),
-          mortgage: Number(fields.mortgage.value),
-          hoa: Number(fields.hoa.value),
-          tax: Number(fields.tax.value),
-          leaseEnd: fields.leaseEnd.value
-        };
-
-        const res = await fetch("/api/admin/financials/update", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) throw new Error("Save failed");
-
-        statusEl.textContent = "Saved successfully.";
-        statusEl.classList.add("success");
-      } catch (e) {
-        statusEl.textContent = "Error saving data.";
-        statusEl.classList.add("error");
-      }
-    };
-  </script>
 </body>
 </html>
