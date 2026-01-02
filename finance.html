@@ -298,6 +298,14 @@ thead th {
 .kpiDelta.down {
   color: var(--bad);
 }
+    td:not(:first-child),
+th:not(:first-child) {
+  text-align: right;
+}
+td:nth-child(11) {
+  white-space: normal;
+}
+
   </style>
 </head>
 
@@ -388,24 +396,22 @@ thead th {
     <div class="cardHead">Financial Breakdown</div>
     <div class="cardBody tableScroll">
       <table>
-        <thead>
-          <tr>
-            <th>Property</th>
-            <th>Rent</th>
-            <th>Mortgage</th>
-            <th>HOA</th>
-            <th>Maintenance</th>
-            <th>Taxes</th>
-            <th>Total Expenses</th>
-            <th>Monthly Net</th>
-            <th>Annual Net</th>
-            <th>Deposit</th>
-            <th>Lease Dates</th>
-            <th>DSCR</th>
-
-          </tr>
-        </thead>
-
+<thead>
+  <tr>
+    <th>Property</th>
+    <th>Rent</th>
+    <th>Mortgage</th>
+    <th>HOA</th>
+    <th>Maintenance</th>
+    <th>Taxes</th>
+    <th>Total Expenses</th>
+    <th>Monthly Net</th>
+    <th>Annual Net</th>
+    <th>Deposit</th>
+    <th>Lease Dates</th>
+    <th>DSCR</th>
+  </tr>
+</thead>
         <tbody id="financeBody"></tbody>
 
         <tfoot>
@@ -501,51 +507,40 @@ const userMode =
 
       const tr = document.createElement("tr");
 tr.innerHTML = `
- <td>${p.name}</td>
-<td>$${rent}</td>
-<td>$${mortgage}</td>
-<td>$${hoa}</td>
-<td>${userMode === "operator" ? `$${maintenance}` : "—"}</td>
-<td>$${tax}</td>
-<td>$${expenses}</td>
+  <td>${p.name}</td>
 
-<td class="${monthlyNet>=0?"pos":"neg"}">$${monthlyNet}</td>
+  <td>${usd(rent)}</td>
+  <td>${usd(mortgage)}</td>
+  <td>${usd(hoa)}</td>
+  <td>${usd(maintenance)}</td>
+  <td>${usd(tax)}</td>
 
-<td>
-  ${
-    userMode === "operator"
-      ? reserveStressLiabilityAware(monthlyNet, reserve, f.deposit || 0)
-      : "—"
-  }
-</td>
-<td>
-  ${
-    userMode === "operator" && mortgage > 0
-      ? (monthlyNet / mortgage).toFixed(2)
-      : "—"
-  }
-</td>
+  <td>${usd(expenses)}</td>
 
-<td>$${annualNet}</td>
+  <td class="${monthlyNet >= 0 ? "pos" : "neg"}">
+    ${usd(monthlyNet)}
+  </td>
 
-<td>
-  ${
-    userMode === "operator"
-      ? `
-        $${f.deposit || 0}
-        <div style="margin-top:4px">
-          ${depositExposureChip(f.deposit, rent)}
-        </div>
-      `
-      : "—"
-  }
-</td>
+  <td class="${annualNet >= 0 ? "pos" : "neg"}">
+    ${usd(annualNet)}
+  </td>
 
-<td>
-  ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
-  <div style="margin-top:4px">${leaseRiskChip(f.rentEndDate)}</div>
-</td>
+  <td>${usd(f.deposit || 0)}</td>
 
+  <td>
+    ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
+    <div style="margin-top:4px">
+      ${leaseRiskChip(f.rentEndDate)}
+    </div>
+  </td>
+
+  <td>
+    ${
+      mortgage > 0
+        ? (rent / mortgage).toFixed(2)
+        : "—"
+    }
+  </td>
 `;
       body.appendChild(tr);
     });
