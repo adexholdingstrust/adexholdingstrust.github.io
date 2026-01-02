@@ -1,233 +1,276 @@
 /* =========================================================
-   ADEX HOLDINGS TRUST — finance.js
-   Read-only analytics + admin-safe financial aggregation
+   ADEX HOLDINGS TRUST — FINANCE LOGIC
+   finance.js
+   Source of truth:
+   - Property metadata: assets/financials.js (window.ADEX_DATA)
+   - Financial records: Cloudflare Worker KV
 ========================================================= */
 
 /* ---------------- CONFIG ---------------- */
 
-const FINANCE_API_BASE = "/api/admin"; // Access protected
-const FINANCE_KV_ENDPOINT = `${FINANCE_API_BASE}/financials`; // future-proof
-const CURRENCY = "USD";
+const API_BASE = "/api/admin";
+const FINANCE_BOOTSTRAP = `${API_BASE}/finance/bootstrap`;
+const FINANCE_GET = `${API_BASE}/financials`;
+const FINANCE_SAVE = `${API_BASE}/financials/update`;
 
-/* ---------------- UTILITIES ---------------- */
+/* ---------------- STATE ---------------- */
 
-function fmtCurrency(n) {
-  if (typeof n !== "number" || isNaN(n)) return "—";
-  return new Intl.NumberFormat("en-US", {
+let PROPERTIES = [];
+let FINANCIALS = {};
+let SELECTED = new Set();
+let READ_ONLY = false;
+
+/* ---------------- HELPERS ---------------- */
+
+const $ = (id) => document.getElementById(id);
+
+const usd = (v) =>
+  Number(v || 0).toLocaleString("en-US", {
     style: "currency",
-    currency: CURRENCY,
-    maximumFractionDigits: 0
-  }).format(n);
+    currency: "USD"
+  });
+
+const daysUntil = (iso) => {
+  if (!iso) return null;
+  return Math.ceil(
+    (new Date(iso).getTime() - Date.now()) / 86400000
+  );
+};
+
+/* ---------------- ACCESS ---------------- */
+
+async function bootstrapFinance() {
+  const res = await fetch(FINANCE_BOOTSTRAP, {
+    credentials: "include"
+  });
+
+  if (!res.ok) {
+    document.body.innerHTML =
+      "<h2>Access expired. Please refresh and sign in.</h2>";
+    throw new Error("Access denied");
+  }
+
+  const data = await res.json();
+  READ_ONLY = !data.roles.includes("admin");
 }
 
-function toNumber(v) {
-  const n = Number(v);
-  return isNaN(n) ? 0 : n;
-}
+/* ---------------- PROPERTY LOADING ---------------- */
 
-function onlyUS(properties) {
-  return properties.filter(p => p.country === "USA");
-}
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function daysBetween(a, b) {
-  const d1 = new Date(a).getTime();
-  const d2 = new Date(b).getTime();
-  return Math.ceil((d2 - d1) / 86400000);
-}
-
-/* ---------------- DATA LOADERS ---------------- */
-
-/**
- * Load static financial baseline from assets/financials.js
- */
-function loadStaticFinancials() {
+function loadProperties() {
   if (!window.ADEX_DATA) {
-    console.error("ADEX_DATA missing");
-    return [];
+    throw new Error("assets/financials.js not loaded");
   }
 
   const rentals = window.ADEX_DATA.rentals || [];
   const lands = window.ADEX_DATA.lands || [];
 
-  return onlyUS([...rentals, ...lands]);
-}
-
-/**
- * Load KV overrides (maintenance, edits, etc.)
- * Safe if endpoint does not yet exist
- */
-async function loadKVFinancialOverrides() {
-  try {
-    const res = await fetch(`${FINANCE_KV_ENDPOINT}`, {
-      cache: "no-store"
-    });
-    if (!res.ok) return {};
-    const json = await res.json();
-    return json.data || {};
-  } catch {
-    return {};
-  }
-}
-
-/* ---------------- FINANCIAL COMPUTATION ---------------- */
-
-/**
- * Normalize a property into a single financial model
- */
-function normalizeProperty(base, override = {}) {
-  const rent =
-    toNumber(override.rent ?? base.rent?.amount);
-
-  const mortgage =
-    toNumber(override.mortgage ?? base.Mortgage?.amount);
-
-  const hoa =
-    toNumber(override.hoa ?? base.HOA?.amount);
-
-  const taxes =
-    toNumber(
-      override.tax ??
-      base.Taxes?.amount ??
-      base.Payments?.amount
-    );
-
-  const maintenance =
-    toNumber(override.maintenance ?? 0);
-
-  const income = rent;
-  const expenses = mortgage + hoa + taxes + maintenance;
-  const net = income - expenses;
-
-  return {
-    id: base.id,
-    name: base.name,
-    type: base.type || "Land",
-    state: base.state,
-    acres: base.acres || null,
-
-    income,
-    expenses,
-    net,
-
-    breakdown: {
-      rent,
-      mortgage,
-      hoa,
-      taxes,
-      maintenance
-    },
-
-    leaseEnd: override.leaseEnd || base.leaseEnd || null
-  };
-}
-
-/**
- * Calculate portfolio summary
- */
-function computePortfolioSummary(properties) {
-  return properties.reduce(
-    (acc, p) => {
-      acc.totalIncome += p.income;
-      acc.totalExpenses += p.expenses;
-      acc.net += p.net;
-      return acc;
-    },
-    { totalIncome: 0, totalExpenses: 0, net: 0 }
+  PROPERTIES = [...rentals, ...lands].filter(
+    (p) => p.country === "USA"
   );
 }
 
-/* ---------------- LEASE ALERTS ---------------- */
+/* ---------------- FINANCIAL STORAGE ---------------- */
 
-/**
- * Compute lease warnings (90 / 60 / 30 days)
- */
-function computeLeaseAlerts(property) {
-  if (!property.leaseEnd) return null;
+async function loadFinancials() {
+  const res = await fetch(FINANCE_GET, {
+    credentials: "include"
+  });
 
-  const days = daysBetween(todayISO(), property.leaseEnd);
+  if (!res.ok) {
+    throw new Error("Failed to load financial data");
+  }
 
-  if (days <= 30) return { level: "30", days };
-  if (days <= 60) return { level: "60", days };
-  if (days <= 90) return { level: "90", days };
-
-  return null;
+  const json = await res.json();
+  FINANCIALS = json.financials || {};
 }
 
-/* ---------------- RENDER HELPERS ---------------- */
+/* ---------------- SELECTOR ---------------- */
 
-/**
- * Render portfolio KPIs
- */
-function renderKPIs(summary) {
-  document.getElementById("kpiIncome").textContent =
-    fmtCurrency(summary.totalIncome);
+function renderPropertySelector() {
+  const sel = $("propertySelect");
+  sel.innerHTML = "";
 
-  document.getElementById("kpiExpenses").textContent =
-    fmtCurrency(summary.totalExpenses);
-
-  document.getElementById("kpiNet").textContent =
-    fmtCurrency(summary.net);
-}
-
-/**
- * Render property table
- */
-function renderTable(properties) {
-  const tbody = document.getElementById("financeTableBody");
-  tbody.innerHTML = "";
-
-  properties.forEach(p => {
-    const alert = computeLeaseAlerts(p);
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${p.name}</td>
-      <td>${p.state}</td>
-      <td>${fmtCurrency(p.income)}</td>
-      <td>${fmtCurrency(p.expenses)}</td>
-      <td class="${p.net >= 0 ? "pos" : "neg"}">
-        ${fmtCurrency(p.net)}
-      </td>
-      <td>
-        ${
-          alert
-            ? `<span class="alert alert-${alert.level}">
-                 ${alert.days} days
-               </span>`
-            : "—"
-        }
-      </td>
-    `;
-
-    tbody.appendChild(tr);
+  PROPERTIES.forEach((p) => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.name} (${p.state})`;
+    sel.appendChild(opt);
   });
 }
 
-/* ---------------- MAIN BOOTSTRAP ---------------- */
-
-async function initFinanceDashboard() {
-  const base = loadStaticFinancials();
-  const overrides = await loadKVFinancialOverrides();
-
-  const normalized = base.map(p =>
-    normalizeProperty(p, overrides[p.id])
+function onPropertySelect() {
+  const sel = $("propertySelect");
+  SELECTED = new Set(
+    Array.from(sel.selectedOptions).map((o) => o.value)
   );
-
-  const summary = computePortfolioSummary(normalized);
-
-  renderKPIs(summary);
-  renderTable(normalized);
+  renderTable();
 }
 
-/* ---------------- AUTO INIT ---------------- */
+/* ---------------- CALCULATIONS ---------------- */
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("financeTableBody")) {
-    initFinanceDashboard();
+function annualize(value, period) {
+  if (!value) return 0;
+  if (period === "month") return value * 12;
+  return value;
+}
+
+function computeAnnualPL(property, record = {}) {
+  const rentAnnual =
+    annualize(record.rent, "year") ||
+    annualize(property.rent?.amount, property.rent?.period);
+
+  const mortgageAnnual =
+    annualize(record.mortgage, "year") ||
+    annualize(property.Mortgage?.amount, property.Mortgage?.period);
+
+  const hoaAnnual =
+    annualize(record.hoa, "year") ||
+    annualize(property.HOA?.amount, property.HOA?.period);
+
+  const maintenanceAnnual = annualize(record.maintenance, "year");
+  const taxAnnual =
+    annualize(record.tax, "year") ||
+    annualize(property.Taxes?.amount, property.Taxes?.period);
+
+  const expenses =
+    mortgageAnnual + hoaAnnual + maintenanceAnnual + taxAnnual;
+
+  return {
+    rentAnnual,
+    expensesAnnual: expenses,
+    netAnnual: rentAnnual - expenses,
+    cashFlowMonthly: (rentAnnual - expenses) / 12
+  };
+}
+
+/* ---------------- TABLE ---------------- */
+
+function leaseBadge(end) {
+  const d = daysUntil(end);
+  if (d == null) return "—";
+  if (d <= 30) return `<span class="badge red">30d</span>`;
+  if (d <= 60) return `<span class="badge orange">60d</span>`;
+  if (d <= 90) return `<span class="badge yellow">90d</span>`;
+  return `<span class="badge green">Active</span>`;
+}
+
+function renderTable() {
+  const body = $("financeBody");
+  body.innerHTML = "";
+
+  let totals = { rent: 0, expenses: 0, net: 0 };
+
+  PROPERTIES.filter((p) => SELECTED.has(p.id)).forEach((p) => {
+    const f = FINANCIALS[p.id] || {};
+    const pl = computeAnnualPL(p, f);
+
+    totals.rent += pl.rentAnnual;
+    totals.expenses += pl.expensesAnnual;
+    totals.net += pl.netAnnual;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.name}</td>
+      <td>${usd(pl.rentAnnual)}</td>
+      <td>${usd(pl.expensesAnnual)}</td>
+      <td class="${pl.netAnnual >= 0 ? "pos" : "neg"}">
+        ${usd(pl.netAnnual)}
+      </td>
+      <td>${usd(pl.cashFlowMonthly)}</td>
+      <td>${f.rentStartDate || "—"}</td>
+      <td>${f.rentEndDate || "—"}</td>
+      <td>${leaseBadge(f.rentEndDate)}</td>
+      <td>
+        ${
+          READ_ONLY
+            ? "🔒"
+            : `<button onclick="openEditor('${p.id}')">Edit</button>`
+        }
+      </td>
+    `;
+    body.appendChild(tr);
+  });
+
+  $("totalRent").textContent = usd(totals.rent);
+  $("totalExpenses").textContent = usd(totals.expenses);
+  $("totalNet").textContent = usd(totals.net);
+}
+
+/* ---------------- EDITOR ---------------- */
+
+function openEditor(id) {
+  const f = FINANCIALS[id] || {};
+
+  $("editId").value = id;
+  $("rent").value = f.rent || "";
+  $("mortgage").value = f.mortgage || "";
+  $("hoa").value = f.hoa || "";
+  $("maintenance").value = f.maintenance || "";
+  $("tax").value = f.tax || "";
+  $("rentStart").value = f.rentStartDate || "";
+  $("rentEnd").value = f.rentEndDate || "";
+  $("deposit").value = f.deposit || "";
+
+  $("modal").style.display = "block";
+}
+
+function closeEditor() {
+  $("modal").style.display = "none";
+}
+
+/* ---------------- SAVE ---------------- */
+
+async function saveFinancials() {
+  const payload = {
+    propertyId: $("editId").value,
+    rent: Number($("rent").value),
+    mortgage: Number($("mortgage").value),
+    hoa: Number($("hoa").value),
+    maintenance: Number($("maintenance").value),
+    tax: Number($("tax").value),
+    rentStartDate: $("rentStart").value,
+    rentEndDate: $("rentEnd").value,
+    deposit: Number($("deposit").value)
+  };
+
+  const res = await fetch(FINANCE_SAVE, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    alert("Save failed");
+    return;
   }
-});
+
+  await loadFinancials();
+  closeEditor();
+  renderTable();
+}
+
+/* ---------------- INVESTOR MODE ---------------- */
+
+function toggleInvestor() {
+  READ_ONLY = !READ_ONLY;
+  document.body.classList.toggle("investor", READ_ONLY);
+  renderTable();
+}
+
+/* ---------------- PDF EXPORT ---------------- */
+
+function exportPDF() {
+  window.print();
+}
+
+/* ---------------- INIT ---------------- */
+
+async function initFinance() {
+  await bootstrapFinance();
+  loadProperties();
+  await loadFinancials();
+  renderPropertySelector();
+}
+
+document.addEventListener("DOMContentLoaded", initFinance);
