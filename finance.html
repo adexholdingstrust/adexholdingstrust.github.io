@@ -3,73 +3,92 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Adex Holdings Trust — Finance Dashboard</title>
+  <title>Adex Holdings Trust | Finance</title>
+
+  <link rel="icon" href="/assets/logo.png" />
 
   <style>
     :root{
-      --bg:#0b1220;
-      --card:#0f1a2d;
-      --line:rgba(255,255,255,.10);
-      --txt:rgba(255,255,255,.92);
+      --bg:#0b0f14;
+      --card:#0f1625;
+      --line:rgba(255,255,255,.08);
+      --txt:#ffffff;
       --muted:rgba(255,255,255,.65);
-      --ok:#3ddc97;
-      --warn:#ffcc66;
+      --ok:#4cd964;
       --bad:#ff6b6b;
-      --shadow:0 16px 50px rgba(0,0,0,.45);
-      --radius:18px;
+      --radius:16px;
     }
 
     *{box-sizing:border-box}
+
     body{
       margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background: radial-gradient(1200px 700px at 10% 10%, #13213c 0%, var(--bg) 55%);
+      background:var(--bg);
       color:var(--txt);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
     }
 
-    .wrap{max-width:1200px;margin:24px auto;padding:0 16px 40px;}
+    .wrap{
+      max-width:1300px;
+      margin:0 auto;
+      padding:24px 20px 60px;
+    }
 
+    /* Top bar */
     .top{
-      display:flex;align-items:center;gap:16px;
-      padding:18px;border:1px solid var(--line);
-      background:linear-gradient(180deg,rgba(15,26,45,.85),rgba(10,18,32,.85));
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin-bottom:24px;
     }
 
-    .logo{
-      width:52px;height:52px;border-radius:12px;
-      overflow:hidden;border:1px solid var(--line);
-      background:rgba(255,255,255,.05);
-      display:flex;align-items:center;justify-content:center;
+    .top img{
+      height:42px;
     }
-    .logo img{width:100%;height:100%;object-fit:cover}
 
-    h1{margin:0;font-size:20px}
-    .sub{font-size:13px;color:var(--muted)}
+    .top .title{
+      font-weight:700;
+      letter-spacing:.05em;
+    }
+
+    .top .sub{
+      font-size:12px;
+      opacity:.6;
+    }
 
     .card{
-      margin-top:16px;
-      border:1px solid var(--line);
-      background:linear-gradient(180deg,rgba(15,26,45,.72),rgba(10,18,32,.72));
+      background:var(--card);
       border-radius:var(--radius);
-      box-shadow:var(--shadow);
+      border:1px solid var(--line);
+      margin-bottom:20px;
     }
 
     .cardHead{
-      padding:14px 16px;
+      padding:14px 18px;
       border-bottom:1px solid var(--line);
       font-weight:700;
     }
 
-    .cardBody{padding:16px}
+    .cardBody{
+      padding:18px;
+    }
 
-    select,button{
-      background:rgba(0,0,0,.25);
-      border:1px solid var(--line);
-      color:var(--txt);
-      padding:10px 12px;
-      border-radius:12px;
+    select,input,button{
+      background:#101c33;
+      border:1px solid #23355c;
+      color:#fff;
+      border-radius:10px;
+      padding:8px 10px;
+    }
+
+    button{
+      cursor:pointer;
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:12px;
     }
 
     table{
@@ -77,19 +96,28 @@
       border-collapse:collapse;
       font-size:13px;
     }
+
     th,td{
       padding:10px;
-      border-bottom:1px solid rgba(255,255,255,.08);
+      border-bottom:1px solid var(--line);
+      text-align:left;
+      white-space:nowrap;
     }
-    th{color:var(--muted);text-align:left}
 
-    .ok{color:var(--ok)}
-    .warn{color:var(--warn)}
-    .bad{color:var(--bad)}
+    th{
+      color:var(--muted);
+      font-weight:600;
+    }
+
+    .pos{color:var(--ok)}
+    .neg{color:var(--bad)}
+
+    tfoot td{
+      font-weight:700;
+    }
 
     @media print{
-      body{background:#fff;color:#000}
-      .top{display:none}
+      .controls{display:none}
     }
   </style>
 </head>
@@ -97,38 +125,64 @@
 <body>
 <div class="wrap">
 
+  <!-- HEADER -->
   <div class="top">
-    <div class="logo">
-      <img src="/assets/logo.png" onerror="this.style.display='none'">
-    </div>
+    <img src="/assets/logo.png" alt="Adex Holdings Trust" />
     <div>
-      <h1>Finance Dashboard</h1>
-      <div class="sub">Portfolio-level financial health & per-property P&L</div>
+      <div class="title">ADEX HOLDINGS TRUST</div>
+      <div class="sub">Finance Overview</div>
     </div>
   </div>
 
+  <!-- CONTROLS -->
   <div class="card">
-    <div class="cardHead">Select Properties</div>
-    <div class="cardBody">
-      <select id="propertySelect" multiple style="width:100%;min-height:160px"></select>
+    <div class="cardHead">View Options</div>
+    <div class="cardBody controls">
+      <select id="propertySelect" multiple onchange="onPropertySelect()"></select>
+
+      <select id="viewMode" onchange="renderTable()">
+        <option value="month">Monthly</option>
+        <option value="year">Yearly</option>
+      </select>
+
+      <input type="month" id="monthSelect" onchange="renderTable()" />
     </div>
   </div>
 
+  <!-- TABLE -->
   <div class="card">
-    <div class="cardHead">Per-Property Financial Summary</div>
+    <div class="cardHead">Financial Breakdown</div>
     <div class="cardBody">
-      <table id="financeTable">
+      <table>
         <thead>
           <tr>
             <th>Property</th>
-            <th>Annual Rent</th>
+            <th>Rent</th>
+            <th>Mortgage</th>
+            <th>HOA</th>
+            <th>Maintenance</th>
+            <th>Taxes</th>
             <th>Total Expenses</th>
-            <th>Net P&L</th>
             <th>Monthly Cash Flow</th>
-            <th>Lease End</th>
+            <th>Annual P&L</th>
+            <th>Deposit</th>
+            <th>Lease</th>
           </tr>
         </thead>
-        <tbody></tbody>
+
+        <tbody id="financeBody"></tbody>
+
+        <tfoot>
+          <tr>
+            <td>Totals</td>
+            <td id="totalRent">—</td>
+            <td colspan="4"></td>
+            <td id="totalExpenses">—</td>
+            <td></td>
+            <td id="totalNet">—</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </div>
@@ -137,5 +191,65 @@
 
 <script src="/assets/financials.js"></script>
 <script src="/finance.js"></script>
+
+<script>
+/* ---------------------------------------
+   EXTEND RENDERING (FRONTEND ONLY)
+--------------------------------------- */
+
+const _renderTable = renderTable;
+
+renderTable = function () {
+  const body = document.getElementById("financeBody");
+  if (!body) return;
+
+  body.innerHTML = "";
+
+  const mode = document.getElementById("viewMode")?.value || "month";
+
+  let totals = { rent:0, expenses:0, net:0 };
+
+  PROPERTIES
+    .filter(p => SELECTED.has(p.id))
+    .forEach(p => {
+      const f = FINANCIALS[p.id] || {};
+
+      const rent = Number(f.rent || 0);
+      const mortgage = Number(f.mortgage || 0);
+      const hoa = Number(f.hoa || 0);
+      const maintenance = Number(f.maintenance || 0);
+      const tax = Number(f.tax || 0);
+
+      const expenses = mortgage + hoa + tax;
+      const monthlyNet = rent - expenses;
+      const annualNet = monthlyNet * 12;
+
+      totals.rent += rent;
+      totals.expenses += expenses;
+      totals.net += mode === "year" ? annualNet : monthlyNet;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${p.name}</td>
+        <td>$${rent}</td>
+        <td>$${mortgage}</td>
+        <td>$${hoa}</td>
+        <td>$${maintenance}</td>
+        <td>$${tax}</td>
+        <td>$${expenses}</td>
+        <td class="${monthlyNet>=0?"pos":"neg"}">$${monthlyNet}</td>
+        <td class="${annualNet>=0?"pos":"neg"}">$${annualNet}</td>
+        <td>$${f.deposit||0}</td>
+        <td>${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}</td>
+      `;
+      body.appendChild(tr);
+    });
+
+  document.getElementById("totalRent").textContent = `$${totals.rent}`;
+  document.getElementById("totalExpenses").textContent = `$${totals.expenses}`;
+  document.getElementById("totalNet").textContent = `$${totals.net}`;
+};
+</script>
+
 </body>
 </html>
