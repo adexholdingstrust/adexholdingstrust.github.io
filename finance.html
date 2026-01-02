@@ -156,6 +156,142 @@ tfoot td{font-weight:700}
 @media print{
   .controls,.cardHead button{display:none}
 }
+  /* ===========================
+   PRINT / PDF LAYOUT
+=========================== */
+
+@media print {
+
+  body {
+    background: #ffffff !important;
+    color: #000 !important;
+  }
+
+  .wrap {
+    max-width: none;
+    padding: 0;
+  }
+
+  /* Hide UI-only elements */
+  .controls,
+  button,
+  select,
+  input,
+  .top,
+  #propertyModal {
+    display: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4 landscape;
+    margin: 40px;
+  }
+
+  /* Header */
+  .pdfHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .pdfHeader img {
+    height: 48px;
+  }
+
+  .pdfTitle {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .pdfSub {
+    font-size: 12px;
+    color: #444;
+  }
+
+  /* Summary cards */
+  .pdfSummary {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .pdfKpi {
+    border: 1px solid #ccc;
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .pdfKpi strong {
+    display: block;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  th, td {
+    border: 1px solid #999;
+    padding: 6px 8px;
+    text-align: right;
+  }
+
+  th {
+    background: #f0f0f0;
+    font-weight: 700;
+  }
+
+  th:first-child,
+  td:first-child {
+    text-align: left;
+    width: 220px;
+  }
+
+  td:nth-child(11) {
+    white-space: normal;
+    text-align: left;
+  }
+
+  .pos { color: #006400; }
+  .neg { color: #8b0000; }
+
+  /* Footer */
+  footer {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    color: #666;
+  }
+
+  .pageNumber::after {
+    content: counter(page);
+  }
+
+  /* Watermark */
+  .watermark {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 96px;
+    font-weight: 700;
+    color: rgba(0,0,0,0.06);
+    transform: rotate(-30deg);
+    pointer-events: none;
+    z-index: -1;
+  }
+}
 </style>
 </head>
 
