@@ -32,6 +32,9 @@ const usd = (v) =>
   });
 
 const daysUntil = (iso) => {
+   function getActiveMonth() {
+  return $("activeMonth")?.value || null;
+}
   if (!iso) return null;
   return Math.ceil(
     (new Date(iso).getTime() - Date.now()) / 86400000
@@ -67,7 +70,48 @@ function clearAllProperties() {
   if ($("rentStart")) $("rentStart").value = f.rentStartDate || "";
   if ($("rentEnd")) $("rentEnd").value = f.rentEndDate || "";
   if ($("deposit")) $("deposit").value = f.deposit || "";
+      renderMaintenanceActuals(propertyId);
+
 }
+/* ---------------- MAINTENANCE ACTUALS ---------------- */
+
+function renderMaintenanceActuals(propertyId) {
+  const list = $("maintenanceList");
+  if (!list) return;
+
+  const actuals =
+    FINANCIALS[propertyId]?.maintenanceActuals || {};
+
+  if (!Object.keys(actuals).length) {
+    list.innerHTML = "<em>No monthly maintenance recorded</em>";
+    return;
+  }
+
+  list.innerHTML = Object.entries(actuals)
+    .sort()
+    .map(([month, amount]) =>
+      `<div>${month}: ${usd(amount)}</div>`
+    )
+    .join("");
+}
+
+function saveMaintenanceActual() {
+  const propertyId = $("editId")?.value;
+  const month = $("maintMonth")?.value;
+  const amount = num($("maintAmount")?.value);
+
+  if (!propertyId || !month) {
+    alert("Select property and month");
+    return;
+  }
+
+  FINANCIALS[propertyId] ||= {};
+  FINANCIALS[propertyId].maintenanceActuals ||= {};
+  FINANCIALS[propertyId].maintenanceActuals[month] = amount;
+
+  renderMaintenanceActuals(propertyId);
+}
+
 /* ---------------- lease-risk helper function---------------- */
 function leaseRiskChip(endDate) {
   if (!endDate) return "—";
@@ -213,7 +257,28 @@ function computeAnnualPL(property, record = {}) {
     cashFlowMonthly: (rentAnnual - expenses) / 12
   };
 }
+/* ---------------- COMPUTING NEW ---------------- */
+function computeMonthlyPL(property, record = {}, month) {
+  const rent = record.rent || 0;
+  const mortgage = record.mortgage || 0;
+  const hoa = record.hoa || 0;
+  const tax = (record.tax || 0) / 12;
 
+  const maintenance =
+    record.maintenanceActuals?.[month] ??
+    record.maintenance ??
+    0;
+
+  const expenses =
+    mortgage + hoa + tax + maintenance;
+
+  return {
+    rent,
+    expenses,
+    net: rent - expenses,
+    maintenance
+  };
+}
 /* ---------------- TABLE ---------------- */
 function openPropertyModal(property) {
   const f = FINANCIALS[property.id] || {};
@@ -325,6 +390,17 @@ function updateDelta(id, prev, curr) {
   el.className = `kpiDelta ${up ? "up" : "down"} show`;
 }
 
+function reserveStress(netMonthly, reserve = 5000) {
+  if (netMonthly >= 0) return "🟢 Stable";
+
+  const months = Math.floor(
+    reserve / Math.abs(netMonthly)
+  );
+
+  if (months >= 6) return "🟡 Watch";
+  return "🔴 High Risk";
+}
+
 // Store for next comparison
 
 function renderTable() {
@@ -332,43 +408,58 @@ function renderTable() {
   if (!body) return; // <-- IMPORTANT: input page has no table
   body.innerHTML = "";
 
-  let totals = { rent: 0, expenses: 0, net: 0 };
+  let totals = {
+  rent: 0,
+  expenses: 0,
+  net: 0,
+  deposits: 0
+};
 
   PROPERTIES.filter((p) => SELECTED.has(p.id)).forEach((p) => {
     const f = FINANCIALS[p.id] || {};
-    const pl = computeAnnualPL(p, f);
+    const month = getActiveMonth();
 
-    totals.rent += pl.rentAnnual;
-    totals.expenses += pl.expensesAnnual;
-    totals.net += pl.netAnnual;
+const pl = month
+  ? computeMonthlyPL(p, f, month)
+  : computeAnnualPL(p, f);
+
+
+totals.rent += pl.rentAnnual;
+totals.expenses += pl.expensesAnnual;
+totals.net += pl.netAnnual;
+totals.deposits += Number(f.deposit || 0);
 
     const tr = document.createElement("tr");
    tr.style.cursor = "pointer";
    tr.onclick = () => openPropertyModal(p);
     tr.innerHTML = `
-      <td>${p.name}</td>
-      <td>${usd(pl.rentAnnual)}</td>
-      <td>${usd(pl.expensesAnnual)}</td>
-      <td class="${pl.netAnnual >= 0 ? "pos" : "neg"}">
-        ${usd(pl.netAnnual)}
-      </td>
-      <td>${usd(pl.cashFlowMonthly)}</td>
-      <td>
-        ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
-        <div style="margin-top:4px">
-          ${leaseRiskChip(f.rentEndDate)}
-        </div>
-      </td>
+  <td>${p.name}</td>
+  <td>${usd(pl.rentAnnual)}</td>
+  <td>${usd(pl.expensesAnnual)}</td>
+  <td class="${pl.netAnnual >= 0 ? "pos" : "neg"}">
+    ${usd(pl.netAnnual)}
+  </td>
+  <td>${usd(pl.cashFlowMonthly)}</td>
 
-      <td>${leaseBadge(f.rentEndDate)}</td>
-      <td>
-        ${
-          READ_ONLY
-            ? "🔒"
-            : `<button onclick="openEditor('${p.id}')">Edit</button>`
-        }
-      </td>
-    `;
+  <!-- ✅ NEW: Cash Reserve Stress -->
+  <td>${reserveStress(pl.cashFlowMonthly)}</td>
+
+  <td>
+    ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
+    <div style="margin-top:4px">
+      ${leaseRiskChip(f.rentEndDate)}
+    </div>
+  </td>
+
+  <td>${leaseBadge(f.rentEndDate)}</td>
+  <td>
+    ${
+      READ_ONLY
+        ? "🔒"
+        : `<button onclick="openEditor('${p.id}')">Edit</button>`
+    }
+  </td>
+`;
     body.appendChild(tr);
   });
 
@@ -382,6 +473,8 @@ if ($("kpiRent")) $("kpiRent").textContent = usd(totals.rent);
 if ($("kpiExpenses")) $("kpiExpenses").textContent = usd(totals.expenses);
 if ($("kpiNet")) $("kpiNet").textContent = usd(totals.net);
 if ($("kpiAnnual")) $("kpiAnnual").textContent = usd(totals.net * 12);
+if ($("kpiDeposits")) {  $("kpiDeposits").textContent = usd(totals.deposits);}
+
 
 // ---- KPI deltas ----
 const current = {
