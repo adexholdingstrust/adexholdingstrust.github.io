@@ -221,30 +221,72 @@ function closeEditor() {
 /* ---------------- SAVE ---------------- */
 
 async function saveFinancials() {
+  // --- HARD GUARD: ensure required DOM elements exist ---
+  const requiredIds = [
+    "editId",
+    "rent",
+    "mortgage",
+    "hoa",
+    "maintenance",
+    "tax",
+    "rentStart",
+    "rentEnd",
+    "deposit"
+  ];
+
+  for (const id of requiredIds) {
+    const el = $(id);
+    if (!el) {
+      console.error(`saveFinancials(): Missing required element #${id}`);
+      alert(`Internal error: Missing field "${id}". Please refresh the page.`);
+      return;
+    }
+  }
+
+  // --- SAFE VALUE EXTRACTION ---
   const payload = {
     propertyId: $("editId").value,
-    rent: Number($("rent").value),
-    mortgage: Number($("mortgage").value),
-    hoa: Number($("hoa").value),
-    maintenance: Number($("maintenance").value),
-    tax: Number($("tax").value),
-    rentStartDate: $("rentStart").value,
-    rentEndDate: $("rentEnd").value,
-    deposit: Number($("deposit").value)
+
+    rent: Number($("rent").value) || 0,
+    mortgage: Number($("mortgage").value) || 0,
+    hoa: Number($("hoa").value) || 0,
+    maintenance: Number($("maintenance").value) || 0,
+    tax: Number($("tax").value) || 0,
+
+    rentStartDate: $("rentStart").value || null,
+    rentEndDate: $("rentEnd").value || null,
+
+    deposit: Number($("deposit").value) || 0
   };
 
-  const res = await fetch(FINANCE_SAVE, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (!res.ok) {
-    alert("Save failed");
+  // --- BASIC SANITY CHECK ---
+  if (!payload.propertyId) {
+    alert("No property selected. Unable to save.");
     return;
   }
 
+  // --- SAVE TO BACKEND ---
+  let res;
+  try {
+    res = await fetch(FINANCE_SAVE, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.error("Network error while saving financials:", err);
+    alert("Network error. Please try again.");
+    return;
+  }
+
+  if (!res.ok) {
+    console.error("Save failed:", await res.text());
+    alert("Save failed. Please try again.");
+    return;
+  }
+
+  // --- REFRESH STATE ---
   await loadFinancials();
   closeEditor();
   renderTable();
