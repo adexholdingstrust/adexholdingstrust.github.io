@@ -12,7 +12,8 @@ const API_BASE = "/api/admin";
 const FINANCE_BOOTSTRAP = `${API_BASE}/finance/bootstrap`;
 const FINANCE_GET = `${API_BASE}/financials`;
 const FINANCE_SAVE = `${API_BASE}/financials/update`;
-
+const num = (v) =>
+  Number(String(v || "").replace(/[^0-9.-]/g, "")) || 0;
 /* ---------------- STATE ---------------- */
 
 let PROPERTIES = [];
@@ -160,6 +161,7 @@ function leaseBadge(end) {
 
 function renderTable() {
   const body = $("financeBody");
+  if (!body) return; // <-- IMPORTANT: input page has no table
   body.innerHTML = "";
 
   let totals = { rent: 0, expenses: 0, net: 0 };
@@ -258,16 +260,15 @@ async function saveFinancials() {
   const payload = {
     propertyId: $("editId").value,
 
-    rent: Number($("rent").value) || 0,
-    mortgage: Number($("mortgage").value) || 0,
-    hoa: Number($("hoa").value) || 0,
-    maintenance: Number($("maintenance").value) || 0,
-    tax: Number($("tax").value) || 0,
-
+    rent: num($("rent").value),
+    mortgage: num($("mortgage").value),
+    hoa: num($("hoa").value),
+    maintenance: num($("maintenance").value),
+    tax: num($("tax").value),
+    deposit: num($("deposit").value),
     rentStartDate: $("rentStart").value || null,
     rentEndDate: $("rentEnd").value || null,
 
-    deposit: Number($("deposit").value) || 0
   };
 
   // --- BASIC SANITY CHECK ---
