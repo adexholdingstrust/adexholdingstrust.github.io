@@ -55,6 +55,28 @@ function clearAllProperties() {
   onPropertySelect();
 }
 
+/* ---------------- lease-risk helper function---------------- */
+function leaseRiskChip(endDate) {
+  if (!endDate) return "—";
+
+  const today = new Date();
+  const end = new Date(endDate);
+  const days = Math.ceil((end - today) / 86400000);
+
+  if (days < 0) {
+    return `<span class="riskChip risk-expired">Expired</span>`;
+  }
+  if (days <= 30) {
+    return `<span class="riskChip risk-30">30d</span>`;
+  }
+  if (days <= 60) {
+    return `<span class="riskChip risk-60">60d</span>`;
+  }
+  if (days <= 90) {
+    return `<span class="riskChip risk-90">90d</span>`;
+  }
+  return `<span class="riskChip risk-safe">Active</span>`;
+}
 /* ---------------- ACCESS ---------------- */
 
 async function bootstrapFinance() {
@@ -166,6 +188,84 @@ function computeAnnualPL(property, record = {}) {
 }
 
 /* ---------------- TABLE ---------------- */
+function openPropertyModal(property) {
+  const f = FINANCIALS[property.id] || {};
+
+  const rent = Number(f.rent || 0);
+  const mortgage = Number(f.mortgage || 0);
+  const hoa = Number(f.hoa || 0);
+  const maintenance = Number(f.maintenance || 0);
+  const tax = Number(f.tax || 0);
+
+  const expenses = mortgage + hoa + tax;
+  const monthlyNet = rent - expenses;
+  const annualNet = monthlyNet * 12;
+
+  document.getElementById("modalTitle").textContent = property.name;
+
+  document.getElementById("modalContent").innerHTML = `
+    <div class="modalGrid">
+      <div class="modalItem">
+        <div class="modalLabel">Monthly Rent</div>
+        <div class="modalValue">$${rent}</div>
+      </div>
+
+      <div class="modalItem">
+        <div class="modalLabel">Security Deposit</div>
+        <div class="modalValue">$${f.deposit || 0}</div>
+      </div>
+
+      <div class="modalItem">
+        <div class="modalLabel">Mortgage</div>
+        <div class="modalValue">$${mortgage}</div>
+      </div>
+
+      <div class="modalItem">
+        <div class="modalLabel">HOA</div>
+        <div class="modalValue">$${hoa}</div>
+      </div>
+
+      <div class="modalItem">
+        <div class="modalLabel">Maintenance</div>
+        <div class="modalValue">$${maintenance}</div>
+      </div>
+
+      <div class="modalItem">
+        <div class="modalLabel">Taxes</div>
+        <div class="modalValue">$${tax}</div>
+      </div>
+
+      <div class="modalItem">
+        <div class="modalLabel">Total Monthly Expenses</div>
+        <div class="modalValue">$${expenses}</div>
+      </div>
+
+      <div class="modalItem">
+        <div class="modalLabel">Monthly Cash Flow</div>
+        <div class="modalValue ${monthlyNet >= 0 ? "pos" : "neg"}">$${monthlyNet}</div>
+      </div>
+
+      <div class="modalItem">
+        <div class="modalLabel">Annual P&L</div>
+        <div class="modalValue ${annualNet >= 0 ? "pos" : "neg"}">$${annualNet}</div>
+      </div>
+
+      <div class="modalItem">
+        <div class="modalLabel">Lease Term</div>
+        <div class="modalValue">
+          ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
+          <div style="margin-top:6px">${leaseRiskChip(f.rentEndDate)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("propertyModal").style.display = "block";
+}
+
+function closePropertyModal() {
+  document.getElementById("propertyModal").style.display = "none";
+}
 
 function leaseBadge(end) {
   const d = daysUntil(end);
@@ -175,6 +275,42 @@ function leaseBadge(end) {
   if (d <= 90) return `<span class="badge yellow">90d</span>`;
   return `<span class="badge green">Active</span>`;
 }
+let previousKpis = {
+  rent: null,
+  expenses: null,
+  net: null,
+  annual: null
+};
+
+function updateDelta(id, prev, curr) {
+  const el = document.getElementById(id);
+  if (!el || prev === null || prev === curr) {
+    if (el) el.classList.remove("show");
+    return;
+  }
+
+  const diff = curr - prev;
+  const up = diff > 0;
+
+  el.textContent = `${up ? "↑" : "↓"} $${Math.abs(diff)}`;
+  el.className = `kpiDelta ${up ? "up" : "down"} show`;
+}
+// --- KPI VALUES ---
+const current = {
+  rent: totals.rent,
+  expenses: totals.expenses,
+  net: totals.net,
+  annual: totals.net * 12
+};
+
+updateDelta("kpiRentDelta", previousKpis.rent, current.rent);
+updateDelta("kpiExpensesDelta", previousKpis.expenses, current.expenses);
+updateDelta("kpiNetDelta", previousKpis.net, current.net);
+updateDelta("kpiAnnualDelta", previousKpis.annual, current.annual);
+
+// Store for next comparison
+previousKpis = { ...current };
+
 
 function renderTable() {
   const body = $("financeBody");
@@ -192,6 +328,8 @@ function renderTable() {
     totals.net += pl.netAnnual;
 
     const tr = document.createElement("tr");
+   tr.style.cursor = "pointer";
+   tr.onclick = () => openPropertyModal(p);
     tr.innerHTML = `
       <td>${p.name}</td>
       <td>${usd(pl.rentAnnual)}</td>
@@ -200,8 +338,13 @@ function renderTable() {
         ${usd(pl.netAnnual)}
       </td>
       <td>${usd(pl.cashFlowMonthly)}</td>
-      <td>${f.rentStartDate || "—"}</td>
-      <td>${f.rentEndDate || "—"}</td>
+      <td>
+        ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
+        <div style="margin-top:4px">
+          ${leaseRiskChip(f.rentEndDate)}
+        </div>
+      </td>
+
       <td>${leaseBadge(f.rentEndDate)}</td>
       <td>
         ${
@@ -248,6 +391,10 @@ function openEditor(id) {
 function closeEditor() {
   $("modal").style.display = "none";
 }
+
+   document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePropertyModal();
+});
 
 /* ---------------- SAVE ---------------- */
 if (READ_ONLY) {
