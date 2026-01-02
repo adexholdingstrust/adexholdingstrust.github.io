@@ -1,128 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Finance – Adex Holdings Trust</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Shared site styling -->
-  <link rel="stylesheet" href="/assets/styles.css" />
-
-  <style>
-    body {
-      background: #020617;
-      color: #e5e7eb;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 24px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-
-    header img {
-      height: 44px;
-    }
-
-    h1 {
-      font-size: 22px;
-      margin: 0;
-      font-weight: 600;
-    }
-
-    .subtitle {
-      font-size: 13px;
-      opacity: 0.7;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #020617;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-top: 18px;
-    }
-
-    th, td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #1e293b;
-      font-size: 14px;
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    th {
-      background: #020617;
-      color: #93c5fd;
-      font-weight: 600;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    tr:hover td {
-      background: rgba(148, 163, 184, 0.05);
-    }
-
-    .positive {
-      color: #22c55e;
-      font-weight: 600;
-    }
-
-    .negative {
-      color: #ef4444;
-      font-weight: 600;
-    }
-
-    .loading {
-      opacity: 0.6;
-      font-size: 14px;
-      padding: 12px;
-    }
-
-    .footer {
-      margin-top: 22px;
-      font-size: 12px;
-      opacity: 0.6;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      background: #1e293b;
-      color: #e5e7eb;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>Finance Dashboard</title>
+  <link rel="stylesheet" href="/assets/style.css">
 </head>
-
 <body>
-  <header>
-    <img src="/assets/logo.png" alt="Adex Holdings Trust" />
-    <div>
-      <h1>Portfolio Financial Overview</h1>
-      <div class="subtitle">
-        Read-only • CPA-ready • U.S. Properties Only
-      </div>
-    </div>
-  </header>
 
-  <section id="finance-content">
-    <div class="loading">Loading financial data…</div>
-  </section>
+<h1>Finance</h1>
 
-  <div class="footer">
-    Secured via Cloudflare Access • Generated in real time
-  </div>
+<select id="propertySelect" multiple></select>
 
-  <!-- Data sources -->
-  <script src="/assets/financials.js"></script>
-  <script src="/finance.js"></script>
+<table>
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Annual Rent</th>
+      <th>Expenses</th>
+      <th>Net P&L</th>
+      <th>Monthly Cash Flow</th>
+      <th>Lease Start</th>
+      <th>Lease End</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody id="financeBody"></tbody>
+</table>
+
+<div>
+  <strong>Total Rent:</strong> <span id="totalRent"></span><br>
+  <strong>Total Expenses:</strong> <span id="totalExpenses"></span><br>
+  <strong>Total Net:</strong> <span id="totalNet"></span>
+</div>
+
+<!-- MODAL (required for edit) -->
+<div id="modal" style="display:none">
+  <input id="editId" hidden>
+  Rent <input id="rent"><br>
+  Mortgage <input id="mortgage"><br>
+  HOA <input id="hoa"><br>
+  Maintenance <input id="maintenance"><br>
+  Tax <input id="tax"><br>
+  Lease Start <input id="rentStart" type="date"><br>
+  Lease End <input id="rentEnd" type="date"><br>
+  Deposit <input id="deposit"><br>
+  <button onclick="saveFinancials()">Save</button>
+  <button onclick="closeEditor()">Cancel</button>
+</div>
+
+<!-- 🔴 ORDER MATTERS -->
+<script src="/assets/financials.js"></script>
+<script src="/finance.js"></script>
+
 </body>
 </html>
