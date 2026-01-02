@@ -1,57 +1,189 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Finance Dashboard</title>
-  <link rel="stylesheet" href="/assets/style.css">
+  <meta charset="UTF-8" />
+  <title>Adex Holdings Trust | Finance Dashboard</title>
+
+  <!-- Shared styling (same pattern as admin/report pages) -->
+  <link rel="stylesheet" href="/assets/style.css" />
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      background: #f6f7f9;
+      color: #1f2937;
+    }
+
+    header {
+      background: #0f172a;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    header img {
+      height: 42px;
+    }
+
+    header h1 {
+      font-size: 20px;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.06);
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    select {
+      padding: 8px;
+      min-width: 280px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+    }
+
+    .positive {
+      color: #047857;
+      font-weight: 600;
+    }
+
+    .negative {
+      color: #b91c1c;
+      font-weight: 600;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      background: #e5e7eb;
+    }
+
+    .badge.warn { background: #fde68a; }
+    .badge.alert { background: #fecaca; }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      opacity: .6;
+      margin: 30px 0;
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>Finance</h1>
+<header>
+  <!-- SAME LOGO PATTERN AS OTHER PAGES -->
+  <img src="/assets/logo.png" alt="Adex Holdings Trust Logo" />
+  <h1>Finance Dashboard</h1>
+</header>
 
-<select id="propertySelect" multiple></select>
+<div class="container">
 
-<table>
-  <thead>
-    <tr>
-      <th>Property</th>
-      <th>Annual Rent</th>
-      <th>Expenses</th>
-      <th>Net P&L</th>
-      <th>Monthly Cash Flow</th>
-      <th>Lease Start</th>
-      <th>Lease End</th>
-      <th>Status</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody id="financeBody"></tbody>
-</table>
+  <!-- PROPERTY SELECTION -->
+  <div class="card">
+    <h2>Select Properties</h2>
+    <div class="controls">
+      <select id="propertySelect" multiple></select>
+      <span class="badge">United States Only</span>
+      <span id="viewMode" class="badge"></span>
+    </div>
+  </div>
 
-<div>
-  <strong>Total Rent:</strong> <span id="totalRent"></span><br>
-  <strong>Total Expenses:</strong> <span id="totalExpenses"></span><br>
-  <strong>Total Net:</strong> <span id="totalNet"></span>
+  <!-- FINANCIAL TABLE -->
+  <div class="card">
+    <h2>Per-Property Financial Summary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Annual Rent</th>
+          <th>Total Expenses</th>
+          <th>Net P&L</th>
+          <th>Monthly Cash Flow</th>
+          <th>Lease End</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="financeBody"></tbody>
+    </table>
+  </div>
+
+  <!-- AGGREGATE TOTALS -->
+  <div class="card">
+    <h2>Portfolio Totals</h2>
+    <table>
+      <tr>
+        <th>Total Annual Rent</th>
+        <td id="totalRent"></td>
+      </tr>
+      <tr>
+        <th>Total Expenses</th>
+        <td id="totalExpenses"></td>
+      </tr>
+      <tr>
+        <th>Net Annual P&L</th>
+        <td id="totalNet"></td>
+      </tr>
+    </table>
+  </div>
+
 </div>
 
-<!-- MODAL (required for edit) -->
-<div id="modal" style="display:none">
-  <input id="editId" hidden>
-  Rent <input id="rent"><br>
-  Mortgage <input id="mortgage"><br>
-  HOA <input id="hoa"><br>
-  Maintenance <input id="maintenance"><br>
-  Tax <input id="tax"><br>
-  Lease Start <input id="rentStart" type="date"><br>
-  Lease End <input id="rentEnd" type="date"><br>
-  Deposit <input id="deposit"><br>
-  <button onclick="saveFinancials()">Save</button>
-  <button onclick="closeEditor()">Cancel</button>
-</div>
+<footer>
+  © <span id="year"></span> Adex Holdings Trust — Financial Reporting
+</footer>
 
-<!-- 🔴 ORDER MATTERS -->
+<!-- REQUIRED LOAD ORDER -->
 <script src="/assets/financials.js"></script>
 <script src="/finance.js"></script>
+
+<script>
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
 
 </body>
 </html>
