@@ -156,6 +156,11 @@ tfoot td{font-weight:700}
 @media print{
   .controls,.cardHead button{display:none}
 }
+  .pdfHeader img {
+  display: block !important;
+  visibility: visible !important;
+}
+
   /* ===========================
    PRINT / PDF LAYOUT
 =========================== */
@@ -276,21 +281,19 @@ tfoot td{font-weight:700}
   .pageNumber::after {
     content: counter(page);
   }
-
-  /* Watermark */
-  .watermark {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 96px;
-    font-weight: 700;
-    color: rgba(0,0,0,0.06);
-    transform: rotate(-30deg);
-    pointer-events: none;
-    z-index: -1;
-  }
+.watermark {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 96px;
+  font-weight: 700;
+  color: rgba(0,0,0,0.08);
+  transform: rotate(-30deg);
+  pointer-events: none;
+  z-index: 9999;        /* 🔑 MUST be high */
+}
 }
 </style>
 </head>
