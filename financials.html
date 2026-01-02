@@ -132,30 +132,32 @@
     <input type="hidden" id="editId" />
 
     <label>Property</label>
-    <select id="propertySelect" onchange="this.value && (document.getElementById('editId').value = this.value)">
+    <select id="propertySelect" onchange="this.value && loadFinancialsIntoForm(this.value)">
+  <!-- options injected by JS -->
+</select>
 
-    <label>Monthly Rent</label>
+    <label for="rent">Monthly Rent</label>
     <input id="rent" type="number" step="0.01" />
 
-    <label>Mortgage</label>
+    <label for="mortgage">Mortgage</label>
     <input id="mortgage" type="number" step="0.01" />
 
-    <label>HOA</label>
+    <label for="hoa">HOA</label>
     <input id="hoa" type="number" step="0.01" />
 
-    <label>Maintenance</label>
+    <label for="maintenance">Maintenance</label>
     <input id="maintenance" type="number" step="0.01" />
 
-    <label>Taxes</label>
+    <label for="tax">Taxes</label>
     <input id="tax" type="number" step="0.01" />
 
-    <label>Lease Start</label>
+    <label for="rentStart">Lease Start</label>
     <input id="rentStart" type="date" />
 
-    <label>Lease End</label>
+    <label for="rentEnd">Lease End</label>
     <input id="rentEnd" type="date" />
 
-    <label>Security Deposit / Down Payment</label>
+    <label for="deposit">Security/Down Payment</label>
     <input id="deposit" type="number" step="0.01" />
 
     <button class="btnPrimary" onclick="saveFinancials()">
