@@ -218,6 +218,7 @@ function onPropertySelect() {
   }
 
   renderTable();
+  renderHOATable();
 }
 
 /* ✅ ADD THIS FUNCTION RIGHT HERE */
@@ -534,6 +535,10 @@ function openEditor(id) {
   $("rent").value = f.rent || "";
   $("mortgage").value = f.mortgage || "";
   $("hoa").value = f.hoa || "";
+  $("hoaCompany").value = f.hoaCompany || "";
+  $("hoaWebsite").value = f.hoaWebsite || "";
+  $("hoaPhone").value = f.hoaPhone || "";
+  $("hoaEmail").value = f.hoaEmail || "";
   $("maintenance").value = f.maintenance || "";
   $("tax").value = f.tax || "";
   $("rentStart").value = f.rentStartDate || "";
@@ -636,6 +641,7 @@ async function saveFinancials() {
   await loadFinancials();
   closeEditor();
   renderTable();
+  renderHOATable();
 }
 
 /* ---------------- INVESTOR MODE ---------------- */
@@ -644,6 +650,7 @@ function toggleInvestor() {
   READ_ONLY = !READ_ONLY;
   document.body.classList.toggle("investor", READ_ONLY);
   renderTable();
+  renderHOATable();
 }
 
 /* ---------------- PDF EXPORT ---------------- */
@@ -651,7 +658,39 @@ function toggleInvestor() {
 function exportPDF() {
   window.print();
 }
+/* ============================
+   HOA TABLE RENDERER
+============================ */
+function renderHOATable() {
+  const body = document.getElementById("hoaBody");
+  if (!body) return;
 
+  body.innerHTML = "";
+
+  PROPERTIES
+  .filter(p => SELECTED.size === 0 || SELECTED.has(p.id))
+  .forEach(p => {
+    const f = FINANCIALS[p.id] || {};
+
+    body.innerHTML += `
+      <tr>
+        <td>${p.name}</td>
+        <td>${f.hoaCompany || "—"}</td>
+        <td>${
+          f.hoaWebsite
+            ? `<a href="${f.hoaWebsite}" target="_blank" rel="noopener">${f.hoaWebsite}</a>`
+            : "—"
+        }</td>
+        <td>${f.hoaPhone || "—"}</td>
+        <td>${
+          f.hoaEmail
+            ? `<a href="mailto:${f.hoaEmail}">${f.hoaEmail}</a>`
+            : "—"
+        }</td>
+      </tr>
+    `;
+  });
+}
 /* ---------------- INIT ---------------- */
 
 async function initFinance() {
@@ -669,6 +708,7 @@ async function initFinance() {
   }
 
   renderTable();
+  renderHOATable(); // ✅ Adding this for the new display
 }
 
 
