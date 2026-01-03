@@ -575,6 +575,7 @@ if (fill && text) {
       runway >= 6  ? "warn" :
                      "neg";
 }
+}
 
   if ($("kpiDeposits")) $("kpiDeposits").textContent = usd(totals.deposits);
   if ($("kpiDSCR")) {
