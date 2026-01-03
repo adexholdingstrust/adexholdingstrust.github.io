@@ -578,25 +578,27 @@ if (fill && text) {
 }
 
   if ($("kpiDeposits")) $("kpiDeposits").textContent = usd(totals.deposits);
-  if ($("kpiDSCR")) {
-    const dscrValues = PROPERTIES
-      .filter(p => selectedIds.includes(p.id))
-   $("kpiDSCR").title = `${dscrValues.length} properties included`;
+ if ($("kpiDSCR")) {
+  const dscrValues = PROPERTIES
+    .filter(p => selectedIds.includes(p.id))
+    .map(p => computeDSCR(FINANCIALS[p.id] || {}))
+    .filter(v => v !== null);
 
+  $("kpiDSCR").title = `${dscrValues.length} properties included`;
 
-    const avgDSCR =
-      dscrValues.length === 0
-        ? null
-        : dscrValues.reduce((a, b) => a + b, 0) / dscrValues.length;
+  const avgDSCR =
+    dscrValues.length === 0
+      ? null
+      : dscrValues.reduce((a, b) => a + b, 0) / dscrValues.length;
 
-    $("kpiDSCR").textContent = avgDSCR ? avgDSCR.toFixed(2) : "—";
-    $("kpiDSCR").className =
-      avgDSCR >= DSCR_CONFIG.healthy
-        ? "pos"
-        : avgDSCR >= DSCR_CONFIG.caution
-        ? "warn"
-        : "neg";
-  }
+  $("kpiDSCR").textContent = avgDSCR !== null ? avgDSCR.toFixed(2) : "—";
+  $("kpiDSCR").className =
+    avgDSCR >= DSCR_CONFIG.healthy
+      ? "pos"
+      : avgDSCR >= DSCR_CONFIG.caution
+      ? "warn"
+      : "neg";
+}
 
 if ($("kpiStress")) {
   const stressScores = PROPERTIES
