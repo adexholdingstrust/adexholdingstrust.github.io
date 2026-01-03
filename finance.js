@@ -488,34 +488,32 @@ const stressDisplay =
     tr.onclick = () => openPropertyModal(p);
 
     tr.innerHTML = `
-      <td>${p.name}</td>
-      <td>${usd(rentVal)}</td>
-      <td>${usd(mortgageVal)}</td>
-      <td>${usd(hoaVal)}</td>
-      <td>${usd(maintVal)}</td>
-      <td>${usd(taxVal)}</td>
-      <td>${usd(expensesVal)}</td>
-      <td class="${netVal >= 0 ? "pos" : "neg"}">${usd(netVal)}</td>
-      <td class="${annualNetVal >= 0 ? "pos" : "neg"}">${usd(annualNetVal)}</td>
-      <td>${dscrDisplay}</td>
-      <td>${stressDisplay}</td>
-      <td>${usd(f.deposit || 0)}</td>
-      <td>
-        ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
-        <div style="margin-top:4px">${leaseRiskChip(f.rentEndDate)}</div>
-      </td>
-      <td>${leaseBadge(f.rentEndDate)}</td>
-      <td>
-  ${READ_ONLY ? "🔒" : `
-    <a href="/financials.html?property=${encodeURIComponent(p.id)}"
-       onclick="event.stopPropagation()"
-       class="editLink">
-       Edit
-    </a>
-  `}
-</td>
-    `;
-
+  <td>${p.name}</td>
+  <td>${usd(rentVal)}</td>
+  <td>${usd(mortgageVal)}</td>
+  <td>${usd(hoaVal)}</td>
+  <td>${usd(maintVal)}</td>
+  <td>${usd(taxVal)}</td>
+  <td>${usd(expensesVal)}</td>
+  <td class="${netVal >= 0 ? "pos" : "neg"}">${usd(netVal)}</td>
+  <td class="${annualNetVal >= 0 ? "pos" : "neg"}">${usd(annualNetVal)}</td>
+  <td>${usd(f.deposit || 0)}</td>
+  <td>
+    ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
+    <div style="margin-top:4px">${leaseRiskChip(f.rentEndDate)}</div>
+  </td>
+  <td>${dscrDisplay}</td>
+  <td>${stressDisplay}</td>
+  <td>
+    ${READ_ONLY ? "🔒" : `
+      <a href="/financials.html?property=${encodeURIComponent(p.id)}"
+         onclick="event.stopPropagation()"
+         class="editLink">
+         Edit
+      </a>
+    `}
+  </td>
+`;
     body.appendChild(tr);
   });
 
