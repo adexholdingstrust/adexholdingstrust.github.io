@@ -373,7 +373,7 @@ function openPropertyModal(property) {
   const mortgage = num(f.mortgage);
   const hoa = num(f.hoa);
   const maintenance = num(f.maintenance);
-  const tax = num(f.tax);
+  const tax = num(f.tax) / 12;
 
   const expenses = mortgage + hoa + maintenance + tax;
   const monthlyNet = rent - expenses;
@@ -523,14 +523,21 @@ const stressDisplay =
 
   if ($("kpiRent")) $("kpiRent").textContent = usd(totals.rent);
   if ($("kpiExpenses")) $("kpiExpenses").textContent = usd(totals.expenses);
-  if ($("kpiNet")) $("kpiNet").textContent = usd(totals.net);
-  if ($("kpiAnnual")) $("kpiAnnual").textContent = usd(totals.net * 12);
+  if ($("kpiNet")) {
+     $("kpiNet").textContent = usd(totals.net);
+     $("kpiNet").className = totals.net >= 0 ? "pos" : "neg";
+      }
+   if ($("kpiAnnual")) {
+        $("kpiAnnual").textContent = usd(totals.net * 12);
+        $("kpiAnnual").className = totals.net >= 0 ? "pos" : "neg";
+      }
+
   if ($("kpiDeposits")) $("kpiDeposits").textContent = usd(totals.deposits);
   if ($("kpiDSCR")) {
     const dscrValues = PROPERTIES
       .filter(p => selectedIds.includes(p.id))
-      .map(p => computeDSCR(FINANCIALS[p.id] || {}))
-      .filter(v => v !== null);
+   $("kpiDSCR").title = `${dscrValues.length} properties included`;
+
 
     const avgDSCR =
       dscrValues.length === 0
@@ -557,7 +564,14 @@ const stressDisplay =
       : stressScores.reduce((a, b) => a + b, 0) / stressScores.length;
 
   $("kpiStress").textContent =
-    avgStress === null ? "—" : avgStress.toFixed(1);
+  avgStress === null
+    ? "—"
+    : avgStress >= 4
+    ? "High"
+    : avgStress >= 2
+    ? "Moderate"
+    : "Low";
+
 
   $("kpiStress").className =
     avgStress >= 4 ? "neg" : avgStress >= 2 ? "warn" : "pos";
@@ -728,16 +742,26 @@ async function initFinance() {
     renderPropertySelector();
     bindFinancialsSelect();
 
-    // Finance dashboard should never look empty
-    if (PAGE === "finance") {
-      const sel = $("propertySelect");
-      if (sel && sel.options.length) {
-        Array.from(sel.options).forEach((o) => (o.selected = true));
-        onPropertySelect();
-      }
-      renderTable();
-    }
+/* ✅ AUTO-SELECT PROPERTY FROM QUERY STRING (Edit link support) */
+const params = new URLSearchParams(window.location.search);
+const pid = params.get("property");
 
+if (pid && $("propertySelect")) {
+  Array.from($("propertySelect").options).forEach((o) => {
+    o.selected = o.value === pid;
+  });
+  onPropertySelect();
+}
+
+// Finance dashboard should never look empty
+if (PAGE === "finance") {
+  const sel = $("propertySelect");
+  if (sel && sel.options.length) {
+    Array.from(sel.options).forEach((o) => (o.selected = true));
+    onPropertySelect();
+  }
+  renderTable();
+}
     // HOA table should always render
     renderHOATable();
 
