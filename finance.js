@@ -598,7 +598,7 @@ if (fill && text) {
         : "neg";
   }
 
- if ($("kpiStress")) {
+if ($("kpiStress")) {
   const stressScores = PROPERTIES
     .filter(p => selectedIds.includes(p.id))
     .map(p => computePortfolioStress(p, FINANCIALS[p.id] || {}));
@@ -609,20 +609,20 @@ if (fill && text) {
       : stressScores.reduce((a, b) => a + b, 0) / stressScores.length;
 
   $("kpiStress").textContent =
-  avgStress === null
-    ? "—"
-    : avgStress >= 4
-    ? "High"
-    : avgStress >= 2
-    ? "Moderate"
-    : "Low";
-
+    avgStress === null
+      ? "—"
+      : avgStress >= 4
+      ? "High"
+      : avgStress >= 2
+      ? "Moderate"
+      : "Low";
 
   $("kpiStress").className =
     avgStress >= 4 ? "neg" : avgStress >= 2 ? "warn" : "pos";
 }
-}
 
+// ✅ CLOSE renderTable()
+}
 /* ---------------- EDITOR ---------------- */
 
 function openEditor(id) {
