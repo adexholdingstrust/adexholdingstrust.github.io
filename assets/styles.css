@@ -1330,4 +1330,49 @@ body.withSidebar .container {
 }
 .pos::before { content: "▲ "; }
 .neg::before { content: "▼ "; }
+/* ===========================
+   HOA TABLE FIX
+=========================== */
+
+/* Center headers for HOA table */
+#hoaBody td,
+#hoaBody th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Allow wrapping inside HOA cells */
+#hoaBody td {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+/* Property column can be slightly left-aligned for readability */
+#hoaBody td:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* HOA Company column */
+#hoaBody td:nth-child(2) {
+  max-width: 320px;
+}
+
+/* HOA Website */
+#hoaBody td:nth-child(3) a {
+  display: inline-block;
+  max-width: 260px;
+  word-break: break-all;
+}
+
+/* HOA Email */
+#hoaBody td:nth-child(5) a {
+  display: inline-block;
+  max-width: 260px;
+  word-break: break-all;
+}
+#hoaBody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
 
