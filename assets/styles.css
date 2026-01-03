@@ -1278,3 +1278,11 @@ body.withSidebar .container {
   vertical-align: middle;
   white-space: nowrap;
 }
+.lockLink {
+  text-decoration: none;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.lockLink:hover {
+  opacity: 1;
+}
