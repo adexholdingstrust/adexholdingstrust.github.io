@@ -474,31 +474,35 @@ totals.deposits += Number(f.deposit || 0);
     const tr = document.createElement("tr");
    tr.style.cursor = "pointer";
    tr.onclick = () => openPropertyModal(p);
-    tr.innerHTML = `
+   const mortgage = Number(f.mortgage || 0);
+const hoa = Number(f.hoa || 0);
+const maintenance = Number(f.maintenance || 0);
+const taxes = Number(f.tax || 0);
+
+const totalExpenses =
+  mortgage + hoa + maintenance + taxes;
+
+const monthlyNet = rentVal - totalExpenses;
+const annualNet = monthlyNet * 12;
+
+tr.innerHTML = `
   <td>${p.name}</td>
   <td>${usd(rentVal)}</td>
-<td>${usd(expenseVal)}</td>
-<td class="${netVal >= 0 ? "pos" : "neg"}">
-  ${usd(netVal)}
-</td>
-<td>${usd(cashFlowVal)}</td>
-
-<td>${reserveStress(cashFlowVal)}</td>
+  <td>${usd(mortgage)}</td>
+  <td>${usd(hoa)}</td>
+  <td>${usd(maintenance)}</td>
+  <td>${usd(taxes)}</td>
+  <td>${usd(totalExpenses)}</td>
+  <td class="${monthlyNet >= 0 ? "pos" : "neg"}">${usd(monthlyNet)}</td>
+  <td class="${annualNet >= 0 ? "pos" : "neg"}">${usd(annualNet)}</td>
+  <td>${usd(f.deposit || 0)}</td>
   <td>
     ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
     <div style="margin-top:4px">
       ${leaseRiskChip(f.rentEndDate)}
     </div>
   </td>
-
   <td>${leaseBadge(f.rentEndDate)}</td>
-  <td>
-    ${
-      READ_ONLY
-        ? "🔒"
-        : `<button onclick="openEditor('${p.id}')">Edit</button>`
-    }
-  </td>
 `;
     body.appendChild(tr);
   });
@@ -679,12 +683,11 @@ function exportPDF() {
 function renderHOATable() {
   const body = document.getElementById("hoaBody");
   if (!body) return;
+   if (!Object.keys(FINANCIALS).length) return;
 
   body.innerHTML = "";
 
-  PROPERTIES
-  .filter(p => SELECTED.size === 0 || SELECTED.has(p.id))
-  .forEach(p => {
+  PROPERTIES.forEach(p => {
     const f = FINANCIALS[p.id] || {};
 
     body.innerHTML += `
@@ -723,6 +726,7 @@ async function initFinance() {
   }
 
   renderTable();
+  renderHOATable();
 }
 
 
