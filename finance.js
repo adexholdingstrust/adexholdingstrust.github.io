@@ -505,13 +505,20 @@ const stressDisplay =
   <td>${dscrDisplay}</td>
   <td>${stressDisplay}</td>
   <td>
-    ${READ_ONLY ? "🔒" : `
-      <a href="/financials.html?property=${encodeURIComponent(p.id)}"
-         onclick="event.stopPropagation()"
-         class="editLink">
-         Edit
-      </a>
-    `}
+    ${READ_ONLY ? `
+  <a href="/financials.html?property=${encodeURIComponent(p.id)}"
+     onclick="event.stopPropagation()"
+     class="lockLink"
+     title="View financials (read-only)">
+     🔒
+  </a>
+` : `
+  <a href="/financials.html?property=${encodeURIComponent(p.id)}"
+     onclick="event.stopPropagation()"
+     class="editLink">
+     Edit
+  </a>
+`}
   </td>
 `;
     body.appendChild(tr);
