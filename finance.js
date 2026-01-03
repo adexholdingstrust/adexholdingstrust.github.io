@@ -560,7 +560,6 @@ function closeEditor() {
 
 
 async function saveFinancials() {
-  // --- HARD GUARD: ensure required DOM elements exist ---
   const requiredIds = [
     "editId",
     "rent",
@@ -586,37 +585,41 @@ async function saveFinancials() {
     }
   }
 
-
-  // --- SAFE VALUE EXTRACTION ---
   const payload = {
-  propertyId: $("editId").value,
+    propertyId: $("editId").value,
 
-  // Financials
-  rent: num($("rent").value),
-  mortgage: num($("mortgage").value),
-  hoa: num($("hoa").value),
-  maintenance: num($("maintenance").value),
-  tax: num($("tax").value),
-  deposit: num($("deposit").value),
+    // Financials
+    rent: num($("rent").value),
+    mortgage: num($("mortgage").value),
+    hoa: num($("hoa").value),
+    maintenance: num($("maintenance").value),
+    tax: num($("tax").value),
+    deposit: num($("deposit").value),
 
-  // Lease
-  rentStartDate: $("rentStart").value || null,
-  rentEndDate: $("rentEnd").value || null,
+    // Lease
+    rentStartDate: $("rentStart").value || null,
+    rentEndDate: $("rentEnd").value || null,
 
-  // HOA Metadata (NEW)
-  hoaCompany: $("hoaCompany").value || null,
-  hoaWebsite: $("hoaWebsite").value || null,
-  hoaPhone: $("hoaPhone").value || null,
-  hoaEmail: $("hoaEmail").value || null
-};
+    // HOA Metadata
+    hoaCompany: $("hoaCompany").value || null,
+    hoaWebsite: $("hoaWebsite").value || null,
+    hoaPhone: $("hoaPhone").value || null,
+    hoaEmail: $("hoaEmail").value || null
+  };
 
-  // --- BASIC SANITY CHECK ---
   if (!payload.propertyId) {
     alert("No property selected. Unable to save.");
     return;
   }
 
-  // --- SAVE TO BACKEND ---
+  // ✅ SAFE MERGE (this is where it belongs)
+  const existing = FINANCIALS[payload.propertyId] || {};
+
+  payload.hoaCompany ??= existing.hoaCompany ?? null;
+  payload.hoaWebsite ??= existing.hoaWebsite ?? null;
+  payload.hoaPhone ??= existing.hoaPhone ?? null;
+  payload.hoaEmail ??= existing.hoaEmail ?? null;
+
   let res;
   try {
     res = await fetch(FINANCE_SAVE, {
@@ -637,7 +640,6 @@ async function saveFinancials() {
     return;
   }
 
-  // --- REFRESH STATE ---
   await loadFinancials();
   closeEditor();
   renderTable();
@@ -692,7 +694,7 @@ function renderHOATable() {
   });
 }
 /* ---------------- INIT ---------------- */
-
+const PAGE = document.body.dataset.page;
 async function initFinance() {
   await bootstrapFinance();
   loadProperties();
@@ -712,4 +714,10 @@ async function initFinance() {
 }
 
 
-document.addEventListener("DOMContentLoaded", initFinance);
+// document.addEventListener("DOMContentLoaded", initFinance);
+document.addEventListener("DOMContentLoaded", () => {
+  if (PAGE === "finance") {
+    initFinance();
+  }
+});
+
