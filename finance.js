@@ -550,17 +550,36 @@ if ($("kpiAnnual")) {
 const cashReserves = num($("cashReserves")?.value);
 const runway = computeRunway(cashReserves, totals.net);
 
-if ($("kpiRunway")) {
+/* ---- CASH RUNWAY GAUGE ---- */
+const cashReserves = num($("cashReserves")?.value);
+const runway = computeRunway(cashReserves, totals.net);
+
+const fill = $("runwayFill");
+const text = $("kpiRunwayText");
+
+if (fill && text) {
   if (runway === null) {
-    $("kpiRunway").textContent = "Positive Cash Flow";
-    $("kpiRunway").className = "pos";
+    fill.style.width = "100%";
+    fill.className = "";
+    text.textContent = "Positive Cash Flow";
+    text.className = "pos";
   } else {
-    $("kpiRunway").textContent = `${runway} months runway`;
-    $("kpiRunway").className =
+    const capped = Math.min(runway, 24); // cap gauge at 24 months
+    const percent = (capped / 24) * 100;
+
+    fill.style.width = `${percent}%`;
+    fill.className =
+      runway >= 12 ? "" :
+      runway >= 6  ? "warn" :
+                     "neg";
+
+    text.textContent = `${runway} months runway`;
+    text.className =
       runway >= 12 ? "pos" :
       runway >= 6  ? "warn" :
                      "neg";
   }
+}
 }
 
   if ($("kpiDeposits")) $("kpiDeposits").textContent = usd(totals.deposits);
