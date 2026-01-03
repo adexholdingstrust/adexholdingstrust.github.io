@@ -341,7 +341,7 @@ tfoot td{font-weight:700}
 <div class="card">
   <div class="cardHead">
     <span>Portfolio Snapshot</span>
-    <button onclick="downloadFinancePDF()">Download PDF</button>
+    <button onclick="exportPDF()">Download PDF</button>
   </div>
   <div class="cardBody kpis">
     <div class="kpi"><label>Monthly Rent</label><div id="kpiRent">$0</div></div>
@@ -414,126 +414,6 @@ tfoot td{font-weight:700}
 
 <script src="/assets/financials.js"></script>
 <script src="/finance.js"></script>
-
-<script>
-function leaseChip(end){
-  if(!end) return "—";
-  const d=Math.ceil((new Date(end)-new Date())/86400000);
-  if(d<=30) return '<span class="chip risk">30d</span>';
-  if(d<=60) return '<span class="chip warn">60d</span>';
-  if(d<=90) return '<span class="chip warn">90d</span>';
-  return '<span class="chip safe">Active</span>';
-}
-
-function stress(net,reserve,deposits){
-  if(net>=0) return "🟢 Stable";
-  const usable=Math.max(reserve-deposits,0);
-  const months=Math.floor(usable/Math.abs(net));
-  if(months>=6) return "🟡 Watch";
-  if(months>=3) return "🟠 Tight";
-  return "🔴 High Risk";
-}
-
-const _renderTable = renderTable;
-renderTable = function(){
-  const body=document.getElementById("financeBody");
-  if(!body) return;
-  body.innerHTML="";
-
-  const reserve=Number(reserveInput.value||0);
-  let totals={rent:0,exp:0,net:0,dep:0};
-
-  PROPERTIES.filter(p=>SELECTED.has(p.id)).forEach(p=>{
-    const f=FINANCIALS[p.id]||{};
-    const rent=+f.rent||0;
-    const mort=+f.mortgage||0;
-    const hoa=+f.hoa||0;
-    const maint=+f.maintenance||0;
-    const tax=+f.tax||0;
-    const exp=mort+hoa+maint+tax;
-    const net=rent-exp;
-    const annual=net*12;
-    const dep=+f.deposit||0;
-    const dscr=mort>0?(rent/mort).toFixed(2):"—";
-
-    totals.rent+=rent;
-    totals.exp+=exp;
-    totals.net+=net;
-    totals.dep+=dep;
-
-    body.innerHTML+=`
-      <tr>
-        <td>${p.name}</td>
-        <td>$${rent.toFixed(2)}</td>
-        <td>$${mort.toFixed(2)}</td>
-        <td>$${hoa.toFixed(2)}</td>
-        <td>$${maint.toFixed(2)}</td>
-        <td>$${tax.toFixed(2)}</td>
-        <td>$${exp.toFixed(2)}</td>
-        <td class="${net>=0?'positive':'negative'}">$${net.toFixed(2)}</td>
-        <td class="${annual>=0?'positive':'negative'}">$${annual.toFixed(2)}</td>
-        <td>$${dep.toFixed(2)}</td>
-        <td>${f.rentStartDate||'—'} → ${f.rentEndDate||'—'}<div>${leaseChip(f.rentEndDate)}</div></td>
-        <td>${dscr}</td>
-        <td><button onclick="location.href='/financials.html?property=${p.id}'">Edit</button></td>
-      </tr>`;
-  });
-
-  totalRent.textContent=`$${totals.rent.toFixed(2)}`;
-  totalExpenses.textContent=`$${totals.exp.toFixed(2)}`;
-  totalNet.textContent=`$${totals.net.toFixed(2)}`;
-
-  kpiRent.textContent=`$${totals.rent.toFixed(2)}`;
-  kpiExpenses.textContent=`$${totals.exp.toFixed(2)}`;
-  kpiNet.textContent=`$${totals.net.toFixed(2)}`;
-  kpiAnnual.textContent=`$${(totals.net*12).toFixed(2)}`;
-  kpiDeposits.textContent=`$${totals.dep.toFixed(2)}`;
-  kpiStress.textContent=stress(totals.net,reserve,totals.dep);
-    // ✅ ADD THIS LINE (Step 2 below)
-  renderHOATable();
-};
-  /* ============================
-   HOA TABLE RENDERER
-============================ */
-function renderHOATable() {
-  const body = document.getElementById("hoaBody");
-  if (!body) return;
-
-  body.innerHTML = "";
-
-  PROPERTIES.forEach(p => {
-      const f = FINANCIALS[p.id] || {};
-
-      const company = f.hoaCompany || "—";
-      const website = f.hoaWebsite
-        ? `<a href="${f.hoaWebsite}" target="_blank" rel="noopener">${f.hoaWebsite}</a>`
-        : "—";
-      const phone = f.hoaPhone || "—";
-      const email = f.hoaEmail
-        ? `<a href="mailto:${f.hoaEmail}">${f.hoaEmail}</a>`
-        : "—";
-
-      body.innerHTML += `
-        <tr>
-          <td>${p.name}</td>
-          <td>${company}</td>
-          <td>${website}</td>
-          <td>${phone}</td>
-          <td>${email}</td>
-        </tr>
-      `;
-    });
-}
-  /* ✅ ADD THIS BLOCK */
-document.addEventListener("DOMContentLoaded", () => {
-  // Delay to ensure finance.js finished loading data
-  setTimeout(() => {
-    if (typeof renderHOATable === "function") {
-      renderHOATable();
-    }
-  }, 0);
-});
-</script>
 
 </body>
 </html>
