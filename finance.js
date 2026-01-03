@@ -195,19 +195,23 @@ function loadProperties() {
 }
 
 /* ---------------- FINANCIAL STORAGE ---------------- */
-
 async function loadFinancials() {
-  const res = await fetch(FINANCE_GET, { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to load financial data");
+  try {
+    const res = await fetch(FINANCE_GET, { credentials: "include" });
+    if (!res.ok) throw new Error("Access blocked");
 
-  const json = await res.json();
-  FINANCIALS = json.financials || {};
+    const json = await res.json();
+    FINANCIALS = json.financials || {};
 
-  Object.values(FINANCIALS).forEach((f) => {
-    f.maintenanceActuals ||= {};
-  });
+    Object.values(FINANCIALS).forEach((f) => {
+      f.maintenanceActuals ||= {};
+    });
+
+  } catch (err) {
+    console.warn("Financial data blocked by Access. Using empty dataset.");
+    FINANCIALS = {};
+  }
 }
-
 /* ---------------- SELECTOR ---------------- */
 
 function renderPropertySelector() {
