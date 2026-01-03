@@ -1310,3 +1310,6 @@ body.withSidebar .container {
 #runwayFill.neg {
   background: #ef4444; /* red */
 }
+.pos { color: var(--ok); }
+.neg { color: var(--bad); }
+.warn { color: var(--warn); }
