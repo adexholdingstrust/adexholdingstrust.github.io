@@ -29,6 +29,12 @@ const PORTFOLIO_STRESS_CONFIG = {
   leaseRisk: 1      // Lease expiring ≤ 90 days
 };
 
+/* ---------------- CASH RUNWAY (STRESS TESTING) ---------------- */
+
+function computeRunway(cashReserves, monthlyNet) {
+  if (!cashReserves || monthlyNet >= 0) return null;
+  return Math.floor(cashReserves / Math.abs(monthlyNet));
+}
 
 /* ---------------- STATE ---------------- */
 
@@ -531,13 +537,31 @@ const stressDisplay =
   if ($("kpiRent")) $("kpiRent").textContent = usd(totals.rent);
   if ($("kpiExpenses")) $("kpiExpenses").textContent = usd(totals.expenses);
   if ($("kpiNet")) {
-     $("kpiNet").textContent = usd(totals.net);
-     $("kpiNet").className = totals.net >= 0 ? "pos" : "neg";
-      }
-   if ($("kpiAnnual")) {
-        $("kpiAnnual").textContent = usd(totals.net * 12);
-        $("kpiAnnual").className = totals.net >= 0 ? "pos" : "neg";
-      }
+  $("kpiNet").textContent = usd(totals.net);
+  $("kpiNet").className = totals.net >= 0 ? "pos" : "neg";
+}
+
+if ($("kpiAnnual")) {
+  const annual = totals.net * 12;
+  $("kpiAnnual").textContent = usd(annual);
+  $("kpiAnnual").className = annual >= 0 ? "pos" : "neg";
+}
+   /* ---- CASH RESERVE RUNWAY KPI ---- */
+const cashReserves = num($("cashReserves")?.value);
+const runway = computeRunway(cashReserves, totals.net);
+
+if ($("kpiRunway")) {
+  if (runway === null) {
+    $("kpiRunway").textContent = "Positive Cash Flow";
+    $("kpiRunway").className = "pos";
+  } else {
+    $("kpiRunway").textContent = `${runway} months runway`;
+    $("kpiRunway").className =
+      runway >= 12 ? "pos" :
+      runway >= 6  ? "warn" :
+                     "neg";
+  }
+}
 
   if ($("kpiDeposits")) $("kpiDeposits").textContent = usd(totals.deposits);
   if ($("kpiDSCR")) {
@@ -748,6 +772,9 @@ async function initFinance() {
 
     renderPropertySelector();
     bindFinancialsSelect();
+     /* ---- Live stress-test updates ---- */
+$("cashReserves")?.addEventListener("input", renderTable);
+
 
 /* ✅ AUTO-SELECT PROPERTY FROM QUERY STRING (Edit link support) */
 const params = new URLSearchParams(window.location.search);
