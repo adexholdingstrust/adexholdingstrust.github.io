@@ -100,10 +100,12 @@ function renderMaintenanceActuals(propertyId) {
     .join("");
 }
 
-const propertyId =
-  $("editId")?.value ||
-  Array.from($("propertySelect")?.selectedOptions || [])
-    .map(o => o.value)[0];
+function saveMaintenanceActual() {
+  const propertyId =
+    $("editId")?.value ||
+    Array.from($("propertySelect")?.selectedOptions || [])
+      .map(o => o.value)[0];
+
   const month = $("maintMonth")?.value;
   const amount = num($("maintAmount")?.value);
 
