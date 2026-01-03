@@ -388,6 +388,25 @@ tfoot td{font-weight:700}
     </table>
   </div>
 </div>
+  <!-- HOA INFORMATION -->
+<div class="card">
+  <div class="cardHead">HOA Information</div>
+  <div class="cardBody">
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>HOA Company</th>
+          <th>HOA Website</th>
+          <th>HOA Phone</th>
+          <th>HOA Email</th>
+        </tr>
+      </thead>
+      <tbody id="hoaBody"></tbody>
+    </table>
+  </div>
+</div>
+
 </div>
 <footer>
   Page <span class="pageNumber"></span> • Confidential • Adex Holdings Trust
@@ -470,7 +489,50 @@ renderTable = function(){
   kpiAnnual.textContent=`$${(totals.net*12).toFixed(2)}`;
   kpiDeposits.textContent=`$${totals.dep.toFixed(2)}`;
   kpiStress.textContent=stress(totals.net,reserve,totals.dep);
+    // ✅ ADD THIS LINE (Step 2 below)
+  renderHOATable();
 };
+  /* ============================
+   HOA TABLE RENDERER
+============================ */
+function renderHOATable() {
+  const body = document.getElementById("hoaBody");
+  if (!body) return;
+
+  body.innerHTML = "";
+
+  PROPERTIES.forEach(p => {
+      const f = FINANCIALS[p.id] || {};
+
+      const company = f.hoaCompany || "—";
+      const website = f.hoaWebsite
+        ? `<a href="${f.hoaWebsite}" target="_blank" rel="noopener">${f.hoaWebsite}</a>`
+        : "—";
+      const phone = f.hoaPhone || "—";
+      const email = f.hoaEmail
+        ? `<a href="mailto:${f.hoaEmail}">${f.hoaEmail}</a>`
+        : "—";
+
+      body.innerHTML += `
+        <tr>
+          <td>${p.name}</td>
+          <td>${company}</td>
+          <td>${website}</td>
+          <td>${phone}</td>
+          <td>${email}</td>
+        </tr>
+      `;
+    });
+}
+  /* ✅ ADD THIS BLOCK */
+document.addEventListener("DOMContentLoaded", () => {
+  // Delay to ensure finance.js finished loading data
+  setTimeout(() => {
+    if (typeof renderHOATable === "function") {
+      renderHOATable();
+    }
+  }, 0);
+});
 </script>
 
 </body>
