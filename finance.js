@@ -612,3 +612,7 @@ async function initFinance() {
 document.addEventListener("DOMContentLoaded", () => {
   if (PAGE === "finance" || PAGE === "financials") initFinance();
 });
+
+
+console.log("ADEX_DATA?", window.ADEX_DATA);
+console.log("PROPERTIES length:", PROPERTIES.length);
