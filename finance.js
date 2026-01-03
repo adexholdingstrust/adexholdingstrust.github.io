@@ -546,12 +546,8 @@ if ($("kpiAnnual")) {
   $("kpiAnnual").textContent = usd(annual);
   $("kpiAnnual").className = annual >= 0 ? "pos" : "neg";
 }
-   /* ---- CASH RESERVE RUNWAY KPI ---- */
-const cashReserves = num($("cashReserves")?.value);
-const runway = computeRunway(cashReserves, totals.net);
-
 /* ---- CASH RUNWAY GAUGE ---- */
-const cashReserves = num($("cashReserves")?.value);
+const cashReserves = num($("reserveInput")?.value);
 const runway = computeRunway(cashReserves, totals.net);
 
 const fill = $("runwayFill");
@@ -560,16 +556,16 @@ const text = $("kpiRunwayText");
 if (fill && text) {
   if (runway === null) {
     fill.style.width = "100%";
-    fill.className = "";
+    fill.className = "pos";
     text.textContent = "Positive Cash Flow";
     text.className = "pos";
   } else {
-    const capped = Math.min(runway, 24); // cap gauge at 24 months
+    const capped = Math.min(runway, 24);
     const percent = (capped / 24) * 100;
 
     fill.style.width = `${percent}%`;
     fill.className =
-      runway >= 12 ? "" :
+      runway >= 12 ? "pos" :
       runway >= 6  ? "warn" :
                      "neg";
 
@@ -578,8 +574,6 @@ if (fill && text) {
       runway >= 12 ? "pos" :
       runway >= 6  ? "warn" :
                      "neg";
-  }
-}
 }
 
   if ($("kpiDeposits")) $("kpiDeposits").textContent = usd(totals.deposits);
@@ -792,7 +786,7 @@ async function initFinance() {
     renderPropertySelector();
     bindFinancialsSelect();
      /* ---- Live stress-test updates ---- */
-$("cashReserves")?.addEventListener("input", renderTable);
+$("reserveInput")?.addEventListener("input", renderTable);
 
 
 /* ✅ AUTO-SELECT PROPERTY FROM QUERY STRING (Edit link support) */
