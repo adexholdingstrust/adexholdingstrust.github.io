@@ -732,7 +732,7 @@ async function initFinance() {
 
 // document.addEventListener("DOMContentLoaded", initFinance);
 document.addEventListener("DOMContentLoaded", () => {
-  if (PAGE === "finance") {
+  if (PAGE === "finance" || PAGE === "financials")  {
     initFinance();
   }
 });
