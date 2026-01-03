@@ -1313,3 +1313,18 @@ body.withSidebar .container {
 .pos { color: var(--ok); }
 .neg { color: var(--bad); }
 .warn { color: var(--warn); }
+/* ===== Financial Value Indicators ===== */
+.pos {
+  color: var(--ok) !important;
+  font-weight: 700;
+}
+
+.neg {
+  color: var(--bad) !important;
+  font-weight: 700;
+}
+
+.warn {
+  color: var(--warn) !important;
+  font-weight: 700;
+}
