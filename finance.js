@@ -59,24 +59,24 @@ function clearAllProperties() {
   onPropertySelect();
 }
 // --- LOAD FINANCIALS ---
-   function loadFinancialsIntoForm(propertyId) {
+function loadFinancialsIntoForm(propertyId) {
   const f = FINANCIALS[propertyId] || {};
 
   if ($("editId")) $("editId").value = propertyId;
-  if ($("rent")) $("rent").value = f.rent || "";
-  if ($("mortgage")) $("mortgage").value = f.mortgage || "";
-  if ($("hoa")) $("hoa").value = f.hoa || "";
-  if ($("hoaCompany")) $("hoaCompany").value = f.hoaCompany || "";
-  if ($("hoaWebsite")) $("hoaWebsite").value = f.hoaWebsite || "";
-  if ($("hoaPhone")) $("hoaPhone").value = f.hoaPhone || "";
-  if ($("hoaEmail")) $("hoaEmail").value = f.hoaEmail || "";
-  if ($("maintenance")) $("maintenance").value = f.maintenance || "";
-  if ($("tax")) $("tax").value = f.tax || "";
-  if ($("rentStart")) $("rentStart").value = f.rentStartDate || "";
-  if ($("rentEnd")) $("rentEnd").value = f.rentEndDate || "";
-  if ($("deposit")) $("deposit").value = f.deposit || "";
-      renderMaintenanceActuals(propertyId);
+  if ($("rent")) $("rent").value = f.rent ?? "";
+  if ($("mortgage")) $("mortgage").value = f.mortgage ?? "";
+  if ($("hoa")) $("hoa").value = f.hoa ?? "";
+  if ($("hoaCompany")) $("hoaCompany").value = f.hoaCompany ?? "";
+  if ($("hoaWebsite")) $("hoaWebsite").value = f.hoaWebsite ?? "";
+  if ($("hoaPhone")) $("hoaPhone").value = f.hoaPhone ?? "";
+  if ($("hoaEmail")) $("hoaEmail").value = f.hoaEmail ?? "";
+  if ($("maintenance")) $("maintenance").value = f.maintenance ?? "";
+  if ($("tax")) $("tax").value = f.tax ?? "";
+  if ($("rentStart")) $("rentStart").value = f.rentStartDate ?? "";
+  if ($("rentEnd")) $("rentEnd").value = f.rentEndDate ?? "";
+  if ($("deposit")) $("deposit").value = f.deposit ?? "";
 
+  renderMaintenanceActuals(propertyId);
 }
 /* ---------------- MAINTENANCE ACTUALS ---------------- */
 
