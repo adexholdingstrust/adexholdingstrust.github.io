@@ -419,7 +419,15 @@ function renderTable() {
         <div style="margin-top:4px">${leaseRiskChip(f.rentEndDate)}</div>
       </td>
       <td>${leaseBadge(f.rentEndDate)}</td>
-      <td>${READ_ONLY ? "🔒" : `<button onclick="event.stopPropagation(); openEditor('${p.id}')">Edit</button>`}</td>
+      <td>
+  ${READ_ONLY ? "🔒" : `
+    <a href="/financials.html?property=${encodeURIComponent(p.id)}"
+       onclick="event.stopPropagation()"
+       class="editLink">
+       Edit
+    </a>
+  `}
+</td>
     `;
 
     body.appendChild(tr);
