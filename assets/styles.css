@@ -1328,3 +1328,6 @@ body.withSidebar .container {
   color: var(--warn) !important;
   font-weight: 700;
 }
+.pos::before { content: "▲ "; }
+.neg::before { content: "▼ "; }
+
