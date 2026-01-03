@@ -12,8 +12,9 @@ const API_BASE = "/api/admin";
 const FINANCE_BOOTSTRAP = `${API_BASE}/finance/bootstrap`;
 const FINANCE_GET = `${API_BASE}/financials`;
 const FINANCE_SAVE = `${API_BASE}/financials/update`;
-const num = (v) =>
-  Number(String(v || "").replace(/[^0-9.-]/g, "")) || 0;
+
+const num = (v) => Number(String(v ?? "").replace(/[^0-9.-]/g, "")) || 0;
+
 /* ---------------- STATE ---------------- */
 
 let PROPERTIES = [];
@@ -26,10 +27,7 @@ let READ_ONLY = false;
 const $ = (id) => document.getElementById(id);
 
 const usd = (v) =>
-  Number(v || 0).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD"
-  });
+  Number(v || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 function getActiveMonth() {
   return $("activeMonth")?.value || null;
@@ -37,28 +35,29 @@ function getActiveMonth() {
 
 const daysUntil = (iso) => {
   if (!iso) return null;
-  return Math.ceil(
-    (new Date(iso).getTime() - Date.now()) / 86400000
-  );
+  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
 };
 
-/* ---------------- HELPER TO SELECT PROPERTIES ---------------- */
+/* ---------------- PROPERTY MULTI-SELECT HELPERS ---------------- */
+
 function selectAllProperties() {
-  const sel = document.getElementById("propertySelect");
+  const sel = $("propertySelect");
   if (!sel) return;
 
-  Array.from(sel.options).forEach(o => (o.selected = true));
+  Array.from(sel.options).forEach((o) => (o.selected = true));
   onPropertySelect();
 }
 
 function clearAllProperties() {
-  const sel = document.getElementById("propertySelect");
+  const sel = $("propertySelect");
   if (!sel) return;
 
-  Array.from(sel.options).forEach(o => (o.selected = false));
+  Array.from(sel.options).forEach((o) => (o.selected = false));
   onPropertySelect();
 }
-// --- LOAD FINANCIALS ---
+
+/* ---------------- FORM LOADER ---------------- */
+
 function loadFinancialsIntoForm(propertyId) {
   const f = FINANCIALS[propertyId] || {};
 
@@ -78,14 +77,14 @@ function loadFinancialsIntoForm(propertyId) {
 
   renderMaintenanceActuals(propertyId);
 }
+
 /* ---------------- MAINTENANCE ACTUALS ---------------- */
 
 function renderMaintenanceActuals(propertyId) {
   const list = $("maintenanceList");
   if (!list) return;
 
-  const actuals =
-    FINANCIALS[propertyId]?.maintenanceActuals || {};
+  const actuals = FINANCIALS[propertyId]?.maintenanceActuals || {};
 
   if (!Object.keys(actuals).length) {
     list.innerHTML = "<em>No monthly maintenance recorded</em>";
@@ -94,17 +93,14 @@ function renderMaintenanceActuals(propertyId) {
 
   list.innerHTML = Object.entries(actuals)
     .sort()
-    .map(([month, amount]) =>
-      `<div>${month}: ${usd(amount)}</div>`
-    )
+    .map(([month, amount]) => `<div>${month}: ${usd(amount)}</div>`)
     .join("");
 }
 
 function saveMaintenanceActual() {
   const propertyId =
     $("editId")?.value ||
-    Array.from($("propertySelect")?.selectedOptions || [])
-      .map(o => o.value)[0];
+    Array.from($("propertySelect")?.selectedOptions || []).map((o) => o.value)[0];
 
   const month = $("maintMonth")?.value;
   const amount = num($("maintAmount")?.value);
@@ -121,7 +117,8 @@ function saveMaintenanceActual() {
   renderMaintenanceActuals(propertyId);
 }
 
-/* ---------------- lease-risk helper function---------------- */
+/* ---------------- LEASE RISK ---------------- */
+
 function leaseRiskChip(endDate) {
   if (!endDate) return "—";
 
@@ -129,70 +126,61 @@ function leaseRiskChip(endDate) {
   const end = new Date(endDate);
   const days = Math.ceil((end - today) / 86400000);
 
-  if (days < 0) {
-    return `<span class="riskChip risk-expired">Expired</span>`;
-  }
-  if (days <= 30) {
-    return `<span class="riskChip risk-30">30d</span>`;
-  }
-  if (days <= 60) {
-    return `<span class="riskChip risk-60">60d</span>`;
-  }
-  if (days <= 90) {
-    return `<span class="riskChip risk-90">90d</span>`;
-  }
+  if (days < 0) return `<span class="riskChip risk-expired">Expired</span>`;
+  if (days <= 30) return `<span class="riskChip risk-30">30d</span>`;
+  if (days <= 60) return `<span class="riskChip risk-60">60d</span>`;
+  if (days <= 90) return `<span class="riskChip risk-90">90d</span>`;
   return `<span class="riskChip risk-safe">Active</span>`;
 }
+
+function leaseBadge(end) {
+  const d = daysUntil(end);
+  if (d == null) return "—";
+  if (d <= 30) return `<span class="badge red">30d</span>`;
+  if (d <= 60) return `<span class="badge orange">60d</span>`;
+  if (d <= 90) return `<span class="badge yellow">90d</span>`;
+  return `<span class="badge green">Active</span>`;
+}
+
 /* ---------------- ACCESS ---------------- */
 
 async function bootstrapFinance() {
-  const res = await fetch(FINANCE_BOOTSTRAP, {
-    credentials: "include"
-  });
+  const res = await fetch(FINANCE_BOOTSTRAP, { credentials: "include" });
 
   if (!res.ok) {
-    document.body.innerHTML =
-      "<h2>Access expired. Please refresh and sign in.</h2>";
+    document.body.innerHTML = "<h2>Access expired. Please refresh and sign in.</h2>";
     throw new Error("Access denied");
   }
 
   const data = await res.json();
-  READ_ONLY = !data.roles.includes("admin");
+  READ_ONLY = !Array.isArray(data.roles) || !data.roles.includes("admin");
 }
 
 /* ---------------- PROPERTY LOADING ---------------- */
 
 function loadProperties() {
-  if (!window.ADEX_DATA) {
-    throw new Error("assets/financials.js not loaded");
-  }
+  if (!window.ADEX_DATA) throw new Error("assets/financials.js not loaded");
 
   const rentals = window.ADEX_DATA.rentals || [];
   const lands = window.ADEX_DATA.lands || [];
 
-  PROPERTIES = [...rentals, ...lands].filter(
-    (p) => p.country === "USA"
-  );
+  // IMPORTANT: If your data uses "US" instead of "USA", this filter would wipe everything.
+  // Keep your original behavior but allow "US" too to prevent empty dropdowns.
+  PROPERTIES = [...rentals, ...lands].filter((p) => (p.country || "").toUpperCase() === "USA" || (p.country || "").toUpperCase() === "US");
 }
 
 /* ---------------- FINANCIAL STORAGE ---------------- */
 
 async function loadFinancials() {
-  const res = await fetch(FINANCE_GET, {
-    credentials: "include"
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to load financial data");
-  }
+  const res = await fetch(FINANCE_GET, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load financial data");
 
   const json = await res.json();
   FINANCIALS = json.financials || {};
 
-Object.values(FINANCIALS).forEach(f => {
-  f.maintenanceActuals ||= {};
-});
-
+  Object.values(FINANCIALS).forEach((f) => {
+    f.maintenanceActuals ||= {};
+  });
 }
 
 /* ---------------- SELECTOR ---------------- */
@@ -200,44 +188,48 @@ Object.values(FINANCIALS).forEach(f => {
 function renderPropertySelector() {
   const sel = $("propertySelect");
   if (!sel) return;
+
   sel.innerHTML = "";
+
+  // On single-select pages (financials.html), a placeholder is helpful
+  const page = document.body?.dataset?.page;
+  if (page === "financials") {
+    const ph = document.createElement("option");
+    ph.value = "";
+    ph.textContent = "Select property…";
+    sel.appendChild(ph);
+  }
 
   PROPERTIES.forEach((p) => {
     const opt = document.createElement("option");
     opt.value = p.id;
-    opt.textContent = `${p.name} (${p.state})`;
+    opt.textContent = p.state ? `${p.name} (${p.state})` : p.name;
     sel.appendChild(opt);
   });
 }
 
 function onPropertySelect() {
   const sel = $("propertySelect");
-  const values = Array.from(sel.selectedOptions).map(o => o.value);
+  if (!sel) return;
 
+  const values = Array.from(sel.selectedOptions).map((o) => o.value).filter(Boolean);
   SELECTED = new Set(values);
 
-  // Auto-load editor fields if exactly one property is selected
-  if (values.length === 1) {
-    loadFinancialsIntoForm(values[0]);
-  }
+  if (values.length === 1) loadFinancialsIntoForm(values[0]);
 
   renderTable();
   renderHOATable();
 }
 
-/* ✅ ADD THIS FUNCTION RIGHT HERE */
 function bindFinancialsSelect() {
   const sel = $("propertySelect");
   if (!sel) return;
 
   sel.addEventListener("change", () => {
-  const selected = Array.from(sel.selectedOptions).map(o => o.value);
-   if (selected.length === 1) {
-     loadFinancialsIntoForm(selected[0]);
-   }
-
+    onPropertySelect();
   });
 }
+
 /* ---------------- CALCULATIONS ---------------- */
 
 function annualize(value, period) {
@@ -260,105 +252,78 @@ function computeAnnualPL(property, record = {}) {
     annualize(property.HOA?.amount, property.HOA?.period);
 
   const maintenanceAnnual = annualize(record.maintenance, "year");
+
   const taxAnnual =
     annualize(record.tax, "year") ||
     annualize(property.Taxes?.amount, property.Taxes?.period);
 
-  const expenses =
-    mortgageAnnual + hoaAnnual + maintenanceAnnual + taxAnnual;
+  const expensesAnnual = mortgageAnnual + hoaAnnual + maintenanceAnnual + taxAnnual;
 
   return {
     rentAnnual,
-    expensesAnnual: expenses,
-    netAnnual: rentAnnual - expenses,
-    cashFlowMonthly: (rentAnnual - expenses) / 12
+    mortgageAnnual,
+    hoaAnnual,
+    maintenanceAnnual,
+    taxAnnual,
+    expensesAnnual,
+    netAnnual: rentAnnual - expensesAnnual,
+    cashFlowMonthly: (rentAnnual - expensesAnnual) / 12
   };
 }
-/* ---------------- COMPUTING NEW ---------------- */
+
 function computeMonthlyPL(property, record = {}, month) {
-  const rent = record.rent || 0;
-  const mortgage = record.mortgage || 0;
-  const hoa = record.hoa || 0;
-  const tax = (record.tax || 0) / 12;
+  const rent = num(record.rent);
+  const mortgage = num(record.mortgage);
+  const hoa = num(record.hoa);
+  const tax = num(record.tax) / 12;
 
   const maintenance =
     record.maintenanceActuals?.[month] ??
     record.maintenance ??
     0;
 
-  const expenses =
-    mortgage + hoa + tax + maintenance;
+  const maintenanceVal = num(maintenance);
+  const expenses = mortgage + hoa + tax + maintenanceVal;
 
   return {
     rent,
+    mortgage,
+    hoa,
+    maintenance: maintenanceVal,
+    tax,
     expenses,
-    net: rent - expenses,
-    maintenance
+    net: rent - expenses
   };
 }
-/* ---------------- TABLE ---------------- */
+
+/* ---------------- TABLE + MODAL ---------------- */
+
 function openPropertyModal(property) {
   const f = FINANCIALS[property.id] || {};
 
-  const rent = Number(f.rent || 0);
-  const mortgage = Number(f.mortgage || 0);
-  const hoa = Number(f.hoa || 0);
-  const maintenance = Number(f.maintenance || 0);
-  const tax = Number(f.tax || 0);
+  const rent = num(f.rent);
+  const mortgage = num(f.mortgage);
+  const hoa = num(f.hoa);
+  const maintenance = num(f.maintenance);
+  const tax = num(f.tax);
 
-  const expenses = mortgage + hoa + tax;
+  const expenses = mortgage + hoa + maintenance + tax;
   const monthlyNet = rent - expenses;
   const annualNet = monthlyNet * 12;
 
-  document.getElementById("modalTitle").textContent = property.name;
+  $("modalTitle").textContent = property.name;
 
-  document.getElementById("modalContent").innerHTML = `
+  $("modalContent").innerHTML = `
     <div class="modalGrid">
-      <div class="modalItem">
-        <div class="modalLabel">Monthly Rent</div>
-        <div class="modalValue">$${rent}</div>
-      </div>
-
-      <div class="modalItem">
-        <div class="modalLabel">Security Deposit</div>
-        <div class="modalValue">$${f.deposit || 0}</div>
-      </div>
-
-      <div class="modalItem">
-        <div class="modalLabel">Mortgage</div>
-        <div class="modalValue">$${mortgage}</div>
-      </div>
-
-      <div class="modalItem">
-        <div class="modalLabel">HOA</div>
-        <div class="modalValue">$${hoa}</div>
-      </div>
-
-      <div class="modalItem">
-        <div class="modalLabel">Maintenance</div>
-        <div class="modalValue">$${maintenance}</div>
-      </div>
-
-      <div class="modalItem">
-        <div class="modalLabel">Taxes</div>
-        <div class="modalValue">$${tax}</div>
-      </div>
-
-      <div class="modalItem">
-        <div class="modalLabel">Total Monthly Expenses</div>
-        <div class="modalValue">$${expenses}</div>
-      </div>
-
-      <div class="modalItem">
-        <div class="modalLabel">Monthly Cash Flow</div>
-        <div class="modalValue ${monthlyNet >= 0 ? "pos" : "neg"}">$${monthlyNet}</div>
-      </div>
-
-      <div class="modalItem">
-        <div class="modalLabel">Annual P&L</div>
-        <div class="modalValue ${annualNet >= 0 ? "pos" : "neg"}">$${annualNet}</div>
-      </div>
-
+      <div class="modalItem"><div class="modalLabel">Monthly Rent</div><div class="modalValue">${usd(rent)}</div></div>
+      <div class="modalItem"><div class="modalLabel">Security Deposit</div><div class="modalValue">${usd(f.deposit || 0)}</div></div>
+      <div class="modalItem"><div class="modalLabel">Mortgage</div><div class="modalValue">${usd(mortgage)}</div></div>
+      <div class="modalItem"><div class="modalLabel">HOA</div><div class="modalValue">${usd(hoa)}</div></div>
+      <div class="modalItem"><div class="modalLabel">Maintenance</div><div class="modalValue">${usd(maintenance)}</div></div>
+      <div class="modalItem"><div class="modalLabel">Taxes</div><div class="modalValue">${usd(tax)}</div></div>
+      <div class="modalItem"><div class="modalLabel">Total Monthly Expenses</div><div class="modalValue">${usd(expenses)}</div></div>
+      <div class="modalItem"><div class="modalLabel">Monthly Cash Flow</div><div class="modalValue ${monthlyNet >= 0 ? "pos" : "neg"}">${usd(monthlyNet)}</div></div>
+      <div class="modalItem"><div class="modalLabel">Annual P&L</div><div class="modalValue ${annualNet >= 0 ? "pos" : "neg"}">${usd(annualNet)}</div></div>
       <div class="modalItem">
         <div class="modalLabel">Lease Term</div>
         <div class="modalValue">
@@ -369,7 +334,7 @@ function openPropertyModal(property) {
     </div>
   `;
 
-  document.getElementById("propertyModal").style.display = "block";
+  $("propertyModal").style.display = "block";
 }
 
 function closePropertyModal() {
@@ -378,182 +343,114 @@ function closePropertyModal() {
   m.style.display = "none";
 }
 
-function leaseBadge(end) {
-  const d = daysUntil(end);
-  if (d == null) return "—";
-  if (d <= 30) return `<span class="badge red">30d</span>`;
-  if (d <= 60) return `<span class="badge orange">60d</span>`;
-  if (d <= 90) return `<span class="badge yellow">90d</span>`;
-  return `<span class="badge green">Active</span>`;
-}
-let previousKpis = {
-  rent: null,
-  expenses: null,
-  net: null,
-  annual: null
-};
-
-function updateDelta(id, prev, curr) {
-  const el = document.getElementById(id);
-  if (!el || prev === null || prev === curr) {
-    if (el) el.classList.remove("show");
-    return;
-  }
-
-  const diff = curr - prev;
-  const up = diff > 0;
-
-  el.textContent = `${up ? "↑" : "↓"} $${Math.abs(diff)}`;
-  el.className = `kpiDelta ${up ? "up" : "down"} show`;
-}
-
-function reserveStress(netMonthly, reserve = 5000) {
-  if (netMonthly >= 0) return "🟢 Stable";
-
-  const months = Math.floor(
-    reserve / Math.abs(netMonthly)
-  );
-
-  if (months >= 6) return "🟡 Watch";
-  return "🔴 High Risk";
-}
-
-// Store for next comparison
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePropertyModal();
+});
 
 function renderTable() {
   const body = $("financeBody");
-  if (!body) return; // <-- IMPORTANT: input page has no table
+  if (!body) return; // financials.html does not have the table
+
   body.innerHTML = "";
 
-  let totals = {
-  rent: 0,
-  expenses: 0,
-  net: 0,
-  deposits: 0
-};
-    const month = getActiveMonth();
-    const isMonthly = Boolean(month);
-if ($("rentHeader")) {
-  $("rentHeader").textContent = isMonthly ? "Monthly Rent" : "Annual Rent";
-}
-if ($("expenseHeader")) {
-  $("expenseHeader").textContent = isMonthly ? "Monthly Expenses" : "Annual Expenses";
-}
-if ($("netHeader")) {
-  $("netHeader").textContent = isMonthly ? "Monthly Net" : "Annual Net";
-}
+  const month = getActiveMonth();
+  const isMonthly = Boolean(month);
 
-  PROPERTIES.filter((p) => SELECTED.has(p.id)).forEach((p) => {
+  // If nothing selected on finance page, show all (so the dashboard never looks empty)
+  const selectedIds =
+    SELECTED.size > 0 ? Array.from(SELECTED) : PROPERTIES.map((p) => p.id);
+
+  const totals = { rent: 0, expenses: 0, net: 0, deposits: 0 };
+
+  PROPERTIES.filter((p) => selectedIds.includes(p.id)).forEach((p) => {
     const f = FINANCIALS[p.id] || {};
 
-let pl;
-let rentVal = 0;
-let expenseVal = 0;
-let netVal = 0;
-let cashFlowVal = 0;
+    let rentVal = 0, mortgageVal = 0, hoaVal = 0, maintVal = 0, taxVal = 0, expensesVal = 0, netVal = 0, annualNetVal = 0;
 
-if (month) {
-  pl = computeMonthlyPL(p, f, month);
-  rentVal = pl.rent;
-  expenseVal = pl.expenses;
-  netVal = pl.net;
-  cashFlowVal = pl.net;
-} else {
-  pl = computeAnnualPL(p, f);
-  rentVal = pl.rentAnnual;
-  expenseVal = pl.expensesAnnual;
-  netVal = pl.netAnnual;
-  cashFlowVal = pl.cashFlowMonthly;
-}
+    if (isMonthly) {
+      const pl = computeMonthlyPL(p, f, month);
+      rentVal = pl.rent;
+      mortgageVal = pl.mortgage;
+      hoaVal = pl.hoa;
+      maintVal = pl.maintenance;
+      taxVal = pl.tax;
+      expensesVal = pl.expenses;
+      netVal = pl.net;
+      annualNetVal = pl.net * 12;
+    } else {
+      // For the breakdown table, keep the monthly components from KV (what your UI expects)
+      rentVal = num(f.rent);
+      mortgageVal = num(f.mortgage);
+      hoaVal = num(f.hoa);
+      maintVal = num(f.maintenance);
+      taxVal = num(f.tax);
 
-totals.rent += rentVal;
-totals.expenses += expenseVal;
-totals.net += netVal;
-totals.deposits += Number(f.deposit || 0);
+      expensesVal = mortgageVal + hoaVal + maintVal + taxVal;
+      netVal = rentVal - expensesVal;
+      annualNetVal = netVal * 12;
+    }
+
+    totals.rent += rentVal;
+    totals.expenses += expensesVal;
+    totals.net += netVal;
+    totals.deposits += num(f.deposit);
 
     const tr = document.createElement("tr");
-   tr.style.cursor = "pointer";
-   tr.onclick = () => openPropertyModal(p);
-   const mortgage = Number(f.mortgage || 0);
-const hoa = Number(f.hoa || 0);
-const maintenance = Number(f.maintenance || 0);
-const taxes = Number(f.tax || 0);
+    tr.style.cursor = "pointer";
+    tr.onclick = () => openPropertyModal(p);
 
-const totalExpenses =
-  mortgage + hoa + maintenance + taxes;
+    tr.innerHTML = `
+      <td>${p.name}</td>
+      <td>${usd(rentVal)}</td>
+      <td>${usd(mortgageVal)}</td>
+      <td>${usd(hoaVal)}</td>
+      <td>${usd(maintVal)}</td>
+      <td>${usd(taxVal)}</td>
+      <td>${usd(expensesVal)}</td>
+      <td class="${netVal >= 0 ? "pos" : "neg"}">${usd(netVal)}</td>
+      <td class="${annualNetVal >= 0 ? "pos" : "neg"}">${usd(annualNetVal)}</td>
+      <td>${usd(f.deposit || 0)}</td>
+      <td>
+        ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
+        <div style="margin-top:4px">${leaseRiskChip(f.rentEndDate)}</div>
+      </td>
+      <td>${leaseBadge(f.rentEndDate)}</td>
+      <td>${READ_ONLY ? "🔒" : `<button onclick="event.stopPropagation(); openEditor('${p.id}')">Edit</button>`}</td>
+    `;
 
-const monthlyNet = rentVal - totalExpenses;
-const annualNet = monthlyNet * 12;
-
-tr.innerHTML = `
-  <td>${p.name}</td>
-  <td>${usd(rentVal)}</td>
-  <td>${usd(mortgage)}</td>
-  <td>${usd(hoa)}</td>
-  <td>${usd(maintenance)}</td>
-  <td>${usd(taxes)}</td>
-  <td>${usd(totalExpenses)}</td>
-  <td class="${monthlyNet >= 0 ? "pos" : "neg"}">${usd(monthlyNet)}</td>
-  <td class="${annualNet >= 0 ? "pos" : "neg"}">${usd(annualNet)}</td>
-  <td>${usd(f.deposit || 0)}</td>
-  <td>
-    ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
-    <div style="margin-top:4px">
-      ${leaseRiskChip(f.rentEndDate)}
-    </div>
-  </td>
-  <td>${leaseBadge(f.rentEndDate)}</td>
-`;
     body.appendChild(tr);
   });
 
-// ---- Totals UI ----
-if ($("totalRent")) $("totalRent").textContent = usd(totals.rent);
-if ($("totalExpenses")) $("totalExpenses").textContent = usd(totals.expenses);
-if ($("totalNet")) $("totalNet").textContent = usd(totals.net);
+  if ($("totalRent")) $("totalRent").textContent = usd(totals.rent);
+  if ($("totalExpenses")) $("totalExpenses").textContent = usd(totals.expenses);
+  if ($("totalNet")) $("totalNet").textContent = usd(totals.net);
 
-// ---- KPI values ----
-if ($("kpiRent")) $("kpiRent").textContent = usd(totals.rent);
-if ($("kpiExpenses")) $("kpiExpenses").textContent = usd(totals.expenses);
-if ($("kpiNet")) $("kpiNet").textContent = usd(totals.net);
-if ($("kpiAnnual")) $("kpiAnnual").textContent = usd(totals.net * 12);
-if ($("kpiDeposits")) {  $("kpiDeposits").textContent = usd(totals.deposits);}
+  if ($("kpiRent")) $("kpiRent").textContent = usd(totals.rent);
+  if ($("kpiExpenses")) $("kpiExpenses").textContent = usd(totals.expenses);
+  if ($("kpiNet")) $("kpiNet").textContent = usd(totals.net);
+  if ($("kpiAnnual")) $("kpiAnnual").textContent = usd(totals.net * 12);
+  if ($("kpiDeposits")) $("kpiDeposits").textContent = usd(totals.deposits);
+}
 
-
-// ---- KPI deltas ----
-const current = {
-  rent: totals.rent,
-  expenses: totals.expenses,
-  net: totals.net,
-  annual: totals.net * 12
-};
-
-updateDelta("kpiRentDelta", previousKpis.rent, current.rent);
-updateDelta("kpiExpensesDelta", previousKpis.expenses, current.expenses);
-updateDelta("kpiNetDelta", previousKpis.net, current.net);
-updateDelta("kpiAnnualDelta", previousKpis.annual, current.annual);
-// ✅ NEW: persist baseline for next render
-previousKpis = { ...current };
-   } // ✅ CLOSE renderTable() HERE
 /* ---------------- EDITOR ---------------- */
+
 function openEditor(id) {
   const f = FINANCIALS[id] || {};
-
   if (!$("modal") || !$("editId")) return;
 
   $("editId").value = id;
-  $("rent").value = f.rent || "";
-  $("mortgage").value = f.mortgage || "";
-  $("hoa").value = f.hoa || "";
-  $("hoaCompany").value = f.hoaCompany || "";
-  $("hoaWebsite").value = f.hoaWebsite || "";
-  $("hoaPhone").value = f.hoaPhone || "";
-  $("hoaEmail").value = f.hoaEmail || "";
-  $("maintenance").value = f.maintenance || "";
-  $("tax").value = f.tax || "";
-  $("rentStart").value = f.rentStartDate || "";
-  $("rentEnd").value = f.rentEndDate || "";
-  $("deposit").value = f.deposit || "";
+  $("rent").value = f.rent ?? "";
+  $("mortgage").value = f.mortgage ?? "";
+  $("hoa").value = f.hoa ?? "";
+  $("hoaCompany").value = f.hoaCompany ?? "";
+  $("hoaWebsite").value = f.hoaWebsite ?? "";
+  $("hoaPhone").value = f.hoaPhone ?? "";
+  $("hoaEmail").value = f.hoaEmail ?? "";
+  $("maintenance").value = f.maintenance ?? "";
+  $("tax").value = f.tax ?? "";
+  $("rentStart").value = f.rentStartDate ?? "";
+  $("rentEnd").value = f.rentEndDate ?? "";
+  $("deposit").value = f.deposit ?? "";
 
   $("modal").style.display = "block";
 }
@@ -564,26 +461,11 @@ function closeEditor() {
   m.style.display = "none";
 }
 
-   document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closePropertyModal();
-});
-
-
 async function saveFinancials() {
   const requiredIds = [
-  "rent",
-  "mortgage",
-  "hoa",
-  "hoaCompany",
-  "hoaWebsite",
-  "hoaPhone",
-  "hoaEmail",
-  "maintenance",
-  "tax",
-  "rentStart",
-  "rentEnd",
-  "deposit"
-];
+    "rent","mortgage","hoa","hoaCompany","hoaWebsite","hoaPhone","hoaEmail",
+    "maintenance","tax","rentStart","rentEnd","deposit"
+  ];
 
   for (const id of requiredIds) {
     const el = $(id);
@@ -594,48 +476,32 @@ async function saveFinancials() {
     }
   }
 
-const propertyId =
-  $("editId")?.value ||
- Array.from($("propertySelect")?.selectedOptions || [])
-  .map(o => o.value)[0];
-   
+  const propertyId =
+    $("editId")?.value ||
+    Array.from($("propertySelect")?.selectedOptions || []).map((o) => o.value)[0];
 
-const payload = {
-  propertyId,
+  if (!propertyId) {
+    alert("No property selected. Unable to save.");
+    return;
+  }
 
-   
+  const existing = FINANCIALS[propertyId] || {};
 
-    // Financials
+  const payload = {
+    propertyId,
     rent: num($("rent").value),
     mortgage: num($("mortgage").value),
     hoa: num($("hoa").value),
     maintenance: num($("maintenance").value),
     tax: num($("tax").value),
     deposit: num($("deposit").value),
-
-    // Lease
     rentStartDate: $("rentStart").value || null,
     rentEndDate: $("rentEnd").value || null,
-
-    // HOA Metadata
-    hoaCompany: $("hoaCompany").value || null,
-    hoaWebsite: $("hoaWebsite").value || null,
-    hoaPhone: $("hoaPhone").value || null,
-    hoaEmail: $("hoaEmail").value || null
+    hoaCompany: $("hoaCompany").value || existing.hoaCompany || null,
+    hoaWebsite: $("hoaWebsite").value || existing.hoaWebsite || null,
+    hoaPhone: $("hoaPhone").value || existing.hoaPhone || null,
+    hoaEmail: $("hoaEmail").value || existing.hoaEmail || null
   };
-
-  if (!payload.propertyId) {
-    alert("No property selected. Unable to save.");
-    return;
-  }
-
-  // ✅ SAFE MERGE (this is where it belongs)
-  const existing = FINANCIALS[payload.propertyId] || {};
-
-  payload.hoaCompany ??= existing.hoaCompany ?? null;
-  payload.hoaWebsite ??= existing.hoaWebsite ?? null;
-  payload.hoaPhone ??= existing.hoaPhone ?? null;
-  payload.hoaEmail ??= existing.hoaEmail ?? null;
 
   let res;
   try {
@@ -677,17 +543,20 @@ function toggleInvestor() {
 function exportPDF() {
   window.print();
 }
-/* ============================
-   HOA TABLE RENDERER
-============================ */
+
+/* ---------------- HOA TABLE ---------------- */
+
 function renderHOATable() {
-  const body = document.getElementById("hoaBody");
+  const body = $("hoaBody");
   if (!body) return;
-   if (!Object.keys(FINANCIALS).length) return;
 
   body.innerHTML = "";
 
-  PROPERTIES.forEach(p => {
+  // Show all properties if nothing selected, otherwise show selected
+  const selectedIds =
+    SELECTED.size > 0 ? Array.from(SELECTED) : PROPERTIES.map((p) => p.id);
+
+  PROPERTIES.filter((p) => selectedIds.includes(p.id)).forEach((p) => {
     const f = FINANCIALS[p.id] || {};
 
     body.innerHTML += `
@@ -709,31 +578,37 @@ function renderHOATable() {
     `;
   });
 }
+
 /* ---------------- INIT ---------------- */
-const PAGE = document.body.dataset.page;
+
+const PAGE = document.body?.dataset?.page;
+
 async function initFinance() {
-  await bootstrapFinance();
-  loadProperties();
-  await loadFinancials();
-  renderPropertySelector();
-  bindFinancialsSelect(); 
+  try {
+    await bootstrapFinance();
+    loadProperties();
+    await loadFinancials();
 
-  // ✅ NEW: auto-select first property
-  const sel = $("propertySelect");
-  if (sel && sel.options.length) {
-    sel.options[0].selected = true;
-    onPropertySelect();
+    renderPropertySelector();
+    bindFinancialsSelect();
+
+    // Finance dashboard should never look empty
+    if (PAGE === "finance") {
+      const sel = $("propertySelect");
+      if (sel && sel.options.length) {
+        Array.from(sel.options).forEach((o) => (o.selected = true));
+        onPropertySelect();
+      }
+    }
+
+    // financials.html: do NOT auto-select; user picks one
+    renderTable();
+    renderHOATable();
+  } catch (e) {
+    console.error("initFinance failed:", e);
   }
-
-  renderTable();
-  renderHOATable();
 }
 
-
-// document.addEventListener("DOMContentLoaded", initFinance);
 document.addEventListener("DOMContentLoaded", () => {
-  if (PAGE === "finance" || PAGE === "financials")  {
-    initFinance();
-  }
+  if (PAGE === "finance" || PAGE === "financials") initFinance();
 });
-
