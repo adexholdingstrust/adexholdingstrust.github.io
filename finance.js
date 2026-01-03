@@ -145,17 +145,21 @@ function leaseBadge(end) {
 /* ---------------- ACCESS ---------------- */
 
 async function bootstrapFinance() {
-  const res = await fetch(FINANCE_BOOTSTRAP, { credentials: "include" });
+  try {
+    const res = await fetch(FINANCE_BOOTSTRAP, {
+      credentials: "include"
+    });
 
-  if (!res.ok) {
-    document.body.innerHTML = "<h2>Access expired. Please refresh and sign in.</h2>";
-    throw new Error("Access denied");
+    if (!res.ok) throw new Error("Access denied");
+
+    const data = await res.json();
+    READ_ONLY = !Array.isArray(data.roles) || !data.roles.includes("admin");
+
+  } catch (err) {
+    console.warn("Finance bootstrap blocked by Access. Falling back to read-only.");
+    READ_ONLY = true;
   }
-
-  const data = await res.json();
-  READ_ONLY = !Array.isArray(data.roles) || !data.roles.includes("admin");
 }
-
 /* ---------------- PROPERTY LOADING ---------------- */
 
 function loadProperties() {
@@ -587,6 +591,10 @@ async function initFinance() {
   try {
     await bootstrapFinance();
     loadProperties();
+
+    console.log("ADEX_DATA?", window.ADEX_DATA);
+    console.log("PROPERTIES length:", PROPERTIES.length);
+
     await loadFinancials();
 
     renderPropertySelector();
@@ -599,20 +607,19 @@ async function initFinance() {
         Array.from(sel.options).forEach((o) => (o.selected = true));
         onPropertySelect();
       }
+      renderTable();
     }
 
-    // financials.html: do NOT auto-select; user picks one
-    renderTable();
+    // HOA table should always render
     renderHOATable();
+
   } catch (e) {
     console.error("initFinance failed:", e);
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (PAGE === "finance" || PAGE === "financials") initFinance();
+  if (PAGE === "finance" || PAGE === "financials") {
+    initFinance();
+  }
 });
-
-
-console.log("ADEX_DATA?", window.ADEX_DATA);
-console.log("PROPERTIES length:", PROPERTIES.length);
