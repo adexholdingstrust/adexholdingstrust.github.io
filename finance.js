@@ -6,14 +6,29 @@
    - Financial records: Cloudflare Worker KV
 ========================================================= */
 
-/* ---------------- CONFIG ---------------- */
-
 const API_BASE = "/api/admin";
 const FINANCE_BOOTSTRAP = `${API_BASE}/finance/bootstrap`;
 const FINANCE_GET = `${API_BASE}/financials`;
 const FINANCE_SAVE = `${API_BASE}/financials/update`;
 
 const num = (v) => Number(String(v ?? "").replace(/[^0-9.-]/g, "")) || 0;
+
+/* ---------------- FINANCIAL METRICS CONFIG ---------------- */
+
+// Debt Service Coverage Ratio thresholds
+const DSCR_CONFIG = {
+  healthy: 1.25,
+  caution: 1.0
+};
+
+// Portfolio stress scoring weights
+const PORTFOLIO_STRESS_CONFIG = {
+  dscrFail: 2,      // DSCR < 1.0
+  dscrCaution: 1,   // DSCR between 1.0 and 1.25
+  negativeCash: 1,  // Monthly cash flow < 0
+  leaseRisk: 1      // Lease expiring ≤ 90 days
+};
+
 
 /* ---------------- STATE ---------------- */
 
@@ -299,7 +314,56 @@ function computeMonthlyPL(property, record = {}, month) {
     net: rent - expenses
   };
 }
+/* ---------------- DSCR ---------------- */
 
+function computeDSCR(record = {}) {
+  const rent = num(record.rent);
+  const mortgage = num(record.mortgage);
+  const hoa = num(record.hoa);
+  const tax = num(record.tax) / 12;
+  const maintenance = num(record.maintenance);
+
+  const operatingIncome = rent;
+  const debtService = mortgage + hoa + tax + maintenance;
+
+  if (debtService === 0) return null;
+
+  return operatingIncome / debtService;
+}
+
+/* ---------------- PORTFOLIO STRESS ---------------- */
+
+function computePortfolioStress(property, record = {}) {
+  let score = 0;
+
+  const dscr = computeDSCR(record);
+
+  if (dscr !== null) {
+    if (dscr < DSCR_CONFIG.caution) {
+      score += PORTFOLIO_STRESS_CONFIG.dscrFail;
+    } else if (dscr < DSCR_CONFIG.healthy) {
+      score += PORTFOLIO_STRESS_CONFIG.dscrCaution;
+    }
+  }
+
+  const monthlyNet =
+    num(record.rent) -
+    (num(record.mortgage) +
+     num(record.hoa) +
+     num(record.tax) / 12 +
+     num(record.maintenance));
+
+  if (monthlyNet < 0) {
+    score += PORTFOLIO_STRESS_CONFIG.negativeCash;
+  }
+
+  const days = daysUntil(record.rentEndDate);
+  if (days !== null && days <= 90) {
+    score += PORTFOLIO_STRESS_CONFIG.leaseRisk;
+  }
+
+  return score;
+}
 /* ---------------- TABLE + MODAL ---------------- */
 
 function openPropertyModal(property) {
@@ -367,7 +431,16 @@ function renderTable() {
   const totals = { rent: 0, expenses: 0, net: 0, deposits: 0 };
 
   PROPERTIES.filter((p) => selectedIds.includes(p.id)).forEach((p) => {
-    const f = FINANCIALS[p.id] || {};
+   const f = FINANCIALS[p.id] || {};
+   const stressScore = computePortfolioStress(p, f);
+
+const stressDisplay =
+  stressScore >= 4
+    ? `<span class="neg">High</span>`
+    : stressScore >= 2
+    ? `<span class="warn">Moderate</span>`
+    : `<span class="pos">Low</span>`;
+
 
     let rentVal = 0, mortgageVal = 0, hoaVal = 0, maintVal = 0, taxVal = 0, expensesVal = 0, netVal = 0, annualNetVal = 0;
 
@@ -387,8 +460,7 @@ function renderTable() {
       mortgageVal = num(f.mortgage);
       hoaVal = num(f.hoa);
       maintVal = num(f.maintenance);
-      taxVal = num(f.tax);
-
+      taxVal = num(f.tax) / 12;
       expensesVal = mortgageVal + hoaVal + maintVal + taxVal;
       netVal = rentVal - expensesVal;
       annualNetVal = netVal * 12;
@@ -398,8 +470,20 @@ function renderTable() {
     totals.expenses += expensesVal;
     totals.net += netVal;
     totals.deposits += num(f.deposit);
+      const dscr = computeDSCR(f);
+      const dscrDisplay =
+  dscr === null
+    ? "—"
+    : `<span class="${
+        dscr >= DSCR_CONFIG.healthy
+          ? "pos"
+          : dscr >= DSCR_CONFIG.caution
+          ? "warn"
+          : "neg"
+      }">${dscr.toFixed(2)}</span>`;
 
     const tr = document.createElement("tr");
+     
     tr.style.cursor = "pointer";
     tr.onclick = () => openPropertyModal(p);
 
@@ -413,6 +497,8 @@ function renderTable() {
       <td>${usd(expensesVal)}</td>
       <td class="${netVal >= 0 ? "pos" : "neg"}">${usd(netVal)}</td>
       <td class="${annualNetVal >= 0 ? "pos" : "neg"}">${usd(annualNetVal)}</td>
+      <td>${dscrDisplay}</td>
+      <td>${stressDisplay}</td>
       <td>${usd(f.deposit || 0)}</td>
       <td>
         ${f.rentStartDate || "—"} → ${f.rentEndDate || "—"}
@@ -442,6 +528,42 @@ function renderTable() {
   if ($("kpiNet")) $("kpiNet").textContent = usd(totals.net);
   if ($("kpiAnnual")) $("kpiAnnual").textContent = usd(totals.net * 12);
   if ($("kpiDeposits")) $("kpiDeposits").textContent = usd(totals.deposits);
+  if ($("kpiDSCR")) {
+    const dscrValues = PROPERTIES
+      .filter(p => selectedIds.includes(p.id))
+      .map(p => computeDSCR(FINANCIALS[p.id] || {}))
+      .filter(v => v !== null);
+
+    const avgDSCR =
+      dscrValues.length === 0
+        ? null
+        : dscrValues.reduce((a, b) => a + b, 0) / dscrValues.length;
+
+    $("kpiDSCR").textContent = avgDSCR ? avgDSCR.toFixed(2) : "—";
+    $("kpiDSCR").className =
+      avgDSCR >= DSCR_CONFIG.healthy
+        ? "pos"
+        : avgDSCR >= DSCR_CONFIG.caution
+        ? "warn"
+        : "neg";
+  }
+
+ if ($("kpiStress")) {
+  const stressScores = PROPERTIES
+    .filter(p => selectedIds.includes(p.id))
+    .map(p => computePortfolioStress(p, FINANCIALS[p.id] || {}));
+
+  const avgStress =
+    stressScores.length === 0
+      ? null
+      : stressScores.reduce((a, b) => a + b, 0) / stressScores.length;
+
+  $("kpiStress").textContent =
+    avgStress === null ? "—" : avgStress.toFixed(1);
+
+  $("kpiStress").className =
+    avgStress >= 4 ? "neg" : avgStress >= 2 ? "warn" : "pos";
+}
 }
 
 /* ---------------- EDITOR ---------------- */
