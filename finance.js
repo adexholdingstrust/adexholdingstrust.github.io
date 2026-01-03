@@ -100,8 +100,10 @@ function renderMaintenanceActuals(propertyId) {
     .join("");
 }
 
-function saveMaintenanceActual() {
-  const propertyId = $("editId")?.value;
+const propertyId =
+  $("editId")?.value ||
+  Array.from($("propertySelect")?.selectedOptions || [])
+    .map(o => o.value)[0];
   const month = $("maintMonth")?.value;
   const amount = num($("maintAmount")?.value);
 
@@ -227,9 +229,11 @@ function bindFinancialsSelect() {
   if (!sel) return;
 
   sel.addEventListener("change", () => {
-    if (sel.value) {
-      loadFinancialsIntoForm(sel.value);
-    }
+  const selected = Array.from(sel.selectedOptions).map(o => o.value);
+   if (selected.length === 1) {
+     loadFinancialsIntoForm(selected[0]);
+   }
+
   });
 }
 /* ---------------- CALCULATIONS ---------------- */
@@ -561,20 +565,19 @@ function closeEditor() {
 
 async function saveFinancials() {
   const requiredIds = [
-    "editId",
-    "rent",
-    "mortgage",
-    "hoa",
-    "hoaCompany",
-    "hoaWebsite",
-    "hoaPhone",
-    "hoaEmail",
-    "maintenance",
-    "tax",
-    "rentStart",
-    "rentEnd",
-    "deposit"
-  ];
+  "rent",
+  "mortgage",
+  "hoa",
+  "hoaCompany",
+  "hoaWebsite",
+  "hoaPhone",
+  "hoaEmail",
+  "maintenance",
+  "tax",
+  "rentStart",
+  "rentEnd",
+  "deposit"
+];
 
   for (const id of requiredIds) {
     const el = $(id);
@@ -585,8 +588,16 @@ async function saveFinancials() {
     }
   }
 
-  const payload = {
-    propertyId: $("editId").value,
+const propertyId =
+  $("editId")?.value ||
+ Array.from($("propertySelect")?.selectedOptions || [])
+  .map(o => o.value)[0];
+   
+
+const payload = {
+  propertyId,
+
+   
 
     // Financials
     rent: num($("rent").value),
@@ -710,7 +721,6 @@ async function initFinance() {
   }
 
   renderTable();
-  renderHOATable(); // ✅ Adding this for the new display
 }
 
 
