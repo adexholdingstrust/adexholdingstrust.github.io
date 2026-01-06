@@ -184,23 +184,42 @@ async function bootstrapFinance() {
 /* ---------------- PROPERTY LOADING ---------------- */
 
 function loadProperties() {
-  if (!window.ADEX_DATA) throw new Error("assets/financials.js not loaded");
+  if (!window.ADEX_DATA) {
+    console.warn("ADEX_DATA missing — continuing with empty property list");
+    PROPERTIES = [];
+    return;
+  }
 
   const rentals = window.ADEX_DATA.rentals || [];
   const lands = window.ADEX_DATA.lands || [];
 
-  // IMPORTANT: If your data uses "US" instead of "USA", this filter would wipe everything.
-  // Keep your original behavior but allow "US" too to prevent empty dropdowns.
-  PROPERTIES = [...rentals, ...lands].filter((p) => (p.country || "").toUpperCase() === "USA" || (p.country || "").toUpperCase() === "US");
+  PROPERTIES = [...rentals, ...lands].filter(
+    (p) => ["US", "USA"].includes((p.country || "").toUpperCase())
+  );
 }
 
 /* ---------------- FINANCIAL STORAGE ---------------- */
 async function loadFinancials() {
   try {
     const res = await fetch(FINANCE_GET, { credentials: "include" });
-    if (!res.ok) throw new Error("Access blocked");
 
-    const json = await res.json();
+    const text = await res.text();
+    let json;
+
+    try {
+      json = JSON.parse(text);
+    } catch {
+      console.error("Finance API returned non-JSON:", text);
+      FINANCIALS = {};
+      return;
+    }
+
+    if (!res.ok || json.ok === false) {
+      console.error("Finance API error:", json);
+      FINANCIALS = {};
+      return;
+    }
+
     FINANCIALS = json.financials || {};
 
     Object.values(FINANCIALS).forEach((f) => {
@@ -208,7 +227,7 @@ async function loadFinancials() {
     });
 
   } catch (err) {
-    console.warn("Financial data blocked by Access. Using empty dataset.");
+    console.error("Finance load failed:", err);
     FINANCIALS = {};
   }
 }
