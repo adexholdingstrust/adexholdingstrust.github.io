@@ -6,8 +6,8 @@
    - Financial records: Cloudflare Worker KV
 ========================================================= */
 
-const API_BASE = "/api/admin";
-const FINANCE_BOOTSTRAP = `${API_BASE}/finance/bootstrap`;
+const API_BASE = "/api/finance-api";
+const FINANCE_BOOTSTRAP = `${API_BASE}/bootstrap`;
 const FINANCE_GET = `${API_BASE}/financials`;
 const FINANCE_SAVE = `${API_BASE}/financials/update`;
 
