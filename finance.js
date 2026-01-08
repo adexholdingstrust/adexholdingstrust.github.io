@@ -82,15 +82,24 @@ function clearAllProperties() {
 function loadFinancialsIntoForm(propertyId) {
   const f = FINANCIALS[propertyId] || {};
 
+  // 🔁 Backward compatibility for old KV records
+  const hoa = f.hoaInfo || {
+    company: f.hoaCompany ?? "",
+    website: f.hoaWebsite ?? "",
+    phone: f.hoaPhone ?? "",
+    email: f.hoaEmail ?? ""
+  };
+
   if ($("editId")) $("editId").value = propertyId;
   if ($("rent")) $("rent").value = f.rent ?? "";
   if ($("mortgage")) $("mortgage").value = f.mortgage ?? "";
   if ($("hoa")) $("hoa").value = f.hoa ?? "";
-   const hoa = f.hoaInfo || {};
-      if ($("hoaCompany")) $("hoaCompany").value = hoa.company ?? "";
-      if ($("hoaWebsite")) $("hoaWebsite").value = hoa.website ?? "";
-      if ($("hoaPhone")) $("hoaPhone").value = hoa.phone ?? "";
-      if ($("hoaEmail")) $("hoaEmail").value = hoa.email ?? "";
+
+  if ($("hoaCompany")) $("hoaCompany").value = hoa.company ?? "";
+  if ($("hoaWebsite")) $("hoaWebsite").value = hoa.website ?? "";
+  if ($("hoaPhone")) $("hoaPhone").value = hoa.phone ?? "";
+  if ($("hoaEmail")) $("hoaEmail").value = hoa.email ?? "";
+
   if ($("maintenance")) $("maintenance").value = f.maintenance ?? "";
   if ($("tax")) $("tax").value = f.tax ?? "";
   if ($("rentStart")) $("rentStart").value = f.rentStartDate ?? "";
@@ -766,46 +775,47 @@ function exportPDF() {
 }
 
 /* ---------------- HOA TABLE ---------------- */
-
 function renderHOATable() {
   const body = $("hoaBody");
   if (!body) return;
 
   body.innerHTML = "";
 
-  // Show all properties if nothing selected, otherwise show selected
   const selectedIds =
-    SELECTED.size > 0 ? Array.from(SELECTED) : PROPERTIES.map((p) => p.id);
+    SELECTED.size > 0 ? Array.from(SELECTED) : PROPERTIES.map(p => p.id);
 
- PROPERTIES.filter((p) => selectedIds.includes(p.id)).forEach((p) => {
-  const f = FINANCIALS[p.id] || {};
-  const hoa = f.hoaInfo || {
-  company: f.hoaCompany || "",
-  website: f.hoaWebsite || "",
-  phone: f.hoaPhone || "",
-  email: f.hoaEmail || ""
-};
+  PROPERTIES
+    .filter(p => selectedIds.includes(p.id))
+    .forEach(p => {
+      const f = FINANCIALS[p.id] || {};
 
-  body.innerHTML += `
-    <tr>
-      <td>${p.name}</td>
-      <td>${hoa.company || "—"}</td>
-      <td>${
-        hoa.website
-          ? `<a href="${hoa.website}" target="_blank" rel="noopener">${hoa.website}</a>`
-          : "—"
-      }</td>
-      <td>${hoa.phone || "—"}</td>
-      <td>${
-        hoa.email
-          ? `<a href="mailto:${hoa.email}">${hoa.email}</a>`
-          : "—"
-      }</td>
-    </tr>
-  `;
-});
+      // 🔁 Backward-compatible HOA resolver
+      const hoa = f.hoaInfo || {
+        company: f.hoaCompany ?? null,
+        website: f.hoaWebsite ?? null,
+        phone: f.hoaPhone ?? null,
+        email: f.hoaEmail ?? null
+      };
+
+      body.innerHTML += `
+        <tr>
+          <td>${p.name}</td>
+          <td>${hoa.company || "—"}</td>
+          <td>${
+            hoa.website
+              ? `<a href="${hoa.website}" target="_blank" rel="noopener">${hoa.website}</a>`
+              : "—"
+          }</td>
+          <td>${hoa.phone || "—"}</td>
+          <td>${
+            hoa.email
+              ? `<a href="mailto:${hoa.email}">${hoa.email}</a>`
+              : "—"
+          }</td>
+        </tr>
+      `;
+    });
 }
-
 /* ---------------- INIT ---------------- */
 
 const PAGE = document.body?.dataset?.page;
