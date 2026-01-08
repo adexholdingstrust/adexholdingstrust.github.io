@@ -1461,3 +1461,19 @@ body.withSidebar .container {
     page-break-before: always;
   }
 }
+/* ===========================
+   HOA WEBSITE CLEAN WRAPPING
+=========================== */
+
+#hoaBody td:nth-child(3) {
+  white-space: normal !important;
+  max-width: 320px;
+}
+
+#hoaBody td:nth-child(3) a {
+  display: block;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
