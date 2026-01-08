@@ -64,15 +64,19 @@ const daysUntil = (iso) => {
 function formatHOAPhone(phone) {
   if (!phone) return "—";
 
-  const parts = phone
-    .replace(/and/gi, ",")
-    .split(",")
-    .map(p => p.trim())
-    .filter(Boolean);
+  // Extract digit groups (10 digits each)
+  const digits = phone.replace(/\D/g, "");
+  const groups = digits.match(/\d{10}/g) || [];
+
+  if (!groups.length) return phone;
+
+  const formatted = groups.map(d =>
+    `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`
+  );
 
   return `
     <div class="hoa-phone">
-      ${parts.map(p => `<div class="hoa-phone-line">${p}</div>`).join("")}
+      ${formatted.map(p => `<div class="hoa-phone-line">${p}</div>`).join("")}
     </div>
   `;
 }
