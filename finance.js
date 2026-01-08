@@ -233,11 +233,15 @@ async function loadFinancials() {
 FINANCIALS = json.financials || {};
 
 Object.values(FINANCIALS).forEach((f) => {
-  // Always ensure maintenanceActuals exists
   f.maintenanceActuals ||= {};
 
-  // ✅ NORMALIZE HOA DATA (this is what rent/mortgage already get implicitly)
-  if (!f.hoaInfo) {
+  if (
+    !f.hoaInfo ||
+    (!f.hoaInfo.company &&
+     !f.hoaInfo.website &&
+     !f.hoaInfo.phone &&
+     !f.hoaInfo.email)
+  ) {
     f.hoaInfo = {
       company: f.hoaCompany ?? null,
       website: f.hoaWebsite ?? null,
