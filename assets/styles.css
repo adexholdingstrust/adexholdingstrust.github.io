@@ -1330,31 +1330,31 @@ body.withSidebar .container {
 }
 .pos::before { content: "▲ "; }
 .neg::before { content: "▼ "; }
+
 /* ===========================
-   HOA TABLE (CLEAN + FINAL)
+   HOA TABLE — FINAL
 =========================== */
 
-/* Base cell behavior */
 #hoaBody td,
 #hoaBody th {
   vertical-align: top;
   text-align: center;
 }
 
-/* Property name left-aligned */
 #hoaBody td:first-child {
   text-align: left;
   font-weight: 600;
 }
 
-/* Allow wrapping in all HOA cells */
-#hoaBody td {
+/* HOA Company */
+#hoaBody td:nth-child(2) {
+  max-width: 260px;
   white-space: normal;
-  line-height: 1.4;
   word-break: break-word;
+  line-height: 1.35;
 }
 
-/* Website + Email links */
+/* Website + Email */
 #hoaBody td a {
   display: inline-block;
   max-width: 420px;
@@ -1363,7 +1363,12 @@ body.withSidebar .container {
   line-height: 1.4;
 }
 
-/* Phone numbers stacked vertically */
+/* Phone column */
+#hoaBody td:nth-child(4) {
+  white-space: normal;
+}
+
+/* Phone numbers stacked */
 .hoa-phone {
   display: flex;
   flex-direction: column;
@@ -1371,11 +1376,9 @@ body.withSidebar .container {
   line-height: 1.3;
 }
 
-/* Hover polish */
 #hoaBody tr:hover {
   background: rgba(255,255,255,0.03);
 }
-
 
 
 /* New Addition as of Jan 8 2026 */
