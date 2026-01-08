@@ -779,7 +779,12 @@ function renderHOATable() {
 
  PROPERTIES.filter((p) => selectedIds.includes(p.id)).forEach((p) => {
   const f = FINANCIALS[p.id] || {};
-  const hoa = f.hoaInfo || {};
+  const hoa = f.hoaInfo || {
+  company: f.hoaCompany || "",
+  website: f.hoaWebsite || "",
+  phone: f.hoaPhone || "",
+  email: f.hoaEmail || ""
+};
 
   body.innerHTML += `
     <tr>
