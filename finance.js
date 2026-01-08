@@ -86,10 +86,11 @@ function loadFinancialsIntoForm(propertyId) {
   if ($("rent")) $("rent").value = f.rent ?? "";
   if ($("mortgage")) $("mortgage").value = f.mortgage ?? "";
   if ($("hoa")) $("hoa").value = f.hoa ?? "";
-  if ($("hoaCompany")) $("hoaCompany").value = f.hoaCompany ?? "";
-  if ($("hoaWebsite")) $("hoaWebsite").value = f.hoaWebsite ?? "";
-  if ($("hoaPhone")) $("hoaPhone").value = f.hoaPhone ?? "";
-  if ($("hoaEmail")) $("hoaEmail").value = f.hoaEmail ?? "";
+   const hoa = f.hoaInfo || {};
+      if ($("hoaCompany")) $("hoaCompany").value = hoa.company ?? "";
+      if ($("hoaWebsite")) $("hoaWebsite").value = hoa.website ?? "";
+      if ($("hoaPhone")) $("hoaPhone").value = hoa.phone ?? "";
+      if ($("hoaEmail")) $("hoaEmail").value = hoa.email ?? "";
   if ($("maintenance")) $("maintenance").value = f.maintenance ?? "";
   if ($("tax")) $("tax").value = f.tax ?? "";
   if ($("rentStart")) $("rentStart").value = f.rentStartDate ?? "";
@@ -658,10 +659,11 @@ function openEditor(id) {
   $("rent").value = f.rent ?? "";
   $("mortgage").value = f.mortgage ?? "";
   $("hoa").value = f.hoa ?? "";
-  $("hoaCompany").value = f.hoaCompany ?? "";
-  $("hoaWebsite").value = f.hoaWebsite ?? "";
-  $("hoaPhone").value = f.hoaPhone ?? "";
-  $("hoaEmail").value = f.hoaEmail ?? "";
+   const hoa = f.hoaInfo || {};
+   $("hoaCompany").value = hoa.company ?? "";
+   $("hoaWebsite").value = hoa.website ?? "";
+   $("hoaPhone").value = hoa.phone ?? "";
+   $("hoaEmail").value = hoa.email ?? "";
   $("maintenance").value = f.maintenance ?? "";
   $("tax").value = f.tax ?? "";
   $("rentStart").value = f.rentStartDate ?? "";
@@ -713,10 +715,13 @@ async function saveFinancials() {
     deposit: num($("deposit").value),
     rentStartDate: $("rentStart").value || null,
     rentEndDate: $("rentEnd").value || null,
-    hoaCompany: $("hoaCompany").value || existing.hoaCompany || null,
-    hoaWebsite: $("hoaWebsite").value || existing.hoaWebsite || null,
-    hoaPhone: $("hoaPhone").value || existing.hoaPhone || null,
-    hoaEmail: $("hoaEmail").value || existing.hoaEmail || null
+hoaInfo: {
+  company: $("hoaCompany").value || existing.hoaInfo?.company || null,
+  website: $("hoaWebsite").value || existing.hoaInfo?.website || null,
+  phone: $("hoaPhone").value || existing.hoaInfo?.phone || null,
+  email: $("hoaEmail").value || existing.hoaInfo?.email || null
+}
+
   };
 
   let res;
@@ -772,27 +777,28 @@ function renderHOATable() {
   const selectedIds =
     SELECTED.size > 0 ? Array.from(SELECTED) : PROPERTIES.map((p) => p.id);
 
-  PROPERTIES.filter((p) => selectedIds.includes(p.id)).forEach((p) => {
-    const f = FINANCIALS[p.id] || {};
+ PROPERTIES.filter((p) => selectedIds.includes(p.id)).forEach((p) => {
+  const f = FINANCIALS[p.id] || {};
+  const hoa = f.hoaInfo || {};
 
-    body.innerHTML += `
-      <tr>
-        <td>${p.name}</td>
-        <td>${f.hoaCompany || "—"}</td>
-        <td>${
-          f.hoaWebsite
-            ? `<a href="${f.hoaWebsite}" target="_blank" rel="noopener">${f.hoaWebsite}</a>`
-            : "—"
-        }</td>
-        <td>${f.hoaPhone || "—"}</td>
-        <td>${
-          f.hoaEmail
-            ? `<a href="mailto:${f.hoaEmail}">${f.hoaEmail}</a>`
-            : "—"
-        }</td>
-      </tr>
-    `;
-  });
+  body.innerHTML += `
+    <tr>
+      <td>${p.name}</td>
+      <td>${hoa.company || "—"}</td>
+      <td>${
+        hoa.website
+          ? `<a href="${hoa.website}" target="_blank" rel="noopener">${hoa.website}</a>`
+          : "—"
+      }</td>
+      <td>${hoa.phone || "—"}</td>
+      <td>${
+        hoa.email
+          ? `<a href="mailto:${hoa.email}">${hoa.email}</a>`
+          : "—"
+      }</td>
+    </tr>
+  `;
+});
 }
 
 /* ---------------- INIT ---------------- */
