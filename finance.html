@@ -45,6 +45,11 @@ body{
 .top img{height:42px}
 .top .title{font-weight:700;letter-spacing:.05em}
 .top .sub{font-size:12px;opacity:.6}
+  
+  /* Hide PDF-only header on screen */
+.pdfHeader {
+  display: none;
+}
 
 /* Cards */
 .card{
@@ -158,6 +163,18 @@ tfoot td{font-weight:700}
 =========================== */
 
 @media print {
+.card {
+  page-break-inside: avoid;
+}
+
+table {
+  page-break-inside: auto;
+}
+
+tr {
+  page-break-inside: avoid;
+  page-break-after: auto;
+}
 
   body {
     background: #ffffff !important;
@@ -297,10 +314,19 @@ tfoot td{font-weight:700}
 
 <body data-page="finance">
 <div class="wrap">
- 
+ <!-- PRINT HEADER (PDF ONLY) -->
+<div class="pdfHeader">
+  <img src="https://adexholdings.com/assets/logo.png"
+     alt="Adex Holdings Trust Logo" />
+  <div>
+    <div class="pdfTitle">Adex Holdings Trust</div>
+    <div class="pdfSub">Finance Overview</div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <div class="top">
-  <img src="/assets/logo.png">
+  <img src="https://adexholdings.com/assets/logo.png">
   <div>
     <div class="title">ADEX HOLDINGS TRUST</div>
     <div class="sub">Finance Overview</div>
