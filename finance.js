@@ -58,6 +58,50 @@ const daysUntil = (iso) => {
   if (!iso) return null;
   return Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
 };
+/* ---------------- HOA FORMATTERS ---------------- */
+
+// Split phone numbers into vertical lines
+function formatHOAPhone(phone) {
+  if (!phone) return "—";
+
+  // Normalize separators: "and", ",", "/"
+  const parts = phone
+    .replace(/and/gi, ",")
+    .split(",")
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  if (parts.length === 1) return parts[0];
+
+  return `
+    <div class="hoa-phone">
+      ${parts.map(p => `<span>${p}</span>`).join("")}
+    </div>
+  `;
+}
+
+// Split multiple emails cleanly
+function formatHOAEmail(email) {
+  if (!email) return "—";
+
+  const parts = email
+    .replace(/and/gi, ",")
+    .split(",")
+    .map(e => e.trim())
+    .filter(Boolean);
+
+  if (parts.length === 1) {
+    return `<a href="mailto:${parts[0]}">${parts[0]}</a>`;
+  }
+
+  return `
+    <div class="hoa-email">
+      ${parts
+        .map(e => `<a href="mailto:${e}">${e}</a>`)
+        .join("")}
+    </div>
+  `;
+}
 
 /* ---------------- PROPERTY MULTI-SELECT HELPERS ---------------- */
 
@@ -789,6 +833,7 @@ function exportPDF() {
   window.print();
 }
 
+
 /* ---------------- HOA TABLE ---------------- */
 function renderHOATable() {
   const body = $("hoaBody");
@@ -804,7 +849,6 @@ function renderHOATable() {
     .forEach(p => {
       const f = FINANCIALS[p.id] || {};
 
-      // 🔁 Backward-compatible HOA resolver
       const hoa = f.hoaInfo || {
         company: f.hoaCompany ?? null,
         website: f.hoaWebsite ?? null,
@@ -815,18 +859,18 @@ function renderHOATable() {
       body.innerHTML += `
         <tr>
           <td>${p.name}</td>
+
           <td>${hoa.company || "—"}</td>
+
           <td>${
             hoa.website
               ? `<a href="${hoa.website}" target="_blank" rel="noopener">${hoa.website}</a>`
               : "—"
           }</td>
-          <td>${hoa.phone || "—"}</td>
-          <td>${
-            hoa.email
-              ? `<a href="mailto:${hoa.email}">${hoa.email}</a>`
-              : "—"
-          }</td>
+
+          <td>${formatHOAPhone(hoa.phone)}</td>
+
+          <td>${formatHOAEmail(hoa.email)}</td>
         </tr>
       `;
     });
