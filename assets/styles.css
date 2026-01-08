@@ -1376,3 +1376,83 @@ body.withSidebar .container {
   background: rgba(255,255,255,0.03);
 }
 
+/* New Addition as of Jan 8 2026 */
+/* =========================
+   PRINT / PDF EXPORT FIXES
+   ========================= */
+@media print {
+
+  /* Page setup */
+  @page {
+    size: landscape;
+    margin: 18mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11px;
+  }
+
+  /* Force full-width tables */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed;
+  }
+
+  th, td {
+    word-wrap: break-word;
+    white-space: normal;
+    font-size: 10.5px;
+    padding: 6px;
+  }
+
+  /* Prevent rows from breaking across pages */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* Section spacing */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  .section,
+  .card,
+  .tableWrapper {
+    page-break-inside: avoid;
+  }
+}
+@media print {
+  .logo,
+  .brand,
+  header img {
+    display: block !important;
+    visibility: visible !important;
+    max-height: 60px;
+  }
+
+  header {
+    position: static !important;
+  }
+}
+.printHeader {
+  display: none;
+}
+
+@media print {
+  .printHeader {
+    display: block;
+    margin-bottom: 12px;
+  }
+}
+@media print {
+  .hoaTable tr {
+    page-break-inside: avoid;
+  }
+
+  .hoaSection {
+    page-break-before: always;
+  }
+}
