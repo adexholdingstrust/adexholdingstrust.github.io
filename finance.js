@@ -60,26 +60,22 @@ const daysUntil = (iso) => {
 };
 /* ---------------- HOA FORMATTERS ---------------- */
 
-// Split phone numbers into vertical lines
+// Format phone numbers: one 10-digit number per line
 function formatHOAPhone(phone) {
   if (!phone) return "—";
 
-  // Normalize separators: "and", ",", "/"
   const parts = phone
     .replace(/and/gi, ",")
     .split(",")
     .map(p => p.trim())
     .filter(Boolean);
 
-  if (parts.length === 1) return parts[0];
-
   return `
     <div class="hoa-phone">
-      ${parts.map(p => `<span>${p}</span>`).join("")}
+      ${parts.map(p => `<div class="hoa-phone-line">${p}</div>`).join("")}
     </div>
   `;
 }
-
 // Split multiple emails cleanly
 function formatHOAEmail(email) {
   if (!email) return "—";
