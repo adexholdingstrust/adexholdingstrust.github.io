@@ -1477,3 +1477,26 @@ body.withSidebar .container {
   overflow-wrap: anywhere;
   line-height: 1.4;
 }
+/* HOA phone formatting */
+.hoa-phone {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hoa-phone-line {
+  white-space: nowrap;   /* 🔑 prevents mid-number wrap */
+}
+/* HOA Website balanced wrapping */
+#hoaBody td:nth-child(3) {
+  white-space: normal !important;
+  max-width: 300px;
+}
+
+#hoaBody td:nth-child(3) a {
+  display: block;
+  max-width: 100%;
+  line-height: 1.45;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
