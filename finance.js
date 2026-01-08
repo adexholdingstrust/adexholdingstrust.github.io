@@ -230,11 +230,22 @@ async function loadFinancials() {
       return;
     }
 
-    FINANCIALS = json.financials || {};
+FINANCIALS = json.financials || {};
 
-    Object.values(FINANCIALS).forEach((f) => {
-      f.maintenanceActuals ||= {};
-    });
+Object.values(FINANCIALS).forEach((f) => {
+  // Always ensure maintenanceActuals exists
+  f.maintenanceActuals ||= {};
+
+  // ✅ NORMALIZE HOA DATA (this is what rent/mortgage already get implicitly)
+  if (!f.hoaInfo) {
+    f.hoaInfo = {
+      company: f.hoaCompany ?? null,
+      website: f.hoaWebsite ?? null,
+      phone: f.hoaPhone ?? null,
+      email: f.hoaEmail ?? null
+    };
+  }
+});
 
   } catch (err) {
     console.error("Finance load failed:", err);
