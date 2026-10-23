@@ -26,7 +26,8 @@ def parse_bill(text, year):
         raise ValueError("Annual total not found")
     # Due dates are explicitly shown in installment columns on the tax bill.
     dates = re.findall(r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+20\d{2}\b", text)
-    amounts = re.findall(r"(?m)^\s*\$([\d,]+\.\d{2})\s*$", text)
+    block = text.split("4TH INSTALLMENT", 1)[-1].split("AMOUNT BARCODE", 1)[0]
+    amounts = re.findall(r"\$([\d,]+\.\d{2})", block)
     if len(dates) < 4 or len(amounts) < 4:
         raise ValueError("Installments require review")
     # The bill lays out installments from fourth to first.
