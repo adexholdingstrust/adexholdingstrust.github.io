@@ -1,0 +1,10 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {normalizeHOABalance,evaluateHOASnapshot} from "./hoa-snapshot-rules.js";
+const base={propertyId:"aurora-oxford-co",provider:"LCM",observedOn:"2026-10-23",balance:684.28};
+test("outstanding balance is not confirmed payment",()=>assert.equal(normalizeHOABalance(base).paymentConfirmed,false));
+test("negative balance is a provisional credit",()=>assert.equal(normalizeHOABalance({...base,balance:-605}).status,"credit_displayed"));
+test("zero balance does not confirm payment",()=>assert.equal(normalizeHOABalance({...base,balance:0}).status,"zero_balance_unverified"));
+test("dated snapshot becomes stale",()=>assert.equal(evaluateHOASnapshot(base,{asOfDate:"2026-10-26"}).stale,true));
+test("same-day snapshot not stale",()=>assert.equal(evaluateHOASnapshot(base,{asOfDate:"2026-10-23"}).stale,false));
+test("reject nonnumeric balance",()=>assert.throws(()=>normalizeHOABalance({...base,balance:"684.28"}),/Invalid/));
