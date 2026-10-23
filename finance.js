@@ -505,9 +505,9 @@ function openPropertyModal(property) {
 
   const rent = num(f.rent);
   const mortgage = num(f.mortgage);
-  const hoa = num(f.hoa);
+  const hoa = monthlyHOAFor(property, f);
   const maintenance = num(f.maintenance);
-  const tax = num(f.tax) / 12;
+  const tax = annualTaxFor(property, f) / 12;
 
   const expenses = mortgage + hoa + maintenance + tax;
   const monthlyNet = rent - expenses;
@@ -731,7 +731,7 @@ if (fill && text) {
 if ($("kpiStress")) {
   const stressScores = PROPERTIES
     .filter(p => selectedIds.includes(p.id))
-    .map(p => computePortfolioStress(p, {...FINANCIALS[p.id],tax:annualTaxFor(p,FINANCIALS[p.id]||{})}));
+    .map(p => computePortfolioStress(p, {...FINANCIALS[p.id],hoa:monthlyHOAFor(p,FINANCIALS[p.id]||{}),tax:annualTaxFor(p,FINANCIALS[p.id]||{})}));
 
   const avgStress =
     stressScores.length === 0

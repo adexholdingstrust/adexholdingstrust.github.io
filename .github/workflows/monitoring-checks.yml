@@ -1,0 +1,36 @@
+name: Monitoring checks
+on:
+  pull_request:
+    paths:
+      - 'hoa-monitor-worker/**'
+      - 'monitoring/**'
+      - 'finance.js'
+      - '.github/workflows/*monitor*.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'hoa-monitor-worker/**'
+      - 'monitoring/**'
+      - 'finance.js'
+      - '.github/workflows/*monitor*.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: node --test monitoring/*.test.mjs hoa-monitor-worker/*.test.mjs
+      - run: python -m unittest discover -s monitoring -p 'test_*.py'
+      - run: node --check finance.js
+      - run: git diff --check
+      - name: Bundle isolated Worker without deployment
+        run: npx --yes wrangler@4.86.0 deploy --dry-run --config hoa-monitor-worker/wrangler.toml --outdir /tmp/adex-monitor-build
+        env:
+          WRANGLER_SEND_METRICS: 'false'

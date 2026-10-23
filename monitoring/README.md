@@ -1,26 +1,105 @@
-# HOA payment monitoring (foundation)
+# Adex HOA and property tax monitoring
 
-This folder contains **read-only decision rules**, not a working portal integration.
+Implementation state, October 23, 2026: code is prepared and locally tested.
+**Cloudflare deployment, authenticated HOA collection, and live email delivery are not verified.**
+No payment initiation is implemented. No existing finance KV records are modified.
 
-Run tests with Node.js 20+:
+## Components
+
+- `hoa-monitor-worker/`: isolated `adex-hoa-monitor` Worker in Adex account
+  `8956c5a630c91f81296ffb3e8f9a7532`. Separate storage binding `HOA_MONITOR_KV`.
+  It has no routes over the production website and no binding to its finance KV.
+- `POST /ingest`: signed version 2 normalized HOA/county observations. Strict
+  property, source host, timestamp, amount, date, and payment validation. Credentials,
+  cookies, arbitrary additional fields, and stale observations are rejected.
+- HMAC SHA-256 signature: sign `UNIX_SECONDS + '.' + RAW_JSON_BODY` with the
+  dedicated `HOA_INGEST_SECRET`. Headers `X-Adex-Timestamp` and
+  `X-Adex-Signature: sha256=HEX`. Five minute transport window. Previously stored
+  newer observations reject older data. KV is eventually consistent, so this is
+  not a transaction or an exact-once replay guarantee.
+- `GET /health`: configuration flags only, no financial/account values.
+- `GET /status`: HMAC on timestamp plus `.` plus empty body; returns last scheduled
+  check summary. Do not expose the signing secret in the website or browser.
+- Worker checks stored observations at 14:15 and 21:15 UTC daily. These checks
+  **do not log into portals**. They evaluate current evidence, detect stale data
+  after 48 hours, and report missing collectors. Property-local dates handle DST.
+- Brevo notifications address both `tenantservices@adexholdings.com` and
+  `ahmedadeyemi@gmail.com`. `NOTIFICATIONS_ENABLED=false` until acceptance.
+  Failed sends remain retryable. Pending sends retry after 15 minutes on a later
+  ingestion/check. KV notification suppression is best effort; simultaneous runs
+  or an ambiguous email-provider timeout can cause duplicate delivery.
+- `collect-county-tax.py`: public Elko account retrieval plus fresh-token PDF
+  download and reconciliation. Two account/bill totals must match before a tax
+  confirmation is accepted. Does not fabricate missing due dates or payment dates.
+- GitHub county collector workflow: daily 13:45/20:45 UTC, disabled unless repository
+  variable `ADEX_MONITOR_COLLECTORS_ENABLED=true`. Manual dry-run is available.
+- Existing Nye PDF extractor and other county registry entries remain source data,
+  **not connected recurring collectors**.
+- Finance modal, monthly results, and portfolio stress summary use the same HOA
+  assessment and annual county-tax overrides. Bank contributions/prepayments stay
+  separate. Calabrese assessment is $205/month; $120/14 days is $3,120/year and
+  $260/month average cash outflow, not an increased HOA expense.
+
+## Verification
+
+Node 24+, Python 3.12+, and Poppler `pdftotext` for live PDF collection:
 
 ```bash
-node --experimental-default-type=module --test monitoring/hoa-rules.test.mjs
+node --test monitoring/*.test.mjs hoa-monitor-worker/*.test.mjs
+python -m unittest discover -s monitoring -p 'test_*.py'
+node --check finance.js
+git diff --check
+npx --yes wrangler@4.86.0 deploy --dry-run --config hoa-monitor-worker/wrangler.toml --outdir /tmp/adex-monitor-build
+python monitoring/collect-county-tax.py --dry-run
 ```
 
-## Intended workflow
+## Deployment and activation prerequisites
 
-1. An authorized connector reads a portal using a permitted, securely stored login session. Do not commit passwords, session cookies, browser network logs, or account numbers.
-2. The connector normalizes an assessment to `{amountDue,dueDate,payments,asOfDate,autopayScheduled}`. The `asOfDate` must be the property's local calendar date.
-3. Only an explicitly **posted** payment counts toward confirmation. Scheduled autopay is not payment confirmation; NSF, failed, returned and reversed entries require investigation.
-4. Alert both configured recipients when a payment remains unconfirmed by the 7th, when overdue, or when failed. Send a confirmation only after posted payment is verified. Deduplicate by property, due date and status, and retain a timestamp/source for every check.
-5. A portal balance alone cannot prove which assessment has been paid. Human review is required when the ledger is ambiguous.
+1. Authenticate Wrangler to the Adex account and verify account identity. Do not
+   reuse another organization's login or alter `adex-trust-security`.
+2. Create a dedicated KV namespace; add its actual ID under `[[kv_namespaces]]`
+   with binding `HOA_MONITOR_KV` in the standalone Wrangler config.
+3. Provision a new high-entropy `HOA_INGEST_SECRET` through secure secret entry.
+   For the GitHub collector, put the same signing value in repository Actions
+   secret `ADEX_MONITOR_INGEST_SECRET`. Never commit or print it.
+4. Configure the verified Brevo sender (`HOA_SENDER_EMAIL` or `EMAIL_FROM`) and
+   `BREVO_API_KEY` for this Worker securely. Existing Worker secrets cannot be
+   read back by Wrangler. Do not copy passwords into source or dashboard scripts.
+5. Deploy with `npx --yes wrangler@4.86.0 deploy --config hoa-monitor-worker/wrangler.toml`.
+   Verify `/health`, unsigned ingestion 401, signed valid ingestion, invalid-data
+   rejection, and signed `/status`. Verify only the new Worker changed.
+6. Set GitHub variable `ADEX_MONITOR_URL` to the verified Worker origin. Run the
+   collector manually in dry-run, then delivery mode with emails disabled. Read
+   back dedicated monitoring storage; verify no finance writes occurred.
+7. Connect provider-specific read-only collectors for LCM Oxford Place, TownSq
+   Hoye Drive, and FrontSteps Calabrese. **These are not implemented:** authenticated
+   sessions/API contracts must be inspected and validated first. MFA or interactive
+   challenges require account-holder involvement. No guessed login endpoints.
+8. Validate remaining county account mappings and allowed retrieval methods:
+   Navajo, Iron (email verification), Valencia (special assessments), Los Angeles
+   (AIN and prior-year delinquency), Nye, and Apache (alternative payment options,
+   not additive installments). Do not guess dates or infer paid from zero balances.
+9. Enable notifications and send a clearly labelled acceptance message to both
+   configured recipients; verify provider acceptance and inbox receipt. Test failed
+   delivery recovery and duplicate suppression. Enable collector repository variable
+   only after acceptance. A full run reports 14 expected property records (3 HOA,
+   11 county); missing collectors must remain visible.
+10. Verify the next scheduled executions in Cloudflare and GitHub. Deployment of
+    a cron configuration alone does not establish that collection is operational.
 
-## Not yet implemented
+## Payment evidence and source handling
 
-- Secure authenticated portal navigation and extraction
-- Cloudflare Worker scheduled execution and alert email delivery
-- Durable alert state, monitoring dashboard, payment history, and integration tests
-- County tax monitoring and lease expiration email verification
+HOA confirmations require posted positive payment references allocated to the
+specific due date, less reversals. Scheduled autopay, a credit balance, and a
+payment description alone are insufficient. County annual confirmation may use
+reconciled current-year account and bill totals with zero overall balance.
+Tax reminders with unknown deadlines stay unverified. Source paths/account IDs
+are not included in email; the originating host and property label identify the
+record. No authentication/session payload belongs in normalized snapshots.
 
-**No automatic payment initiation.** Existing finance data and KV records must remain untouched until monitoring is validated.
+## Remaining blockers at preparation time
+
+The available Cloudflare browser was signed out and no Wrangler credentials were
+present. Dedicated KV, signing/email secrets, deployments, recurring execution,
+HOA portal sessions, remaining county readers, and real email receipt require
+verification. Production services have not been modified by this branch.
