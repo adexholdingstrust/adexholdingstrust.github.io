@@ -1,0 +1,38 @@
+name: County tax monitoring
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Read and reconcile county records without sending to the Worker
+        type: boolean
+        default: true
+  schedule:
+    - cron: '45 13,20 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: adex-county-tax-monitor
+  cancel-in-progress: false
+jobs:
+  collect:
+    if: github.event_name == 'workflow_dispatch' || vars.ADEX_MONITOR_COLLECTORS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PDF text extraction
+        run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
+      - name: Read county accounts and reconcile bills
+        env:
+          ADEX_MONITOR_URL: ${{ vars.ADEX_MONITOR_URL }}
+          ADEX_MONITOR_INGEST_SECRET: ${{ secrets.ADEX_MONITOR_INGEST_SECRET }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            python monitoring/collect-county-tax.py --dry-run
+          else
+            python monitoring/collect-county-tax.py
+          fi
