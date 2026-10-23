@@ -15,8 +15,9 @@ async function validSignature(body,signature,secret){
   return diff===0;
 }
 async function sendBrevo(env,email){
-  if(!env.BREVO_API_KEY||!env.HOA_SENDER_EMAIL)throw new Error("Email service not configured");
-  const res=await fetch("https://api.brevo.com/v3/smtp/email",{method:"POST",headers:{"api-key":env.BREVO_API_KEY,"content-type":"application/json"},body:JSON.stringify({sender:{email:env.HOA_SENDER_EMAIL,name:"Adex HOA Monitoring"},to:email.to.map(address=>({email:address})),subject:email.subject,textContent:email.text})});
+  const sender=env.HOA_SENDER_EMAIL||env.EMAIL_FROM;
+  if(!env.BREVO_API_KEY||!sender)throw new Error("Email service not configured");
+  const res=await fetch("https://api.brevo.com/v3/smtp/email",{method:"POST",headers:{"api-key":env.BREVO_API_KEY,"content-type":"application/json"},body:JSON.stringify({sender:{email:sender,name:env.BREVO_SENDER_NAME||"Adex HOA Monitoring"},to:email.to.map(address=>({email:address})),subject:email.subject,textContent:email.text})});
   if(!res.ok)throw new Error("Email provider rejected delivery: "+res.status);
 }
 export default {async fetch(request,env){
