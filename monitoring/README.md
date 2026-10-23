@@ -103,3 +103,34 @@ The available Cloudflare browser was signed out and no Wrangler credentials were
 present. Dedicated KV, signing/email secrets, deployments, recurring execution,
 HOA portal sessions, remaining county readers, and real email receipt require
 verification. Production services have not been modified by this branch.
+
+
+## Deployment without Cloud Browser
+
+The `Deploy isolated Adex monitor` GitHub Actions workflow supports the account
+holder's normal browser. Add an account-scoped API token as repository Actions
+secret `ADEX_MONITOR_CLOUDFLARE_API_TOKEN`. The workflow pins the Adex account,
+Worker name, namespace title, and notifications-off policy, and refuses site
+routes, other account IDs, service bindings, and ambiguous storage namespaces.
+Use only Workers Scripts edit, Workers KV Storage edit, and Account Settings
+read permissions for this Adex account; do not supply a Global API Key.
+
+The deployment job is gated by `ADEX_MONITOR_DEPLOY_ENABLED=true` on main pushes,
+or can run manually via Actions. It creates/reuses only
+`adex-hoa-monitor-dedicated-v1`, deploys the monitoring Worker, installs its signing
+secret, checks health and authenticated/unauthenticated requests, and delivers
+both reconciled Elko observations with notifications disabled. It does not
+configure the old production Worker or touch finance KV. A failed deploy may
+leave the dedicated namespace or monitoring Worker partially provisioned; review
+the job summary rather than assuming activation succeeded.
+
+An explicit `ADEX_MONITOR_INGEST_SECRET` Actions secret is preferred. If omitted,
+the pipeline derives a domain-separated HMAC key from the scoped Cloudflare API
+token. The Cloudflare API token itself is never sent to ingestion. The county
+collector can derive the same signing key and discover the Worker origin using
+that repository token; it needs no copying of plaintext credentials through chat.
+After rotating the Cloudflare token, redeploy before running collectors so the
+Worker and collector use the same derived key. The optional repository secret
+`ADEX_MONITOR_BREVO_API_KEY` provisions email credentials for this new Worker;
+notifications stay disabled even when it is present. Existing encrypted Worker
+secrets cannot be read back or automatically moved to the new Worker.

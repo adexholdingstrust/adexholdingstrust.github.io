@@ -71,6 +71,18 @@ def main():
     args = parser.parse_args()
     endpoint = os.environ.get('ADEX_MONITOR_URL', '')
     secret = os.environ.get('ADEX_MONITOR_INGEST_SECRET', '')
+    token = os.environ.get('CLOUDFLARE_API_TOKEN', '')
+    if not args.dry_run and token and (not endpoint or not secret):
+        deployment = load('monitor_deployment', 'deploy-monitor.py')
+        if not secret:
+            secret = deployment.signing_secret(token)
+        print('::add-mask::' + secret, flush=True)
+        if not endpoint:
+            subdomain = deployment.api(token, f'/accounts/{deployment.ACCOUNT}/workers/subdomain')['result']['subdomain']
+            import re
+            if not re.fullmatch(r'[a-z0-9-]+', subdomain):
+                parser.error('Unexpected Worker subdomain')
+            endpoint = f'https://{deployment.WORKER}.{subdomain}.workers.dev'
     if not args.dry_run and (not endpoint or not secret):
         parser.error('Worker URL and signing secret environment variables are required')
     page = load('elko_page', 'elko-tax-extractor.py')

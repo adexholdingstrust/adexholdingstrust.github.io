@@ -27,6 +27,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
       - name: Read county accounts and reconcile bills
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN }}
           ADEX_MONITOR_URL: ${{ vars.ADEX_MONITOR_URL }}
           ADEX_MONITOR_INGEST_SECRET: ${{ secrets.ADEX_MONITOR_INGEST_SECRET }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
