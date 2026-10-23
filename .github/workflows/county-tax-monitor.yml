@@ -16,6 +16,7 @@ concurrency:
 jobs:
   collect:
     if: github.event_name == 'workflow_dispatch' || vars.ADEX_MONITOR_COLLECTORS_ENABLED == 'true'
+    environment: github-pages
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -24,7 +25,12 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install PDF text extraction
-        run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils
+        timeout-minutes: 3
+        run: |
+          if ! command -v pdftotext >/dev/null 2>&1; then
+            sudo apt-get update -qq -o Acquire::Retries=1 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20
+            sudo apt-get install -y poppler-utils
+          fi
       - name: Read county accounts and reconcile bills
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
