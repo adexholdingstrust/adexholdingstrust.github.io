@@ -1,0 +1,11 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { classifyHOAPayment, notificationKey } from "./hoa-rules.js";
+const base={amountDue:635.03,dueDate:"2026-11-01",asOfDate:"2026-11-07"};
+test("posted payment is confirmed",()=>assert.equal(classifyHOAPayment({...base,payments:[{status:"posted",dueDate:base.dueDate,amount:635.03}]}).status,"paid"));
+test("scheduled autopay is not paid",()=>assert.equal(classifyHOAPayment({...base,asOfDate:"2026-10-30",autopayScheduled:true}).status,"scheduled_unconfirmed"));
+test("missing payment by seventh needs attention",()=>assert.equal(classifyHOAPayment(base).requiresAttention,true));
+test("failed payment is flagged",()=>assert.equal(classifyHOAPayment({...base,payments:[{status:"nsf",dueDate:base.dueDate,amount:635.03}]}).status,"payment_failed"));
+test("past due without posted payment is overdue",()=>assert.equal(classifyHOAPayment({...base,asOfDate:"2026-11-08"}).status,"overdue"));
+test("invalid inputs are unknown",()=>assert.equal(classifyHOAPayment({...base,dueDate:"2026-02-30"}).status,"unknown"));
+test("notification key stable",()=>assert.equal(notificationKey("co-condo","2026-11-01","paid"),"co-condo:2026-11-01:paid"));

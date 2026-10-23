@@ -1,0 +1,10 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {evaluateLCMSnapshot} from "./lcm-evaluate.js";
+const base={propertyId:"pier-point",dueDate:"2026-11-01",observedOn:"2026-10-28",balanceDue:635.03,transactions:[{description:"Assessment-Monthly",charge:635.03}]};
+test("upcoming assessment warning",()=>assert.equal(evaluateLCMSnapshot(base).alertType,"upcoming_assessment"));
+test("unconfirmed on seventh",()=>assert.equal(evaluateLCMSnapshot({...base,observedOn:"2026-11-07"}).alertType,"unconfirmed_by_seventh"));
+test("payment problem wins",()=>assert.equal(evaluateLCMSnapshot({...base,transactions:[{description:"NSF/STP Pmt Charge",charge:20}]}).alertType,"payment_problem"));
+test("posted confirmation needs zero balance",()=>assert.equal(evaluateLCMSnapshot({...base,balanceDue:0,paymentConfirmation:"posted"}).alertType,"payment_confirmed"));
+test("no confirmation from scheduled payment",()=>assert.notEqual(evaluateLCMSnapshot({...base,balanceDue:0,paymentConfirmation:"scheduled"}).alertType,"payment_confirmed"));
+test("missing source snapshot rejected",()=>assert.throws(()=>evaluateLCMSnapshot({}),/Incomplete/));

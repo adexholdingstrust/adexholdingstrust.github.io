@@ -1,0 +1,11 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {planHOANotification,recordHOADelivery} from "./hoa-notifications.js";
+const evaluation={propertyId:"pier-point",dueDate:"2026-11-01",observedOn:"2026-11-07",alertType:"unconfirmed_by_seventh"};
+test("new alert planned",()=>assert.equal(planHOANotification(evaluation).send,true));
+test("same sent alert not repeated",()=>{const first=planHOANotification(evaluation);assert.equal(planHOANotification(evaluation,{key:first.key,deliveryStatus:"sent"}).send,false)});
+test("pending alert not repeated",()=>{const first=planHOANotification(evaluation);assert.equal(planHOANotification(evaluation,{key:first.key,deliveryStatus:"pending"}).send,false)});
+test("failed delivery retryable",()=>{const first=planHOANotification(evaluation);assert.equal(planHOANotification(evaluation,{key:first.key,deliveryStatus:"failed"}).send,true)});
+test("status change produces new notification key",()=>{const first=planHOANotification(evaluation);assert.equal(planHOANotification({...evaluation,alertType:"payment_problem"},{key:first.key,deliveryStatus:"sent"}).send,true)});
+test("receipt includes timestamp and status",()=>{const first=planHOANotification(evaluation);assert.equal(recordHOADelivery(first,"2026-11-07T12:00:00Z","sent").deliveryStatus,"sent")});
+test("invalid delivery rejected",()=>assert.throws(()=>recordHOADelivery({send:true,key:"x"},"2026-11-07T12:00:00Z","delivered"),/Invalid/));
