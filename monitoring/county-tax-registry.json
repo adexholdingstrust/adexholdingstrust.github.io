@@ -61,7 +61,16 @@
       "taxPortalUrl": "https://apps.navajocountyaz.gov/NavajoWebPayments/PropertyInformation",
       "accessMode": "lookup_required",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillDetails": {
+        "taxYear": "2026",
+        "annualAssessment": 60,
+        "paymentStatus": "unverified",
+        "amountType": "user_estimate",
+        "verifiedOn": null,
+        "source": "user_estimate",
+        "sourceUrl": "https://apps.navajocountyaz.gov/NavajoWebPayments/PropertyInformation"
+      }
     },
     {
       "propertyId": "iron-ut-113",
@@ -71,7 +80,17 @@
       "taxPortalUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D=",
       "accessMode": "email_verification_required",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillDetails": {
+        "taxYear": "2026",
+        "annualAssessment": 16.08,
+        "accountBalance": 16.08,
+        "paymentStatus": "unpaid_as_of_screenshot",
+        "verifiedOn": "2026-10-23",
+        "dueDate": "2026-11-30",
+        "source": "user_provided_screenshot",
+        "sourceUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D="
+      }
     },
     {
       "propertyId": "modena-ut-112",
@@ -81,7 +100,17 @@
       "taxPortalUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D=",
       "accessMode": "email_verification_required",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillDetails": {
+        "taxYear": "2026",
+        "annualAssessment": 15.39,
+        "accountBalance": 0,
+        "paymentStatus": "balance_zero_as_of_screenshot",
+        "verifiedOn": "2026-10-23",
+        "dueDate": "2026-11-30",
+        "source": "user_provided_screenshot",
+        "sourceUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D="
+      }
     },
     {
       "propertyId": "valencia-nm-rge-1",
@@ -91,7 +120,17 @@
       "taxPortalUrl": "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R023098",
       "accessMode": "public_tax_page",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillDetails": {
+        "taxYear": "2026",
+        "annualAssessment": 4.76,
+        "paymentStatus": "unverified",
+        "specialAssessmentsExist": true,
+        "specialAssessmentsAmount": null,
+        "verifiedOn": "2026-10-23",
+        "source": "user_provided_screenshot",
+        "sourceUrl": "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R023098"
+      }
     },
     {
       "propertyId": "valencia-nm-rancho-215",
@@ -120,7 +159,28 @@
       "taxPortalUrl": "https://ttc.lacounty.gov/request-duplicate-bill/",
       "accessMode": "manual_ain_lookup",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillDetails": {
+        "taxYear": "2026/2027",
+        "annualAssessment": 122.55,
+        "paymentStatus": "unverified",
+        "priorYearDelinquencyWarning": true,
+        "verifiedOn": "2026-10-23",
+        "installments": [
+          {
+            "dueDate": "2026-11-01",
+            "amount": 61.28,
+            "delinquentAfter": "2026-12-10"
+          },
+          {
+            "dueDate": "2027-02-01",
+            "amount": 61.27,
+            "delinquentAfter": "2027-04-10"
+          }
+        ],
+        "source": "user_provided_screenshot",
+        "sourceUrl": "https://ttc.lacounty.gov/request-duplicate-bill/"
+      }
     },
     {
       "propertyId": "lancaster-ca-253",
@@ -130,7 +190,28 @@
       "taxPortalUrl": "https://ttc.lacounty.gov/request-duplicate-bill/",
       "accessMode": "manual_ain_lookup",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillDetails": {
+        "taxYear": "2026/2027",
+        "annualAssessment": 138.88,
+        "paymentStatus": "unverified",
+        "priorYearDelinquencyWarning": true,
+        "verifiedOn": "2026-10-23",
+        "installments": [
+          {
+            "dueDate": "2026-11-01",
+            "amount": 69.44,
+            "delinquentAfter": "2026-12-10"
+          },
+          {
+            "dueDate": "2027-02-01",
+            "amount": 69.44,
+            "delinquentAfter": "2027-04-10"
+          }
+        ],
+        "source": "user_provided_screenshot",
+        "sourceUrl": "https://ttc.lacounty.gov/request-duplicate-bill/"
+      }
     },
     {
       "propertyId": "pahrump-nv-232",
@@ -176,7 +257,29 @@
       "taxPortalUrl": "https://eagletreasurer.co.apache.az.us:8443/treasurer/treasurerweb/account.jsp?account=R0042800",
       "accessMode": "public_tax_page",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillDetails": {
+        "taxYear": "2026",
+        "annualAssessment": 18.08,
+        "accountBalance": 18.08,
+        "paymentStatus": "unpaid_as_of_screenshot",
+        "verifiedOn": "2026-10-23",
+        "installments": [
+          {
+            "dueDate": "2026-11-02",
+            "amount": 18.08,
+            "type": "first_half_option"
+          },
+          {
+            "dueDate": "2026-12-31",
+            "amount": 18.08,
+            "type": "full_payment_option"
+          }
+        ],
+        "note": "Alternative payment options, not additive installments.",
+        "source": "user_provided_screenshot",
+        "sourceUrl": "https://eagletreasurer.co.apache.az.us:8443/treasurer/treasurerweb/account.jsp?account=R0042800"
+      }
     }
   ],
   "forecasting": {
