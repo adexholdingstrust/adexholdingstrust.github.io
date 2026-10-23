@@ -127,7 +127,7 @@ async function loadHOAAssessments() {
     const data = await res.json();
     HOA_ASSESSMENT_ACTUALS = new Map((data.accounts||[])
       .filter(a => Number.isFinite(a.monthlyAssessment) && a.monthlyAssessment >= 0 && a.assessmentSource !== "not verified")
-      .map(a => [a.propertyId,a.monthlyAssessment]));
+      .map(a => [({ "aurora-oxford-co":"co-condo", "aurora-hoye-co":"co-townhouse", "fallbrook-ca":"ca-sfh-fallbrook" })[a.propertyId] || a.propertyId,a.monthlyAssessment]));
   } catch(err) {console.warn("HOA assessment registry unavailable; retaining finance values",err);}
 }
 function monthlyHOAFor(property,record) {
