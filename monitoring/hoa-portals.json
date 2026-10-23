@@ -35,8 +35,8 @@
       "balance": -605,
       "observedOn": "2026-10-23",
       "status": "possible_credit_unverified",
-      "monthlyAssessment": null,
-      "assessmentSource": "not verified",
+      "monthlyAssessment": 205,
+      "assessmentSource": "owner_reported_monthly_assessment",
       "nextDueDate": null,
       "autopay": {
         "amount": 120,
@@ -45,8 +45,12 @@
         "annualPayments": 26,
         "annualCashOutflow": 3120,
         "averageMonthlyCashOutflow": 260,
-        "status": "user_reported_configured_not_verified_posted"
-      }
+        "status": "user_reported_configured_not_verified_posted",
+        "annualPotentialCreditIncrease": 660
+      },
+      "assessmentVerifiedOn": "2026-10-23",
+      "intendedMonthlyContribution": 240,
+      "contributionNote": "Owner intends to pay above the $205 monthly assessment; $120 every 14 days averages $260/month, not $240. Do not infer settlement."
     }
   ]
 }
