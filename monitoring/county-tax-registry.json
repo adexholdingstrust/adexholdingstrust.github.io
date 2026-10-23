@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "source": "user-provided tax portal links and existing assets/financials.js metadata",
+  "verificationStatus": "unverified",
+  "obligations": {
+    "landLoan": "monthly",
+    "landTax": "annual"
+  },
+  "properties": [
+    {
+      "propertyId": "elko-nv-10a-1",
+      "state": "NV",
+      "county": "Elko County",
+      "storedParcelId": "007-12Q-011",
+      "taxPortalUrl": "https://elko-search.gsacorp.io/tax/00712Q011",
+      "accessMode": "public_tax_page",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    },
+    {
+      "propertyId": "elko-nv-10a-2",
+      "state": "NV",
+      "county": "Elko County",
+      "storedParcelId": "010-81H-024",
+      "taxPortalUrl": "https://elko-search.gsacorp.io/tax/01081H024",
+      "accessMode": "public_tax_page",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    },
+    {
+      "propertyId": "navajo-az-10",
+      "state": "AZ",
+      "county": "Navajo County",
+      "storedParcelId": "201-23-012",
+      "taxPortalUrl": "https://apps.navajocountyaz.gov/NavajoWebPayments/PropertyInformation",
+      "accessMode": "lookup_required",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    },
+    {
+      "propertyId": "iron-ut-113",
+      "state": "UT",
+      "county": "Iron County",
+      "storedParcelId": "E-1699-0038-0000",
+      "taxPortalUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D=",
+      "accessMode": "email_verification_required",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    },
+    {
+      "propertyId": "modena-ut-112",
+      "state": "UT",
+      "county": "Iron County",
+      "storedParcelId": "E-1695-0014-0008-05",
+      "taxPortalUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D=",
+      "accessMode": "email_verification_required",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    },
+    {
+      "propertyId": "valencia-nm-rge-1",
+      "state": "NM",
+      "county": "Valencia County",
+      "storedParcelId": "101-502-926-426-4141100",
+      "reportedParcelId": "1-016-026-124-054-100690",
+      "requiresParcelConfirmation": true,
+      "taxPortalUrl": "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R023098",
+      "accessMode": "parcel_mismatch",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    },
+    {
+      "propertyId": "valencia-nm-rancho-215",
+      "state": "NM",
+      "county": "Valencia County",
+      "storedParcelId": "1-015-029-264-264-141100",
+      "taxPortalUrl": "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R016363",
+      "accessMode": "public_tax_page",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    },
+    {
+      "propertyId": "lancaster-ca-210",
+      "state": "CA",
+      "county": "Los Angeles County",
+      "storedParcelId": "3322-023-014",
+      "taxPortalUrl": "https://ttc.lacounty.gov/request-duplicate-bill/",
+      "accessMode": "manual_ain_lookup",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    },
+    {
+      "propertyId": "lancaster-ca-253",
+      "state": "CA",
+      "county": "Los Angeles County",
+      "storedParcelId": "3344-011-068",
+      "taxPortalUrl": "https://ttc.lacounty.gov/request-duplicate-bill/",
+      "accessMode": "manual_ain_lookup",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    },
+    {
+      "propertyId": "pahrump-nv-232",
+      "state": "NV",
+      "county": "Nye County",
+      "storedParcelId": "045-243-39",
+      "taxPortalUrl": "https://nyenv-assessor.devnetwedge.com/parcel/view/04524339/2026",
+      "accessMode": "dynamic_tax_year",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null,
+      "taxBillUrlTemplate": "https://nyenv-assessor.devnetwedge.com/TaxBill?source=RE&property_key=04524339&year={year}"
+    },
+    {
+      "propertyId": "apache-az-464",
+      "state": "AZ",
+      "county": "Apache County",
+      "storedParcelId": "206-30-098",
+      "taxPortalUrl": "https://eagletreasurer.co.apache.az.us:8443/treasurer/treasurerweb/account.jsp?account=R0042800",
+      "accessMode": "public_tax_page",
+      "verifiedTaxDueDate": null,
+      "verifiedPaymentStatus": null
+    }
+  ]
+}
