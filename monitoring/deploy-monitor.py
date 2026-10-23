@@ -99,6 +99,12 @@ def smoke(origin, secret):
             with build_opener(NoRedirect()).open(req, timeout=25) as res:
                 return res.status, json.loads(res.read(20000))
         except HTTPError as exc:
+            # Inspect only public health-page diagnostics; never log request headers.
+            if path == '/health':
+                body_text = exc.read(4096).decode('utf-8', errors='replace')
+                error_codes = re.findall(r'(?:error code[: ]*|Error[: ]+)([0-9]{3,5})', body_text, re.I)
+                signals = [label for label in ['Cloudflare Access', 'Access denied', 'Forbidden', 'Error 1101', 'error code: 1020', 'Verify you are human'] if label.lower() in body_text.lower()]
+                print(json.dumps({'healthHttpStatus': exc.code, 'contentType': exc.headers.get('Content-Type'), 'server': exc.headers.get('Server'), 'errorCodes': error_codes, 'signals': signals}), flush=True)
             return exc.code, None
     health = None
     status = None
@@ -150,6 +156,8 @@ def main():
         if not re.fullmatch(r'[a-z0-9-]+', subdomain):
             raise RuntimeError('Unexpected Worker subdomain')
         origin = f'https://{WORKER}.{subdomain}.workers.dev'
+        subdomain_settings = api(token, f'/accounts/{ACCOUNT}/workers/scripts/{WORKER}/subdomain')['result']
+        print(json.dumps({'workerSubdomainSettings': {k: subdomain_settings.get(k) for k in ['enabled', 'previews_enabled']}}), flush=True)
         smoke(origin, secret)
         child_env = dict(os.environ, ADEX_MONITOR_URL=origin, ADEX_MONITOR_INGEST_SECRET=secret)
         subprocess.run([sys.executable, 'monitoring/collect-county-tax.py'], env=child_env, cwd=ROOT, check=True)
