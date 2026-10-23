@@ -7,7 +7,12 @@
       "url": "https://lcmpropertymanagement.com/AccountStatus/40583~10533163/?type=Account&active=0",
       "balance": 684.28,
       "observedOn": "2026-10-23",
-      "status": "unverified"
+      "status": "unverified",
+      "monthlyAssessment": 635.03,
+      "assessmentSource": "2026-11-01 ledger assessment",
+      "assessmentVerifiedOn": "2026-10-23",
+      "nextDueDate": "2026-11-01",
+      "balanceIncludesFutureAssessment": true
     },
     {
       "propertyId": "aurora-hoye-co",
@@ -16,7 +21,12 @@
       "balance": 199.32,
       "observedOn": "2026-10-23",
       "status": "outstanding_balance",
-      "lastPayment": 330.68
+      "lastPayment": 330.68,
+      "monthlyAssessment": 330.68,
+      "assessmentSource": "2026-10-01 ledger assessment",
+      "assessmentVerifiedOn": "2026-10-23",
+      "nextDueDate": "2026-11-01",
+      "autopayStatus": "configured_not_payment_proof"
     },
     {
       "propertyId": "fallbrook-ca",
@@ -24,7 +34,10 @@
       "url": "https://horsecreekridge.frontsteps.com/dashboard#tour",
       "balance": -605,
       "observedOn": "2026-10-23",
-      "status": "possible_credit_unverified"
+      "status": "possible_credit_unverified",
+      "monthlyAssessment": null,
+      "assessmentSource": "not verified",
+      "nextDueDate": null
     }
   ]
 }
