@@ -37,7 +37,16 @@
       "status": "possible_credit_unverified",
       "monthlyAssessment": null,
       "assessmentSource": "not verified",
-      "nextDueDate": null
+      "nextDueDate": null,
+      "autopay": {
+        "amount": 120,
+        "currency": "USD",
+        "frequency": "every_14_days",
+        "annualPayments": 26,
+        "annualCashOutflow": 3120,
+        "averageMonthlyCashOutflow": 260,
+        "status": "user_reported_configured_not_verified_posted"
+      }
     }
   ]
 }
