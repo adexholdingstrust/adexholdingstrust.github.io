@@ -2,7 +2,7 @@
 # This configuration targets the Adex Cloudflare account only.
 # Do not deploy with a different Wrangler account or copy credentials from adex-trust-security.
 name = "adex-hoa-monitor"
-main = "hoa-monitor-worker/index.js"
+main = "index.js"
 compatibility_date = "2026-10-23"
 account_id = "8956c5a630c91f81296ffb3e8f9a7532"
 workers_dev = true
