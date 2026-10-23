@@ -88,7 +88,7 @@ def namespace(token):
 
 def smoke(origin, secret):
     def request(path, method='GET', body=None, signed=False):
-        headers = {'Content-Type': 'application/json'}
+        headers = {'Content-Type': 'application/json', 'User-Agent': 'AdexPropertyMonitor/2.0 (+https://adexholdings.com)'}
         if signed:
             stamp = str(int(time.time()))
             data = body or b''
