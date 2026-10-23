@@ -389,13 +389,13 @@ window.ADEX_DATA = {
 	  DownPayment: { amount: 0},
       Payments: { amount: 0, period: "month" },
       currency: "USD",
-      parcelId: "101-502-926-426-4141100",
+      parcelId: "1-016-026-124-054-100690",
       embedQuery: "Rio Grande Estates Valencia County NM",
       center: [-106.7952, 34.8031],
       links: {
         maps: "https://www.google.com/maps?q=Rio+Grande+Estates+Valencia+County+NM"
       },
-      assessor: { deepLink: "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R016363", zoning: null, assessedValue: "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R016363&doc=AccountValue" },
+      assessor: { deepLink: "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R023098", zoning: null, assessedValue: "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R023098&doc=AccountValue" },
       geo: null,
       photos: ["/assets/photos/valencia/valencia1.png"],
       video: {
