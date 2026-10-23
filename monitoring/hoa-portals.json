@@ -46,11 +46,12 @@
         "annualCashOutflow": 3120,
         "averageMonthlyCashOutflow": 260,
         "status": "user_reported_configured_not_verified_posted",
-        "annualPotentialCreditIncrease": 660
+        "annualPotentialCreditIncrease": 660,
+        "frequencyConfirmedBy": "user_bank_schedule"
       },
       "assessmentVerifiedOn": "2026-10-23",
       "intendedMonthlyContribution": 240,
-      "contributionNote": "Owner intends to pay above the $205 monthly assessment; $120 every 14 days averages $260/month, not $240. Do not infer settlement."
+      "contributionNote": "Bank confirms $120 every 14 days; average $260 monthly cash outflow. Monthly assessment is $205. Extra payments are credit/prepayment, not HOA expense."
     }
   ]
 }
