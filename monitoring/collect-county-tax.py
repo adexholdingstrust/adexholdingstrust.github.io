@@ -51,7 +51,7 @@ def deliver(snapshot, endpoint, secret):
     stamp = str(int(time.time()))
     signature = hmac.new(secret.encode(), stamp.encode() + b'.' + body, hashlib.sha256).hexdigest()
     req = Request(endpoint.rstrip('/') + '/ingest', data=body,
-                  headers={'Content-Type': 'application/json', 'X-Adex-Timestamp': stamp,
+                  headers={'Content-Type': 'application/json', 'User-Agent': 'AdexPropertyMonitor/2.0 (+https://adexholdings.com)', 'X-Adex-Timestamp': stamp,
                            'X-Adex-Signature': 'sha256=' + signature})
     # Do not follow redirects carrying signed account data to an unintended host.
     from urllib.request import HTTPRedirectHandler, build_opener
