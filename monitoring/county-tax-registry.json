@@ -17,7 +17,18 @@
       "verifiedTaxDueDate": null,
       "verifiedPaymentStatus": null,
       "taxBillUrl": "https://elko-search.gsacorp.io/taxbill/RE/00712Q011",
-      "taxBillAccessMethod": "POST via Tax Bill form on parcel detail page with fresh token"
+      "taxBillAccessMethod": "POST via Tax Bill form on parcel detail page with fresh token",
+      "taxBillDetails": {
+        "taxYear": "2026/2027",
+        "annualAssessment": 11.73,
+        "currentYearPaid": 11.73,
+        "accountBalance": 0,
+        "paymentStatus": "paid_confirmed",
+        "verificationMethod": "account_ledger_and_county_tax_bill_pdf",
+        "verifiedOn": "2026-10-23",
+        "sourceUrl": "https://elko-search.gsacorp.io/taxbill/RE/00712Q011",
+        "installments": []
+      }
     },
     {
       "propertyId": "elko-nv-10a-2",
@@ -29,7 +40,18 @@
       "verifiedTaxDueDate": null,
       "verifiedPaymentStatus": null,
       "taxBillUrl": "https://elko-search.gsacorp.io/taxbill/RE/01081H024",
-      "taxBillAccessMethod": "POST via Tax Bill form on parcel detail page with fresh token"
+      "taxBillAccessMethod": "POST via Tax Bill form on parcel detail page with fresh token",
+      "taxBillDetails": {
+        "taxYear": "2026/2027",
+        "annualAssessment": 28.38,
+        "currentYearPaid": 28.38,
+        "accountBalance": 0,
+        "paymentStatus": "paid_confirmed",
+        "verificationMethod": "account_ledger_and_county_tax_bill_pdf",
+        "verifiedOn": "2026-10-23",
+        "sourceUrl": "https://elko-search.gsacorp.io/taxbill/RE/01081H024",
+        "installments": []
+      }
     },
     {
       "propertyId": "navajo-az-10",
