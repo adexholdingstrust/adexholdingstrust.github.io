@@ -1,25 +1,40 @@
-/* HOA monitoring decision rules. No credentials, payments or external requests.
-   This module is intentionally not connected to live notifications yet. */
-export const HOA_ALERT_RECIPIENTS = [
+/* Read-only HOA monitoring decisions. No portal credentials or network access. */
+export const HOA_ALERT_RECIPIENTS = Object.freeze([
   "tenantservices@adexholdings.com",
   "ahmedadeyemi@gmail.com"
-];
+]);
 export const HOA_POLICY = Object.freeze({
   dueDay: 1,
   verifyByDay: 7,
-  warningDays: [1, 3, 5, 7],
-  timezone: "America/Denver"
+  warningDays: [1, 3, 5, 7]
 });
-export function classifyHOAPayment({ amountDue, dueDate, payments = [], asOf = new Date() }) {
-  if (!dueDate || !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return { status: "unknown", reason: "Missing due date" };
-  const due = new Date(dueDate + "T00:00:00Z");
-  const now = new Date(asOf);
-  if (Number.isNaN(due.getTime()) || Number.isNaN(now.getTime())) return { status: "unknown", reason: "Invalid date" };
+const dayNumber = (iso) => {
+  if (typeof iso !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+  const ms = Date.parse(iso + "T00:00:00Z");
+  return Number.isFinite(ms) && new Date(ms).toISOString().slice(0,10) === iso ? ms / 86400000 : null;
+};
+/* Supply asOfDate in the property's local calendar date (YYYY-MM-DD). */
+export function classifyHOAPayment({ amountDue, dueDate, payments = [], asOfDate, autopayScheduled = false }) {
+  const dueDay = dayNumber(dueDate), today = dayNumber(asOfDate);
   const amount = Number(amountDue);
-  if (!Number.isFinite(amount) || amount < 0) return { status: "unknown", reason: "Invalid amount" };
-  const confirmed = payments.filter(p => p.status === "posted" && p.dueDate === dueDate)
-    .reduce((sum,p) => sum + (Number(p.amount) || 0), 0);
-  if (confirmed >= amount && amount > 0) return { status: "paid", confirmed, amountDue: amount };
-  const daysPastDue = Math.floor((Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()) - due.getTime()) / 86400000);
-  return { status: daysPastDue > 0 ? "overdue" : "pending", amountDue: amount, confirmed, daysPastDue };
+  if (dueDay === null || today === null || !Number.isFinite(amount) || amount < 0 || !Array.isArray(payments))
+    return { status: "unknown", reason: "Missing or invalid verified inputs" };
+  const valid = payments.filter(p => p && p.dueDate === dueDate && Number.isFinite(Number(p.amount)) && Number(p.amount) > 0);
+  const posted = valid.filter(p => p.status === "posted").reduce((n,p) => n + Number(p.amount),0);
+  const reversed = valid.filter(p => p.status === "reversed").reduce((n,p) => n + Number(p.amount),0);
+  const confirmed = Math.max(0, posted - reversed);
+  const failed = valid.some(p => ["failed","returned","nsf"].includes(p.status));
+  const daysPastDue = today - dueDay;
+  let status;
+  if (amount === 0) status = "no_balance";
+  else if (confirmed >= amount && !failed) status = "paid";
+  else if (failed) status = "payment_failed";
+  else if (daysPastDue > 0) status = "overdue";
+  else if (autopayScheduled) status = "scheduled_unconfirmed";
+  else status = "pending";
+  return { status, amountDue: amount, confirmed, daysPastDue, requiresAttention: ["payment_failed","overdue"].includes(status) || (status !== "paid" && status !== "no_balance" && new Date(dueDate+"T00:00:00Z").getUTCDate() === HOA_POLICY.dueDay && Number(asOfDate.slice(8)) >= HOA_POLICY.verifyByDay && asOfDate.slice(0,7) === dueDate.slice(0,7)) };
+}
+export function notificationKey(propertyId, dueDate, status) {
+  if (!propertyId || dayNumber(dueDate) === null || !status) throw new Error("Invalid notification key");
+  return [propertyId,dueDate,status].map(encodeURIComponent).join(":");
 }
