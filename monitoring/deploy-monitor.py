@@ -100,9 +100,22 @@ def smoke(origin, secret):
                 return res.status, json.loads(res.read(20000))
         except HTTPError as exc:
             return exc.code, None
-    status, health = request('/health')
-    if status != 200 or health.get('service') != WORKER or health.get('version') != 2 or not health.get('storageConfigured') or not health.get('signingConfigured') or health.get('notificationsEnabled'):
-        raise RuntimeError('Worker health verification failed')
+    health = None
+    status = None
+    # A newly published secret/version can take a short time to reach the edge.
+    for attempt in range(7):
+        status, health = request('/health')
+        ready = (status == 200 and isinstance(health, dict) and
+                 health.get('service') == WORKER and health.get('version') == 2 and
+                 health.get('storageConfigured') and health.get('signingConfigured') and
+                 not health.get('notificationsEnabled'))
+        if ready:
+            break
+        if attempt < 6:
+            time.sleep(5)
+    else:
+        flags = {key: health.get(key) for key in ['service', 'version', 'storageConfigured', 'signingConfigured', 'notificationsEnabled']} if isinstance(health, dict) else {}
+        raise RuntimeError('Worker health verification failed: HTTP ' + str(status) + ' ' + json.dumps(flags))
     if request('/ingest', 'POST', b'{}')[0] != 401:
         raise RuntimeError('Unsigned ingestion was not rejected')
     if request('/ingest', 'POST', b'{}', True)[0] != 400:
