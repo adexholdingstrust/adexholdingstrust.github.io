@@ -15,7 +15,9 @@
       "taxPortalUrl": "https://elko-search.gsacorp.io/tax/00712Q011",
       "accessMode": "public_tax_page",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillUrl": "https://elko-search.gsacorp.io/taxbill/RE/00712Q011",
+      "taxBillAccessMethod": "POST via Tax Bill form on parcel detail page with fresh token"
     },
     {
       "propertyId": "elko-nv-10a-2",
@@ -25,7 +27,9 @@
       "taxPortalUrl": "https://elko-search.gsacorp.io/tax/01081H024",
       "accessMode": "public_tax_page",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillUrl": "https://elko-search.gsacorp.io/taxbill/RE/01081H024",
+      "taxBillAccessMethod": "POST via Tax Bill form on parcel detail page with fresh token"
     },
     {
       "propertyId": "navajo-az-10",
