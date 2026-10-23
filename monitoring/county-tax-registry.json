@@ -61,11 +61,9 @@
       "propertyId": "valencia-nm-rge-1",
       "state": "NM",
       "county": "Valencia County",
-      "storedParcelId": "101-502-926-426-4141100",
-      "reportedParcelId": "1-016-026-124-054-100690",
-      "requiresParcelConfirmation": true,
+      "storedParcelId": "1-016-026-124-054-100690",
       "taxPortalUrl": "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R023098",
-      "accessMode": "parcel_mismatch",
+      "accessMode": "public_tax_page",
       "verifiedTaxDueDate": null,
       "verifiedPaymentStatus": null
     },
