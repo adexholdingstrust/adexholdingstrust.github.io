@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "accounts": [
+    {
+      "propertyId": "aurora-oxford-co",
+      "provider": "LCM",
+      "url": "https://lcmpropertymanagement.com/AccountStatus/40583~10533163/?type=Account&active=0",
+      "balance": 684.28,
+      "observedOn": "2026-10-23",
+      "status": "unverified"
+    },
+    {
+      "propertyId": "aurora-hoye-co",
+      "provider": "TownSq",
+      "url": "https://app.townsq.io/w/672048ef610bb549fcae2a41/user-accounts",
+      "balance": 199.32,
+      "observedOn": "2026-10-23",
+      "status": "outstanding_balance",
+      "lastPayment": 330.68
+    },
+    {
+      "propertyId": "fallbrook-ca",
+      "provider": "FrontSteps",
+      "url": "https://horsecreekridge.frontsteps.com/dashboard#tour",
+      "balance": -605,
+      "observedOn": "2026-10-23",
+      "status": "possible_credit_unverified"
+    }
+  ]
+}
