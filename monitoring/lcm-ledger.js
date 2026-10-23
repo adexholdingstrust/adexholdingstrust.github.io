@@ -12,10 +12,14 @@ export function classifyLCMTransaction({description="",charge=0,credit=0,date=""
 export function summarizeLCM({balanceDue,transactions}) {
   if (!Array.isArray(transactions)||!Number.isFinite(Number(balanceDue))) throw new Error("Invalid ledger");
   const entries=transactions.map(classifyLCMTransaction);
-  const penalties=entries.filter(e=>e.kind==="penalty").reduce((n,e)=>n+e.charge,0);
+  const lateFees=entries.filter(e=>e.kind==="penalty").reduce((n,e)=>n+e.charge,0);
+  const paymentFailureFees=entries.filter(e=>e.kind==="payment_problem" && /charge|fee/i.test(e.description)).reduce((n,e)=>n+e.charge,0);
+  const penalties=lateFees+paymentFailureFees;
   return {
     balanceDue:Number(balanceDue),
     penalties:Math.round(penalties*100)/100,
+    lateFees:Math.round(lateFees*100)/100,
+    paymentFailureFees:Math.round(paymentFailureFees*100)/100,
     paymentProblem:entries.some(e=>e.kind==="payment_problem"),
     latestAssessment:entries.find(e=>e.kind==="assessment")||null,
     entries,
