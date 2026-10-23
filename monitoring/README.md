@@ -1,7 +1,6 @@
 # Adex HOA and property tax monitoring
 
-Implementation state, October 23, 2026: code is prepared and locally tested.
-**Cloudflare deployment, authenticated HOA collection, and live email delivery are not verified.**
+Implementation state, October 23, 2026: the isolated Worker is deployed and its health/authentication acceptance checks passed. Both Elko public account/bill observations were reconciled and delivered live.\n**Authenticated HOA collection, other county readers, and live email delivery remain incomplete.**
 No payment initiation is implemented. No existing finance KV records are modified.
 
 ## Components
@@ -31,8 +30,7 @@ No payment initiation is implemented. No existing finance KV records are modifie
 - `collect-county-tax.py`: public Elko account retrieval plus fresh-token PDF
   download and reconciliation. Two account/bill totals must match before a tax
   confirmation is accepted. Does not fabricate missing due dates or payment dates.
-- GitHub county collector workflow: daily 13:45/20:45 UTC, disabled unless repository
-  variable `ADEX_MONITOR_COLLECTORS_ENABLED=true`. Manual dry-run is available.
+- GitHub county collector workflow: enabled daily 13:45/20:45 UTC. A live activation run is also triggered by workflow-file updates; manual dry-run remains available.
 - Existing Nye PDF extractor and other county registry entries remain source data,
   **not connected recurring collectors**.
 - Finance modal, monthly results, and portfolio stress summary use the same HOA
@@ -97,26 +95,22 @@ Tax reminders with unknown deadlines stay unverified. Source paths/account IDs
 are not included in email; the originating host and property label identify the
 record. No authentication/session payload belongs in normalized snapshots.
 
-## Remaining blockers at preparation time
+## Initial deployment blocker (resolved)
 
-The available Cloudflare browser was signed out and no Wrangler credentials were
-present. Dedicated KV, signing/email secrets, deployments, recurring execution,
-HOA portal sessions, remaining county readers, and real email receipt require
-verification. Production services have not been modified by this branch.
+The initial browser login blocker was resolved with GitHub Actions and an encrypted secret in the existing `github-pages` environment. Both deployment and county collection jobs explicitly target that environment and preserve its main-branch protection. Do not move the existing token or expose its value.\n\nVerified deployment run: https://github.com/adexholdingstrust/adexholdingstrust.github.io/actions/runs/40030654287\n\nWorker origin: `https://adex-hoa-monitor.tenantservices.workers.dev`. Dedicated KV: `a26688b05efe477eb9460c684dcfc08a`. Public health confirms storage and signing configured with notifications off. Unsigned ingestion and status return 401; signed invalid input returns 400; signed status succeeds. Both Elko observations were delivered and classified `paid_confirmed`. Cloudflare cron triggers are installed for 14:15/21:15 UTC; a natural scheduled execution has not yet been verified. Existing production Worker and finance KV were not modified.\n\nRemaining blockers: Brevo credentials are not configured for this Worker, HOA portal credentials remain encrypted in the old Worker and cannot be read back, authenticated HOA collectors and other county collectors are unfinished. Do not enable email notifications until end-to-end acceptance.\n\nHealth and ingestion clients use `AdexPropertyMonitor/2.0 (+https://adexholdings.com)` as their truthful service identity. Python's default User-Agent was rejected with Cloudflare 1010. No security protections were disabled.
 
 
 ## Deployment without Cloud Browser
 
 The `Deploy isolated Adex monitor` GitHub Actions workflow supports the account
 holder's normal browser. Add an account-scoped API token as repository Actions
-secret `ADEX_MONITOR_CLOUDFLARE_API_TOKEN`. The workflow pins the Adex account,
+secret `ADEX_MONITOR_CLOUDFLARE_API_TOKEN` in the existing `github-pages` environment (repository secrets also work). The workflow pins the Adex account,
 Worker name, namespace title, and notifications-off policy, and refuses site
 routes, other account IDs, service bindings, and ambiguous storage namespaces.
 Use only Workers Scripts edit, Workers KV Storage edit, and Account Settings
 read permissions for this Adex account; do not supply a Global API Key.
 
-The deployment job is gated by `ADEX_MONITOR_DEPLOY_ENABLED=true` on main pushes,
-or can run manually via Actions. It creates/reuses only
+The deployment job runs on relevant main-branch pushes or manually via Actions. It creates/reuses only
 `adex-hoa-monitor-dedicated-v1`, deploys the monitoring Worker, installs its signing
 secret, checks health and authenticated/unauthenticated requests, and delivers
 both reconciled Elko observations with notifications disabled. It does not
