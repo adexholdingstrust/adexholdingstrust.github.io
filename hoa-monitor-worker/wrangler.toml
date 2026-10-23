@@ -1,0 +1,20 @@
+# Standalone Adex HOA monitoring Worker
+# This configuration targets the Adex Cloudflare account only.
+# Do not deploy with a different Wrangler account or copy credentials from adex-trust-security.
+name = "adex-hoa-monitor"
+main = "hoa-monitor-worker/index.js"
+compatibility_date = "2026-10-23"
+account_id = "8956c5a630c91f81296ffb3e8f9a7532"
+workers_dev = true
+
+# After creating a dedicated KV namespace in the Adex account, configure:
+# [[kv_namespaces]]
+# binding = "HOA_MONITOR_KV"
+# id = "<dedicated namespace ID>"
+
+# Secrets to add to this standalone Worker:
+# HOA_INGEST_SECRET (new random HMAC signing key)
+# BREVO_API_KEY (only if sending is enabled)
+# HOA_SENDER_EMAIL or EMAIL_FROM (verified sender)
+# Credentials are not needed in this ingestion-only Worker.
+# Portal login automation runs separately; no cron triggers until validated.
