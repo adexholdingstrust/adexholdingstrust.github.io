@@ -105,6 +105,7 @@ function formatHOAEmail(email) {
 
 /* County tax actuals are annual; finance KV values remain untouched. */
 let COUNTY_TAX_ACTUALS = new Map();
+let HOA_ASSESSMENT_ACTUALS = new Map();
 async function loadCountyTaxActuals() {
   if (document.body?.dataset?.page !== "finance") return;
   try {
@@ -117,6 +118,21 @@ async function loadCountyTaxActuals() {
         Number.isFinite(Number(p.taxBillDetails.annualAssessment)))
       .map(p => [p.propertyId, Number(p.taxBillDetails.annualAssessment)]));
   } catch (err) { console.warn("County tax actuals unavailable; using stored finance values",err); }
+}
+async function loadHOAAssessments() {
+  if (document.body?.dataset?.page !== "finance") return;
+  try {
+    const res = await fetch("/monitoring/hoa-portals.json",{cache:"no-store"});
+    if (!res.ok) throw new Error("HOA registry unavailable");
+    const data = await res.json();
+    HOA_ASSESSMENT_ACTUALS = new Map((data.accounts||[])
+      .filter(a => Number.isFinite(a.monthlyAssessment) && a.monthlyAssessment >= 0 && a.assessmentSource !== "not verified")
+      .map(a => [a.propertyId,a.monthlyAssessment]));
+  } catch(err) {console.warn("HOA assessment registry unavailable; retaining finance values",err);}
+}
+function monthlyHOAFor(property,record) {
+  return HOA_ASSESSMENT_ACTUALS.has(property?.id)
+    ? HOA_ASSESSMENT_ACTUALS.get(property.id) : num(record.hoa);
 }
 function annualTaxFor(property, record) {
   return COUNTY_TAX_ACTUALS.has(property?.id)
@@ -411,7 +427,7 @@ function computeAnnualPL(property, record = {}) {
 function computeMonthlyPL(property, record = {}, month) {
   const rent = num(record.rent);
   const mortgage = num(record.mortgage);
-  const hoa = num(record.hoa);
+  const hoa = monthlyHOAFor(property, record);
   const tax = annualTaxFor(property, record) / 12;
 
   const maintenance =
@@ -550,7 +566,7 @@ function renderTable() {
 
   PROPERTIES.filter((p) => selectedIds.includes(p.id)).forEach((p) => {
    const f = FINANCIALS[p.id] || {};
-   const stressScore = computePortfolioStress(p, {...f, tax: annualTaxFor(p, f)});
+   const stressScore = computePortfolioStress(p, {...f, hoa: monthlyHOAFor(p,f), tax: annualTaxFor(p, f)});
 
 const stressDisplay =
   stressScore >= 4
@@ -576,7 +592,7 @@ const stressDisplay =
       // For the breakdown table, keep the monthly components from KV (what your UI expects)
       rentVal = num(f.rent);
       mortgageVal = num(f.mortgage);
-      hoaVal = num(f.hoa);
+      hoaVal = monthlyHOAFor(p, f);
       maintVal = num(f.maintenance);
       taxVal = annualTaxFor(p, f) / 12;
       expensesVal = mortgageVal + hoaVal + maintVal + taxVal;
@@ -588,7 +604,7 @@ const stressDisplay =
     totals.expenses += expensesVal;
     totals.net += netVal;
     totals.deposits += num(f.deposit);
-      const dscr = computeDSCR({...f, tax: annualTaxFor(p, f)});
+      const dscr = computeDSCR({...f, hoa: monthlyHOAFor(p,f), tax: annualTaxFor(p, f)});
       const dscrDisplay =
   dscr === null
     ? "—"
@@ -693,7 +709,7 @@ if (fill && text) {
  if ($("kpiDSCR")) {
   const dscrValues = PROPERTIES
     .filter(p => selectedIds.includes(p.id))
-    .map(p => computeDSCR({...FINANCIALS[p.id],tax:annualTaxFor(p,FINANCIALS[p.id]||{})}))
+    .map(p => computeDSCR({...FINANCIALS[p.id],hoa:monthlyHOAFor(p,FINANCIALS[p.id]||{}),tax:annualTaxFor(p,FINANCIALS[p.id]||{})}))
     .filter(v => v !== null);
 
   $("kpiDSCR").title = `${dscrValues.length} properties included`;
@@ -909,6 +925,7 @@ async function initFinance() {
 
     await loadFinancials();
     await loadCountyTaxActuals();
+    await loadHOAAssessments();
 
     renderPropertySelector();
     bindFinancialsSelect();
