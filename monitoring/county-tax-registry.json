@@ -101,7 +101,16 @@
       "taxPortalUrl": "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R016363",
       "accessMode": "public_tax_page",
       "verifiedTaxDueDate": null,
-      "verifiedPaymentStatus": null
+      "verifiedPaymentStatus": null,
+      "taxBillDetails": {
+        "taxYear": "2026",
+        "annualAssessment": 9.5,
+        "paymentStatus": "unverified",
+        "specialAssessmentsExist": true,
+        "specialAssessmentsAmount": null,
+        "source": "user_provided_county_tax_history_screenshot",
+        "sourceUrl": "https://valenciacountynm-assessorweb.tylerhost.net/assessor/taxweb/account.jsp?accountNum=R016363"
+      }
     },
     {
       "propertyId": "lancaster-ca-210",
@@ -169,5 +178,11 @@
       "verifiedTaxDueDate": null,
       "verifiedPaymentStatus": null
     }
-  ]
+  ],
+  "forecasting": {
+    "annualIncreaseRate": 0.1,
+    "method": "compound",
+    "actualsOverrideForecasts": true,
+    "note": "Forecasts exclude unverified special assessments; no automatic changes to historical financial KV records"
+  }
 }
