@@ -397,6 +397,51 @@ tr {
     z-index: 9999;        /* 🔑 MUST be high */
   }
 }
+
+/* Enterprise Finance visual system — screen only */
+@media screen {
+  :root { --bg:#f3f6fb; --card:#fff; --line:#dce4ef; --txt:#17253b; --muted:#63748d; --ok:#16845b; --bad:#c0444c; --warn:#a86a11; --radius:16px; }
+  body[data-page="finance"] { background:linear-gradient(180deg,#edf3fa 0,#f7f9fc 340px); color:var(--txt); font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif; }
+  .wrap { max-width:1560px; padding:32px clamp(18px,3vw,52px) 90px; }
+  .top { background:#10233d; color:#fff; padding:24px 30px; border-radius:20px; box-shadow:0 18px 36px rgba(14,35,63,.14); margin-bottom:28px; }
+  .top img { height:56px; max-width:90px; object-fit:contain; }
+  .top .title { font-size:21px; letter-spacing:.035em; }
+  .top .sub { font-size:13px; opacity:.75; margin-top:5px; }
+  .card { background:#fff; border:1px solid #dde5ef; border-radius:18px; box-shadow:0 8px 26px rgba(26,49,83,.055); margin-bottom:24px; overflow:hidden; }
+  .cardHead { color:#18304e; font-size:16px; padding:19px 24px; border-bottom:1px solid #e8edf4; background:#fbfcfe; }
+  .cardBody { padding:22px 24px; }
+  .controls { grid-template-columns:minmax(160px,1fr) minmax(240px,2fr) minmax(150px,1fr) minmax(150px,1fr); gap:18px; align-items:end; }
+  .controls label { color:#526781; font-weight:650; opacity:1!important; display:block; margin-bottom:8px; }
+  select,input,button { background:#fff; border:1px solid #cbd7e6; color:#1b2d46; padding:11px 13px; border-radius:10px; font:inherit; }
+  select:focus-visible,input:focus-visible,button:focus-visible { outline:3px solid #93b8ee; outline-offset:2px; }
+  button { background:#eff4fb; color:#18395f; font-weight:650; transition:background .15s ease; }
+  button:hover { background:#dce9f9; }
+  .cardHead button { background:#1a568f; border-color:#1a568f; color:#fff; padding:10px 17px; }
+  .cardHead button:hover { background:#13416e; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; }
+  .kpi { background:#f7faff; border:1px solid #e0e9f5; min-width:0; border-radius:14px; padding:19px; }
+  .kpi label { display:block; color:#64758b; font-size:12px; font-weight:650; opacity:1; line-height:1.4; }
+  .kpi div { font-size:24px; font-weight:750; letter-spacing:-.035em; margin-top:10px; }
+  .kpi .runwayGauge { margin-top:10px; }
+  table { min-width:1100px; font-size:12.5px; }
+  th,td { padding:13px 12px; border-bottom:1px solid #e9eef5; }
+  th { color:#52657f; background:#f5f8fc; font-size:11px; font-weight:750; letter-spacing:.025em; }
+  tbody tr:nth-child(even) { background:#fafcff; }
+  tbody tr:hover { background:#eef5ff; }
+  td:first-child { font-weight:650; color:#203954; }
+  tfoot td { background:#eef4fc; color:#173756; }
+  #hoaBody td { color:#28415e; }
+  #hoaBody td:nth-child(2) { min-width:150px; }
+  #hoaBody td:nth-child(3) { min-width:190px; }
+  #hoaBody td:nth-child(4) { min-width:155px; }
+  #hoaBody td a { color:#1b629f; text-decoration:underline; text-underline-offset:2px; }
+  .hoa-phone-line { white-space:nowrap; }
+  .pos { color:#147d54!important; } .neg { color:#bd3545!important; } .warn { color:#9c6516!important; }
+  footer { color:#7a8798; font-size:11px; text-align:center; padding:15px; }
+  @media(max-width:850px) { .wrap { padding:18px 14px 70px; } .top { padding:20px; } .controls { grid-template-columns:1fr 1fr; } .cardBody { padding:16px; } }
+  @media(max-width:540px) { .controls { grid-template-columns:1fr; } .top .title { font-size:17px; } .top img { height:42px; } .cardHead { padding:15px 16px; } .kpis { grid-template-columns:1fr 1fr; } .kpi { padding:14px; } .kpi div { font-size:19px; } }
+}
+
 </style>
 </head>
 
