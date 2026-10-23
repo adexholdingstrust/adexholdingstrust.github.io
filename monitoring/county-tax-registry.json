@@ -106,7 +106,32 @@
       "accessMode": "dynamic_tax_year",
       "verifiedTaxDueDate": null,
       "verifiedPaymentStatus": null,
-      "taxBillUrlTemplate": "https://nyenv-assessor.devnetwedge.com/TaxBill?source=RE&property_key=04524339&year={year}"
+      "taxBillUrlTemplate": "https://nyenv-assessor.devnetwedge.com/TaxBill?source=RE&property_key=04524339&year={year}",
+      "taxBillDetails": {
+        "taxYear": "2026/2027",
+        "annualAssessment": 239.55,
+        "installments": [
+          {
+            "dueDate": "2026-08-17",
+            "amount": 95.55
+          },
+          {
+            "dueDate": "2026-10-05",
+            "amount": 48
+          },
+          {
+            "dueDate": "2027-01-04",
+            "amount": 48
+          },
+          {
+            "dueDate": "2027-03-01",
+            "amount": 48
+          }
+        ],
+        "paymentStatus": "unverified",
+        "source": "county_2026_tax_bill_pdf",
+        "sourceUrl": "https://nyenv-assessor.devnetwedge.com/TaxBill?source=RE&property_key=04524339&year=2026"
+      }
     },
     {
       "propertyId": "apache-az-464",
