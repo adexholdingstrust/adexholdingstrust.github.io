@@ -103,6 +103,26 @@ function formatHOAEmail(email) {
   `;
 }
 
+/* County tax actuals are annual; finance KV values remain untouched. */
+let COUNTY_TAX_ACTUALS = new Map();
+async function loadCountyTaxActuals() {
+  if (document.body?.dataset?.page !== "finance") return;
+  try {
+    const response = await fetch("/monitoring/county-tax-registry.json", {cache:"no-store"});
+    if (!response.ok) throw new Error("County registry unavailable");
+    const data = await response.json();
+    COUNTY_TAX_ACTUALS = new Map((data.properties || [])
+      .filter(p => p.taxBillDetails?.annualAssessment != null &&
+        p.taxBillDetails?.amountType !== "user_estimate" &&
+        Number.isFinite(Number(p.taxBillDetails.annualAssessment)))
+      .map(p => [p.propertyId, Number(p.taxBillDetails.annualAssessment)]));
+  } catch (err) { console.warn("County tax actuals unavailable; using stored finance values",err); }
+}
+function annualTaxFor(property, record) {
+  return COUNTY_TAX_ACTUALS.has(property?.id)
+    ? COUNTY_TAX_ACTUALS.get(property.id) : num(record.tax);
+}
+
 /* ---------------- PROPERTY MULTI-SELECT HELPERS ---------------- */
 
 function selectAllProperties() {
@@ -392,7 +412,7 @@ function computeMonthlyPL(property, record = {}, month) {
   const rent = num(record.rent);
   const mortgage = num(record.mortgage);
   const hoa = num(record.hoa);
-  const tax = num(record.tax) / 12;
+  const tax = annualTaxFor(property, record) / 12;
 
   const maintenance =
     record.maintenanceActuals?.[month] ??
@@ -530,7 +550,7 @@ function renderTable() {
 
   PROPERTIES.filter((p) => selectedIds.includes(p.id)).forEach((p) => {
    const f = FINANCIALS[p.id] || {};
-   const stressScore = computePortfolioStress(p, f);
+   const stressScore = computePortfolioStress(p, {...f, tax: annualTaxFor(p, f)});
 
 const stressDisplay =
   stressScore >= 4
@@ -558,7 +578,7 @@ const stressDisplay =
       mortgageVal = num(f.mortgage);
       hoaVal = num(f.hoa);
       maintVal = num(f.maintenance);
-      taxVal = num(f.tax) / 12;
+      taxVal = annualTaxFor(p, f) / 12;
       expensesVal = mortgageVal + hoaVal + maintVal + taxVal;
       netVal = rentVal - expensesVal;
       annualNetVal = netVal * 12;
@@ -568,7 +588,7 @@ const stressDisplay =
     totals.expenses += expensesVal;
     totals.net += netVal;
     totals.deposits += num(f.deposit);
-      const dscr = computeDSCR(f);
+      const dscr = computeDSCR({...f, tax: annualTaxFor(p, f)});
       const dscrDisplay =
   dscr === null
     ? "—"
@@ -673,7 +693,7 @@ if (fill && text) {
  if ($("kpiDSCR")) {
   const dscrValues = PROPERTIES
     .filter(p => selectedIds.includes(p.id))
-    .map(p => computeDSCR(FINANCIALS[p.id] || {}))
+    .map(p => computeDSCR({...FINANCIALS[p.id],tax:annualTaxFor(p,FINANCIALS[p.id]||{})}))
     .filter(v => v !== null);
 
   $("kpiDSCR").title = `${dscrValues.length} properties included`;
@@ -695,7 +715,7 @@ if (fill && text) {
 if ($("kpiStress")) {
   const stressScores = PROPERTIES
     .filter(p => selectedIds.includes(p.id))
-    .map(p => computePortfolioStress(p, FINANCIALS[p.id] || {}));
+    .map(p => computePortfolioStress(p, {...FINANCIALS[p.id],tax:annualTaxFor(p,FINANCIALS[p.id]||{})}));
 
   const avgStress =
     stressScores.length === 0
@@ -888,6 +908,7 @@ async function initFinance() {
     console.log("PROPERTIES length:", PROPERTIES.length);
 
     await loadFinancials();
+    await loadCountyTaxActuals();
 
     renderPropertySelector();
     bindFinancialsSelect();
