@@ -6,6 +6,10 @@ on:
         description: Read and reconcile county records without sending to the Worker
         type: boolean
         default: true
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/county-tax-monitor.yml'
   schedule:
     - cron: '45 13,20 * * *'
 permissions:
@@ -15,7 +19,6 @@ concurrency:
   cancel-in-progress: false
 jobs:
   collect:
-    if: github.event_name == 'workflow_dispatch' || vars.ADEX_MONITOR_COLLECTORS_ENABLED == 'true'
     environment: github-pages
     runs-on: ubuntu-latest
     timeout-minutes: 10
