@@ -6,6 +6,7 @@ on:
     paths:
       - 'hoa-monitor-worker/**'
       - 'monitoring/deploy-monitor.py'
+      - 'monitoring/collect-county-tax.py'
       - '.github/workflows/deploy-monitor.yml'
 permissions:
   contents: read
