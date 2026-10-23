@@ -1,0 +1,11 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {evaluateLandTax} from "./land-tax-rules.js";
+const base={propertyId:"elko-nv-10a-1",taxYear:2026,dueDate:"2026-12-01",asOfDate:"2026-11-15",balanceDue:120};
+test("upcoming at 30 days",()=>assert.equal(evaluateLandTax(base).status,"upcoming"));
+test("urgent within seven days",()=>assert.equal(evaluateLandTax({...base,asOfDate:"2026-11-27"}).status,"urgent"));
+test("overdue after deadline",()=>assert.equal(evaluateLandTax({...base,asOfDate:"2026-12-02"}).status,"overdue"));
+test("posted zero balance confirms",()=>assert.equal(evaluateLandTax({...base,balanceDue:0,paymentStatus:"posted"}).status,"paid_confirmed"));
+test("zero balance without posted status not confirmed",()=>assert.equal(evaluateLandTax({...base,balanceDue:0}).confirmed,false));
+test("missing deadline rejected",()=>assert.throws(()=>evaluateLandTax({...base,dueDate:null}),/Invalid/));
+test("invalid date rejected",()=>assert.throws(()=>evaluateLandTax({...base,dueDate:"2026-02-31"}),/Invalid/));
