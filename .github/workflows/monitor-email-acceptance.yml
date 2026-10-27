@@ -1,0 +1,29 @@
+name: Verify monitoring email delivery
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/monitor-email-acceptance.yml'
+      - 'monitoring/verify-email-delivery.py'
+permissions:
+  contents: read
+concurrency:
+  group: adex-monitor-email-acceptance
+  cancel-in-progress: false
+jobs:
+  verify-email:
+    environment: github-pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify test-message safety
+        run: python -m unittest discover -s monitoring -p 'test_email_acceptance.py'
+      - name: Send monitoring test to both recipients
+        env:
+          ADEX_MONITOR_BREVO_API_KEY: ${{ secrets.ADEX_MONITOR_BREVO_API_KEY || secrets.BREVO_API_KEY }}
+        run: python monitoring/verify-email-delivery.py
