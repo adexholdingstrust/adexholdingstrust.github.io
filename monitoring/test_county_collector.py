@@ -28,3 +28,18 @@ class CollectorTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class NyeCollectorTests(unittest.TestCase):
+    def test_bill_remains_unverified_and_selects_next_local_due_date(self):
+        from datetime import datetime, timezone
+        data={'propertyId':'pahrump-nv-232','sourceUrl':'https://nyenv-assessor.devnetwedge.com/TaxBill?year=2026','taxYear':'2026/2027','annualAssessment':96,'paymentStatus':'unverified','installments':[{'dueDate':'2026-10-05','amount':48},{'dueDate':'2027-01-04','amount':48}]}
+        snapshot=collector.normalize_nye(data,datetime(2026,10,27,tzinfo=timezone.utc))
+        self.assertEqual(snapshot['dueDate'],'2027-01-04')
+        self.assertIsNone(snapshot['balanceDue'])
+        self.assertEqual(snapshot['payments'],[])
+        self.assertEqual(len(snapshot['installments']),2)
+
+    def test_tax_year_rollover_uses_nevada_local_date(self):
+        from datetime import datetime, timezone
+        self.assertEqual(collector.nye_year(datetime(2027,7,1,5,tzinfo=timezone.utc)),2026)
+        self.assertEqual(collector.nye_year(datetime(2027,7,1,8,tzinfo=timezone.utc)),2027)

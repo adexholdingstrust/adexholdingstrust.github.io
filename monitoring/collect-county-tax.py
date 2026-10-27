@@ -1,4 +1,4 @@
-"""Read-only Elko collector and signed delivery to the isolated Worker.
+"""Read-only Elko and Nye collector and signed delivery to the isolated Worker.
 No credentials required to read public county data. Prints summary fields only.
 Set ADEX_MONITOR_URL and ADEX_MONITOR_INGEST_SECRET for delivery; never pass
 secrets on command lines. --dry-run performs county reconciliation without delivery.
@@ -13,6 +13,7 @@ from pathlib import Path
 import sys
 import time
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
@@ -41,6 +42,29 @@ def normalize(account):
                              'billPreviousPayments': float(account['billPreviousPayments']),
                              'currentYearBalance': float(account['currentYearBalance'])},
     }
+
+
+def normalize_nye(bill, now=None):
+    now = now or datetime.now(timezone.utc)
+    local_today = now.astimezone(ZoneInfo('America/Los_Angeles')).date().isoformat()
+    installments = bill['installments']
+    if not installments or bill.get('paymentStatus') != 'unverified':
+        raise ValueError('Incomplete Nye bill')
+    # A tax bill establishes amounts and dates, not settlement or balance.
+    next_due = next((i for i in installments if i['dueDate'] >= local_today), installments[-1])
+    return {
+        'kind': 'tax', 'propertyId': bill['propertyId'], 'provider': 'Nye County',
+        'sourceUrl': bill['sourceUrl'], 'observedAt': now.isoformat(timespec='milliseconds').replace('+00:00', 'Z'),
+        'taxYear': bill['taxYear'], 'annualAssessment': bill['annualAssessment'],
+        'dueDate': next_due['dueDate'], 'amountDue': next_due['amount'],
+        'balanceDue': None, 'payments': [], 'installments': installments,
+    }
+
+
+def nye_year(now=None):
+    now = now or datetime.now(timezone.utc)
+    local = now.astimezone(ZoneInfo('America/Los_Angeles'))
+    return local.year if local.month >= 7 else local.year - 1
 
 
 def deliver(snapshot, endpoint, secret):
@@ -100,6 +124,17 @@ def main():
             # Never include response bodies, tokens, exception URLs, or headers.
             failures += 1
             print(json.dumps({'propertyId': property_id, 'status': 'collection_or_delivery_failed'}), file=sys.stderr)
+    nye = load('nye_bill', 'nye-tax-extractor.py')
+    try:
+        tax_bill = nye.fetch_bill(nye_year())
+        snapshot = normalize_nye(tax_bill)
+        result = None if args.dry_run else deliver(snapshot, endpoint, secret)
+        print(json.dumps({'propertyId': snapshot['propertyId'], 'billValidated': True,
+                          'countyPaymentStatus': 'unverified', 'delivered': bool(result),
+                          'mode': 'dry_run' if args.dry_run else 'live'}))
+    except Exception:
+        failures += 1
+        print(json.dumps({'propertyId': nye.PROPERTY_ID, 'status': 'collection_or_delivery_failed'}), file=sys.stderr)
     return 1 if failures else 0
 
 if __name__ == '__main__':
