@@ -17,7 +17,7 @@ function keys(value, allowed) {
   if(!value || typeof value!=='object' || Array.isArray(value) || Object.keys(value).some(k=>!allowed.includes(k))) throw Error('Invalid fields');
 }
 export function validateSnapshot(value, taxProperties, now = new Date()) {
-  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement']);
+  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement','installments']);
   const hoa=HOA_PROPERTIES[value.propertyId];
   const tax=taxProperties.find(p=>p.propertyId===value.propertyId);
   if(!['hoa','tax'].includes(value.kind) || (value.kind==='hoa'?!hoa:!tax)) throw Error('Unknown property');
@@ -28,11 +28,20 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
   const url=new URL(value.sourceUrl);
   if(url.protocol!=='https:' || url.hostname!==host || url.username || url.password || url.hash) throw Error('Invalid source');
   if(value.kind==='hoa' && value.provider!==hoa.provider) throw Error('Provider mismatch');
-  if(!(validDate(value.dueDate) || value.kind==='tax' && value.dueDate===null) || !money(value.amountDue) || typeof value.balanceDue!=='number' || !Number.isFinite(value.balanceDue) || Math.abs(value.balanceDue)>100000000 || !Array.isArray(value.payments) || value.payments.length>1000) throw Error('Invalid obligation');
+  if(!(validDate(value.dueDate) || value.kind==='tax' && value.dueDate===null) || !money(value.amountDue) || !(value.kind==='tax' && value.balanceDue===null || typeof value.balanceDue==='number' && Number.isFinite(value.balanceDue) && Math.abs(value.balanceDue)<=100000000) || !Array.isArray(value.payments) || value.payments.length>1000) throw Error('Invalid obligation');
   if(value.monthlyAssessment!==undefined && !money(value.monthlyAssessment)) throw Error('Invalid assessment');
   if(value.annualAssessment!==undefined && !money(value.annualAssessment)) throw Error('Invalid assessment');
   if(value.kind==='tax' && !/^20\d{2}(\/20\d{2})?$/.test(value.taxYear||'')) throw Error('Invalid tax year');
   if(value.autopayScheduled!==undefined && typeof value.autopayScheduled!=='boolean') throw Error('Invalid autopay');
+  if(value.installments!==undefined) {
+    if(value.kind!=='tax' || !Array.isArray(value.installments) || value.installments.length>12) throw Error('Invalid installments');
+    let previous='';
+    for(const item of value.installments) {
+      keys(item,['dueDate','amount']);
+      if(!validDate(item.dueDate) || item.dueDate<=previous || !money(item.amount)) throw Error('Invalid installment');
+      previous=item.dueDate;
+    }
+  }
   if(value.countySettlement!==undefined) {
     const proof=value.countySettlement;
     keys(proof,['method','postedTotal','currentYearBalance','billPreviousPayments']);
@@ -52,6 +61,11 @@ export function evaluateSnapshot(snapshot, now = new Date()) {
   const proof=snapshot.countySettlement;
   if(snapshot.kind==='tax' && proof && proof.postedTotal>=snapshot.annualAssessment && proof.currentYearBalance===0 && snapshot.balanceDue===0)
     return {status:'paid',paymentConfirmed:true,asOfDate,alertType:'payment_confirmed',evidence:'county_account_and_bill'};
+  if(snapshot.kind==='tax' && snapshot.balanceDue===null) {
+    const days=snapshot.dueDate===null ? null : Math.round((Date.parse(snapshot.dueDate+'T00:00:00Z')-Date.parse(asOfDate+'T00:00:00Z'))/86400000);
+    const previousInstallment=snapshot.installments?.some(item=>item.dueDate<asOfDate) || false;
+    return {status:'payment_unverified',paymentConfirmed:false,asOfDate,daysUntilDue:days,requiresHumanReview:previousInstallment,alertType:previousInstallment || days!==null && days<=30?'payment_verification_due':null};
+  }
   if(snapshot.dueDate===null)return {status:'deadline_unverified',paymentConfirmed:false,asOfDate,alertType:null};
   const result=classifyHOAPayment({...snapshot,asOfDate});
   const daysUntilDue=Math.round((Date.parse(snapshot.dueDate+'T00:00:00Z')-Date.parse(asOfDate+'T00:00:00Z'))/86400000);

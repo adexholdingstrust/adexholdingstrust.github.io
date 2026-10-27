@@ -44,7 +44,7 @@ export async function processSnapshot(env,snapshot,now=new Date()) {
   const message={subject:`Adex ${snapshot.kind==='hoa'?'HOA':'Property Tax'} | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
     `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,
     `Obligation due: ${snapshot.dueDate||"Deadline not verified"}`,`Obligation amount: $${snapshot.amountDue.toFixed(2)}`,
-    `Last portal balance: $${snapshot.balanceDue.toFixed(2)}`,`Observed: ${snapshot.observedAt}`,`Check date: ${result.asOfDate}`,
+    `Last portal balance: ${snapshot.balanceDue===null?"Not verified":"$"+snapshot.balanceDue.toFixed(2)}`,`Observed: ${snapshot.observedAt}`,`Check date: ${result.asOfDate}`,
     `Status: ${result.status}`,result.paymentConfirmed?(result.evidence==='county_account_and_bill'?'County account ledger and tax bill reconcile paid annual assessment and zero account balance.':'Posted payment evidence allocated to this obligation confirms payment.'):'Payment is NOT confirmed by this notice.',
     'Scheduled autopay and credit balances alone do not confirm payment. Review the source portal. No payment has been initiated.'
   ].join('\n')};
