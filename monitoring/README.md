@@ -1,6 +1,7 @@
 # Adex HOA and property tax monitoring
 
-Implementation state, October 23, 2026: the isolated Worker is deployed and its health/authentication acceptance checks passed. Both Elko public account/bill observations were reconciled and delivered live.\n**Authenticated HOA collection, other county readers, and live email delivery remain incomplete.**
+Implementation state, October 27, 2026: the isolated Worker is deployed and its health/authentication acceptance checks passed. Both Elko public account/bill observations and the validated Nye tax bill were delivered live.
+**Authenticated HOA collection, other county readers, and live email delivery remain incomplete.**
 No payment initiation is implemented. No existing finance KV records are modified.
 
 ## Components
@@ -31,8 +32,7 @@ No payment initiation is implemented. No existing finance KV records are modifie
   download and reconciliation. Two account/bill totals must match before a tax
   confirmation is accepted. Does not fabricate missing due dates or payment dates.
 - GitHub county collector workflow: enabled daily 13:45/20:45 UTC. A live activation run is also triggered by workflow-file updates; manual dry-run remains available.
-- Existing Nye PDF extractor and other county registry entries remain source data,
-  **not connected recurring collectors**.
+- The Nye County bill is collected on the same schedule. Its installment amounts and dates are captured; account balance and payment status remain unverified because the bill alone does not prove settlement. Past installments are flagged for review, not labeled unpaid or delinquent. Other county registry entries are not yet connected recurring collectors.
 - Finance modal, monthly results, and portfolio stress summary use the same HOA
   assessment and annual county-tax overrides. Bank contributions/prepayments stay
   separate. Calabrese assessment is $205/month; $120/14 days is $3,120/year and
@@ -79,8 +79,7 @@ python monitoring/collect-county-tax.py --dry-run
    not additive installments). Do not guess dates or infer paid from zero balances.
 9. Enable notifications and send a clearly labelled acceptance message to both
    configured recipients; verify provider acceptance and inbox receipt. Test failed
-   delivery recovery and duplicate suppression. Enable collector repository variable
-   only after acceptance. A full run reports 14 expected property records (3 HOA,
+   delivery recovery and duplicate suppression. The county collector is enabled after successful acceptance; verify each additional collector before enabling it. A full run reports 14 expected property records (3 HOA,
    11 county); missing collectors must remain visible.
 10. Verify the next scheduled executions in Cloudflare and GitHub. Deployment of
     a cron configuration alone does not establish that collection is operational.
@@ -97,7 +96,15 @@ record. No authentication/session payload belongs in normalized snapshots.
 
 ## Initial deployment blocker (resolved)
 
-The initial browser login blocker was resolved with GitHub Actions and an encrypted secret in the existing `github-pages` environment. Both deployment and county collection jobs explicitly target that environment and preserve its main-branch protection. Do not move the existing token or expose its value.\n\nVerified deployment run: https://github.com/adexholdingstrust/adexholdingstrust.github.io/actions/runs/40030654287\n\nWorker origin: `https://adex-hoa-monitor.tenantservices.workers.dev`. Dedicated KV: `a26688b05efe477eb9460c684dcfc08a`. Public health confirms storage and signing configured with notifications off. Unsigned ingestion and status return 401; signed invalid input returns 400; signed status succeeds. Both Elko observations were delivered and classified `paid_confirmed`. Cloudflare cron triggers are installed for 14:15/21:15 UTC; a natural scheduled execution has not yet been verified. Existing production Worker and finance KV were not modified.\n\nRemaining blockers: Brevo credentials are not configured for this Worker, HOA portal credentials remain encrypted in the old Worker and cannot be read back, authenticated HOA collectors and other county collectors are unfinished. Do not enable email notifications until end-to-end acceptance.\n\nHealth and ingestion clients use `AdexPropertyMonitor/2.0 (+https://adexholdings.com)` as their truthful service identity. Python's default User-Agent was rejected with Cloudflare 1010. No security protections were disabled.
+The initial browser login blocker was resolved with GitHub Actions and an encrypted secret in the existing `github-pages` environment. Both deployment and county collection jobs explicitly target that environment and preserve its main-branch protection. Do not move the existing token or expose its value.
+
+Verified latest deployment and three live county deliveries: https://github.com/adexholdingstrust/adexholdingstrust.github.io/actions/runs/40515430198
+
+Worker origin: `https://adex-hoa-monitor.tenantservices.workers.dev`. Dedicated KV: `a26688b05efe477eb9460c684dcfc08a`. Public health confirms storage and signing configured with notifications off. Unsigned ingestion and status return 401; signed invalid input returns 400; signed status succeeds. Both Elko observations were delivered and classified `paid_confirmed`. The Nye bill was delivered with payment status unverified. GitHub scheduled county collection has run successfully for Elko; the expanded Nye collector was verified in the deployment run. Cloudflare cron triggers are installed for 14:15/21:15 UTC; a natural Worker cron execution still requires verification. Existing production Worker and finance KV were not modified.
+
+Remaining blockers: Brevo credentials are not configured for this Worker, HOA portal credentials remain encrypted in the old Worker and cannot be read back, authenticated HOA collectors and other county collectors are unfinished. Do not enable email notifications until end-to-end acceptance.
+
+Health and ingestion clients use `AdexPropertyMonitor/2.0 (+https://adexholdings.com)` as their truthful service identity. Python's default User-Agent was rejected with Cloudflare 1010. No security protections were disabled.
 
 
 ## Deployment without Cloud Browser
