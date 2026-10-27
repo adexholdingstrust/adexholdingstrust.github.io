@@ -125,16 +125,24 @@ def main():
             failures += 1
             print(json.dumps({'propertyId': property_id, 'status': 'collection_or_delivery_failed'}), file=sys.stderr)
     nye = load('nye_bill', 'nye-tax-extractor.py')
+    stage = 'county_bill_fetch'
     try:
         tax_bill = nye.fetch_bill(nye_year())
+        stage = 'bill_normalization'
         snapshot = normalize_nye(tax_bill)
+        stage = 'worker_delivery'
         result = None if args.dry_run else deliver(snapshot, endpoint, secret)
         print(json.dumps({'propertyId': snapshot['propertyId'], 'billValidated': True,
                           'countyPaymentStatus': 'unverified', 'delivered': bool(result),
                           'mode': 'dry_run' if args.dry_run else 'live'}))
-    except Exception:
+    except Exception as exc:
         failures += 1
-        print(json.dumps({'propertyId': nye.PROPERTY_ID, 'status': 'collection_or_delivery_failed'}), file=sys.stderr)
+        # Log the operation and non-sensitive HTTP status; never response bodies or URLs.
+        from urllib.error import HTTPError
+        details = {'propertyId': nye.PROPERTY_ID, 'status': 'collection_or_delivery_failed', 'stage': stage, 'errorType': type(exc).__name__}
+        if isinstance(exc, HTTPError):
+            details['httpStatus'] = exc.code
+        print(json.dumps(details), file=sys.stderr)
     return 1 if failures else 0
 
 if __name__ == '__main__':
