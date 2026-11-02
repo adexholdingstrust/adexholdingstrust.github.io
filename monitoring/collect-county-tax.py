@@ -86,6 +86,11 @@ def nye_year(now=None):
     return local.year if local.month >= 7 else local.year - 1
 
 
+def normalize_iron(account,now=None):
+    now=now or datetime.now(timezone.utc)
+    return {'kind':'tax','propertyId':account['propertyId'],'provider':'Iron County Treasurer','sourceUrl':account['sourceUrl'],'observedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'taxYear':account['taxYear'],'annualAssessment':account['annualAssessment'],'amountDue':account['annualAssessment'],'balanceDue':account['accountBalance'],'dueDate':None,'payments':[]}
+
+
 def deliver(snapshot, endpoint, secret):
     url = urlparse(endpoint)
     if url.scheme != 'https' or url.username or url.password or url.query or url.fragment or url.path not in ['', '/']:
@@ -111,7 +116,7 @@ def deliver(snapshot, endpoint, secret):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--county',choices=['all','elko','nye','valencia','navajo','apache'],default='all')
+    parser.add_argument('--county',choices=['all','elko','nye','valencia','navajo','apache','iron'],default='all')
     args = parser.parse_args()
     endpoint = os.environ.get('ADEX_MONITOR_URL', '')
     secret = os.environ.get('ADEX_MONITOR_INGEST_SECRET', '')
@@ -193,6 +198,21 @@ def main():
             details={'propertyId':module.PROPERTY_ID,'status':'collection_or_delivery_failed','stage':stage,'errorType':type(exc).__name__}
             if isinstance(exc,HTTPError):details['httpStatus']=exc.code
             print(json.dumps(details),file=sys.stderr)
+    if args.county in ['all','iron']:
+        iron=load('iron_county','iron-tax-extractor.py')
+        for property_id in iron.ACCOUNTS:
+            stage='public_account_retrieval'
+            try:
+                account=iron.fetch(property_id,datetime.now(ZoneInfo('America/Denver')).year)
+                stage='account_normalization';snapshot=normalize_iron(account)
+                stage='worker_delivery';result=None if args.dry_run else deliver(snapshot,endpoint,secret)
+                print(json.dumps({'propertyId':property_id,'countyPaymentStatus':'unverified','balanceObserved':True,'delivered':bool(result),'mode':'dry_run' if args.dry_run else 'live'}))
+            except Exception as exc:
+                failures+=1
+                from urllib.error import HTTPError
+                details={'propertyId':property_id,'status':'collection_or_delivery_failed','stage':stage,'errorType':type(exc).__name__}
+                if isinstance(exc,HTTPError):details['httpStatus']=exc.code
+                print(json.dumps(details),file=sys.stderr)
     return 1 if failures else 0
 
 if __name__ == '__main__':

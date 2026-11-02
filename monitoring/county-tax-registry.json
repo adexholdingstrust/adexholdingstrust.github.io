@@ -77,8 +77,8 @@
       "state": "UT",
       "county": "Iron County",
       "storedParcelId": "E-1699-0038-0000",
-      "taxPortalUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D=",
-      "accessMode": "email_verification_required",
+      "taxPortalUrl": "https://eagleweb.ironcounty.net:8443/treasurer/treasurerweb/account.jsp?account=0503376&action=tx",
+      "accessMode": "public_guest_account",
       "verifiedTaxDueDate": null,
       "verifiedPaymentStatus": null,
       "taxBillDetails": {
@@ -90,15 +90,16 @@
         "dueDate": "2026-11-30",
         "source": "user_provided_screenshot",
         "sourceUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D="
-      }
+      },
+      "billtraxPortalUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D="
     },
     {
       "propertyId": "modena-ut-112",
       "state": "UT",
       "county": "Iron County",
       "storedParcelId": "E-1695-0014-0008-05",
-      "taxPortalUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D=",
-      "accessMode": "email_verification_required",
+      "taxPortalUrl": "https://eagleweb.ironcounty.net:8443/treasurer/treasurerweb/account.jsp?account=0331246&action=tx",
+      "accessMode": "public_guest_account",
       "verifiedTaxDueDate": null,
       "verifiedPaymentStatus": null,
       "taxBillDetails": {
@@ -110,7 +111,8 @@
         "dueDate": "2026-11-30",
         "source": "user_provided_screenshot",
         "sourceUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D="
-      }
+      },
+      "billtraxPortalUrl": "https://ironcounty.billtrax.com/consumer/bills/bill-history?YmlsbFR5cGVJZD02MzBkZGRhNjYwNTA3ZDhlNmZhNDY0MTQmYnV0dG9uTmFtZT1WaWV3ICYgUGF5IEJpbGw%3D="
     },
     {
       "propertyId": "valencia-nm-rge-1",

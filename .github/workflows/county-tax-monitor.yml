@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        county: [elko, nye, valencia, navajo, apache]
+        county: [elko, nye, valencia, navajo, apache, iron]
     name: ${{ matrix.county }} tax monitoring
     environment: github-pages
     runs-on: ubuntu-latest

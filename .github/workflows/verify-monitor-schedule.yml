@@ -1,6 +1,10 @@
 name: Verify deployed monitor schedule
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: [Deploy isolated Adex monitor]
+    branches: [main]
+    types: [completed]
   push:
     branches: [main]
     paths:
@@ -10,6 +14,7 @@ permissions:
   contents: read
 jobs:
   verify:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment: github-pages
     runs-on: ubuntu-latest
     timeout-minutes: 3
