@@ -102,7 +102,7 @@ Verified latest deployment and three live county deliveries: https://github.com/
 
 Worker origin: `https://adex-hoa-monitor.tenantservices.workers.dev`. Dedicated KV: `a26688b05efe477eb9460c684dcfc08a`. The November 2 activation deploy sets live notifications on; its health check verifies storage, signing and the expected notification flag. Unsigned ingestion and status return 401; signed invalid input returns 400; signed status succeeds. Both Elko observations were delivered and classified `paid_confirmed`. The Nye bill was delivered with payment status unverified. GitHub scheduled county collection has run successfully for Elko; the expanded Nye collector was verified in the deployment run. Cloudflare cron triggers are installed for 14:15/21:15 UTC; a natural Worker cron execution still requires verification. Existing production Worker and finance KV were not modified.
 
-Email credentials are now configured for the isolated Worker. The acceptance message and both real Elko payment-confirmation messages were verified in the connected Gmail inbox, addressed to both requested recipients. Separate tenantservices inbox delivery has not been inspected. Remaining implementation gaps are the three authenticated HOA collectors, remaining county collectors, and live finance reconciliation. HOA credentials remain encrypted in the original Worker and cannot be read back. Preserve the working Cloudflare and Brevo secrets in the existing github-pages environment.
+Email credentials are now configured for the isolated Worker. The acceptance message, both real Elko payment-confirmation messages, and the Nye payment-verification notice were verified in the connected Gmail inbox, addressed to both requested recipients. Separate tenantservices inbox delivery has not been inspected. Remaining implementation gaps are the three authenticated HOA collectors, remaining county collectors, and live finance reconciliation. HOA credentials remain encrypted in the original Worker and cannot be read back. Preserve the working Cloudflare and Brevo secrets in the existing github-pages environment.
 
 Health and ingestion clients use `AdexPropertyMonitor/2.0 (+https://adexholdings.com)` as their truthful service identity. Python's default User-Agent was rejected with Cloudflare 1010. No security protections were disabled.
 
@@ -143,6 +143,6 @@ The GitHub-hosted runner was rejected by Brevo's source-IP policy. The supplied 
 
 Runtime acceptance deployment: https://github.com/adexholdingstrust/adexholdingstrust.github.io/actions/runs/41503452825
 
-Activation deployment: https://github.com/adexholdingstrust/adexholdingstrust.github.io/actions/runs/41504140644 (check latest attempt; the first attempt deployed successfully and delivered both Elko notifications, then failed on a transient Nye county bill download).
+Activation deployment: https://github.com/adexholdingstrust/adexholdingstrust.github.io/actions/runs/41504140644 (latest attempt succeeded: health/authentication checks, all three county deliveries and runtime email acceptance passed; live notifications are enabled).
 
 The worker's notification flag is separate from coverage: an enabled notification service does not mean the HOA or finance integrations are complete. No payments are initiated.
