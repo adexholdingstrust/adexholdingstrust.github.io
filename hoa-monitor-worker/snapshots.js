@@ -49,7 +49,8 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
   }
   const references=new Set();
   for(const p of value.payments) {
-    keys(p,['reference','amount','dueDate','postedOn','status']);
+    keys(p,['reference','amount','dueDate','postedOn','status','evidence']);
+    if(value.kind==='hoa' && p.evidence!=='hoa_account_ledger') throw Error('HOA payment requires account ledger evidence');
     if(typeof p.reference!=='string' || !/^[a-zA-Z0-9._:-]{1,120}$/.test(p.reference) || references.has(p.reference) || !money(p.amount) || p.amount<=0 || !validDate(p.dueDate) || !validDate(p.postedOn) || p.postedOn>localDate(new Date(observed),zone) || !['posted','scheduled','failed','returned','nsf','reversed'].includes(p.status)) throw Error('Invalid payment evidence');
     references.add(p.reference);
   }
@@ -67,10 +68,12 @@ export function evaluateSnapshot(snapshot, now = new Date()) {
     return {status:'payment_unverified',paymentConfirmed:false,asOfDate,daysUntilDue:days,requiresHumanReview:previousInstallment,alertType:previousInstallment || days!==null && days<=30?'payment_verification_due':null};
   }
   if(snapshot.dueDate===null)return {status:'deadline_unverified',paymentConfirmed:false,asOfDate,alertType:null};
-  const result=classifyHOAPayment({...snapshot,asOfDate});
+  // Stored observations must also satisfy the current evidence requirement.
+  const payments=snapshot.kind==='hoa'?snapshot.payments.filter(p=>p.evidence==='hoa_account_ledger'):snapshot.payments;
+  const result=classifyHOAPayment({...snapshot,payments,asOfDate});
   const daysUntilDue=Math.round((Date.parse(snapshot.dueDate+'T00:00:00Z')-Date.parse(asOfDate+'T00:00:00Z'))/86400000);
   const paymentConfirmed=result.status==='paid';
   const alertType=paymentConfirmed?'payment_confirmed':result.status==='payment_failed'?'payment_problem':
     result.status==='overdue' && snapshot.kind==='hoa' && asOfDate>=snapshot.dueDate.slice(0,7)+'-07'?'unconfirmed_by_seventh':result.status==='overdue'?'overdue':daysUntilDue>=0&&daysUntilDue<=(snapshot.kind==='tax'?30:5)&&snapshot.amountDue>0?'upcoming_assessment':null;
-  return {...result,asOfDate,paymentConfirmed,daysUntilDue,alertType};
+  return {...result,asOfDate,paymentConfirmed,daysUntilDue,alertType,...(paymentConfirmed && snapshot.kind==='hoa'?{evidence:'hoa_account_ledger'}:{})};
 }

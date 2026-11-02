@@ -146,3 +146,9 @@ Runtime acceptance deployment: https://github.com/adexholdingstrust/adexholdings
 Activation deployment: https://github.com/adexholdingstrust/adexholdingstrust.github.io/actions/runs/41504140644 (latest attempt succeeded: health/authentication checks, all three county deliveries and runtime email acceptance passed; live notifications are enabled).
 
 The worker's notification flag is separate from coverage: an enabled notification service does not mean the HOA or finance integrations are complete. No payments are initiated.
+
+### Confirmation evidence
+
+HOA confirmation does not depend on receipt emails. Every HOA payment observation must carry `evidence: "hoa_account_ledger"`, a stable portal transaction reference, posting date, amount, status, and the due date of the assessment to which it is allocated. Collectors must verify these fields in the authenticated HOA account. A bank debit, scheduled autopay, receipt email, or account credit alone is insufficient. Partial payments and payments allocated to another month cannot confirm the current assessment. Reversals remove the corresponding paid amount. Stored records without ledger evidence cannot generate confirmation.
+
+Tax receipt emails acknowledge a transaction; county account/bill reconciliation independently verifies posting. Missing receipt email does not prove nonpayment. Receipt-mail ingestion is not yet connected. Authenticated HOA collection still requires secure portal access.
