@@ -1,0 +1,36 @@
+name: Provision isolated private finance access
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'monitoring/finance-access.py'
+      - '.github/workflows/provision-finance-access.yml'
+permissions:
+  contents: read
+jobs:
+  provision:
+    environment: github-pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s monitoring -p 'test_finance_access.py'
+      - name: Configure only the new protected monitoring path
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          python - <<'PY'
+          import importlib.util, os
+          from pathlib import Path
+          def load(name,path):
+              spec=importlib.util.spec_from_file_location(name,path)
+              module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module);return module
+          deploy=load('deployment',Path('monitoring/deploy-monitor.py'))
+          access=load('finance_access',Path('monitoring/finance-access.py'))
+          aud=access.provision(os.environ['CLOUDFLARE_API_TOKEN'],deploy.api)
+          print('Isolated finance Access application configured; existing application unchanged; audience '+aud)
+          PY
