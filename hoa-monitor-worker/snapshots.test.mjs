@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {validateSnapshot,evaluateSnapshot,localDate} from './snapshots.js';
 const now=new Date('2026-11-07T16:00:00.000Z');
-const base={kind:'hoa',propertyId:'fallbrook-ca',provider:'FrontSteps',sourceUrl:'https://horsecreekridge.frontsteps.com/dashboard',observedAt:now.toISOString(),dueDate:'2026-11-01',amountDue:205,balanceDue:-605,payments:[],monthlyAssessment:205,autopayScheduled:true};
+const base={kind:'hoa',propertyId:'aurora-oxford-co',provider:'LCM',sourceUrl:'https://lcmpropertymanagement.com/AccountStatus/40583~10533163/',observedAt:now.toISOString(),dueDate:'2026-11-01',amountDue:205,balanceDue:-605,payments:[],monthlyAssessment:205,autopayScheduled:true};
 const validate=value=>validateSnapshot(value,[],now);
 test('credit and scheduled autopay never prove payment',()=>{const e=evaluateSnapshot(validate(base),now);assert.equal(e.paymentConfirmed,false);assert.equal(e.status,'payment_unverified');});
 test('allocated posted evidence confirms the assessment',()=>{const payments=[{reference:'posted-123',amount:205,dueDate:'2026-11-01',postedOn:'2026-11-02',status:'posted',evidence:'hoa_account_ledger'}];assert.equal(evaluateSnapshot(validate({...base,payments}),now).paymentConfirmed,true);});
@@ -41,4 +41,14 @@ test('FrontSteps balance-only observation cannot confirm an unknown assessment',
  const snapshot=validate({...base,amountDue:null,dueDate:null,balanceDue:-605,sourceUpdatedAt:'2026-10-23T12:00:00.000Z'});
  const result=evaluateSnapshot(snapshot,now);assert.equal(result.status,'payment_unverified');assert.equal(result.paymentConfirmed,false);assert.equal(result.sourceStale,true);
  assert.throws(()=>validate({...base,sourceUpdatedAt:'2027-01-01T00:00:00.000Z'}));
+});
+
+test('Calabrese uses dashboard balance policy without requiring individual payment proof',()=>{
+ const account={...base,propertyId:'fallbrook-ca',provider:'FrontSteps',sourceUrl:'https://horsecreekridge.frontsteps.com/dashboard',amountDue:null,dueDate:null,payments:[],sourceUpdatedAt:now.toISOString()};
+ for(const [balanceDue,status,alertType] of [[-725,'credit_balance','balance_update'],[0,'no_balance_due','balance_update'],[120,'balance_due','balance_due'],[null,'balance_unavailable','balance_unavailable']]) {
+  const result=evaluateSnapshot(validate({...account,balanceDue}),now);
+  assert.equal(result.monitoringMode,'balance_only');assert.equal(result.status,status);assert.equal(result.alertType,alertType);assert.equal(result.paymentConfirmed,false);
+ }
+ const result=evaluateSnapshot({...account,balanceDue:-725,zone:'America/Los_Angeles'},new Date('2026-11-10T16:00:00Z'));
+ assert.equal(result.monitoringMode,'balance_only');assert.equal(result.alertType,'monitor_stale');
 });

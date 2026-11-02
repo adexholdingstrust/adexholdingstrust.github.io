@@ -43,7 +43,7 @@ jobs:
         env:
           HOA_PROVIDER: ${{ matrix.provider }}
           HOA_TOWNSQ_ATTEMPT: ${{ github.event_name == 'workflow_dispatch' }}
-          HOA_DISCOVER_FINANCE: ${{ github.event_name != 'schedule' }}
+          HOA_DISCOVER_FINANCE: 'false'
           HOA_INGEST_ENABLED: 'true'
           CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
           ADEX_MONITOR_INGEST_SECRET: ${{ secrets.ADEX_MONITOR_INGEST_SECRET }}

@@ -51,7 +51,9 @@
       },
       "assessmentVerifiedOn": "2026-10-23",
       "intendedMonthlyContribution": 240,
-      "contributionNote": "Bank confirms $120 every 14 days; average $260 monthly cash outflow. Monthly assessment is $205. Extra payments are credit/prepayment, not HOA expense."
+      "contributionNote": "Bank confirms $120 every 14 days; average $260 monthly cash outflow. Monthly assessment is $205. Extra payments are credit/prepayment, not HOA expense.",
+      "monitoringMode": "balance_only",
+      "monitoringPolicy": "Owner accepts dashboard balance monitoring; individual bank payments are not reconciled. Alert on positive balance, unavailable balance, stale retrieval, and report balance changes."
     }
   ]
 }

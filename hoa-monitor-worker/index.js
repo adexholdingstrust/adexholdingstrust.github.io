@@ -48,6 +48,22 @@ async function deliver(env,key,message,now,acceptance=false) {
 export async function processSnapshot(env,snapshot,now=new Date()) {
   const result=evaluateSnapshot(snapshot,now);
   if(!result.alertType)return {result,delivery:'none'};
+  if(result.monitoringMode==='balance_only') {
+    const signature=JSON.stringify([result.status,snapshot.balanceDue]);
+    const stateKey='monitor:balance-notice:'+snapshot.propertyId;
+    let state=await env.HOA_MONITOR_KV.get(stateKey,'json');
+    if(!state||state.signature!==signature){state={signature,eventId:crypto.randomUUID()};await env.HOA_MONITOR_KV.put(stateKey,JSON.stringify(state));}
+    const balance=snapshot.balanceDue===null?'Not available':snapshot.balanceDue<0?'Credit $'+Math.abs(snapshot.balanceDue).toFixed(2):snapshot.balanceDue===0?'$0.00 — no balance due':'Amount owed $'+snapshot.balanceDue.toFixed(2);
+    const message={subject:`Adex HOA | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
+      `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,`Dashboard balance: ${balance}`,
+      `Observed: ${snapshot.observedAt}`,`Provider last updated: ${snapshot.sourceUpdatedAt||'Not provided'}`,`Status: ${result.status}`,
+      'Monitoring basis: HOA dashboard balance. Owner-reported bank schedule: $120 every 14 days.',
+      result.status==='stale'?'Dashboard retrieval is stale; a fresh check is required.':result.status==='balance_unavailable'?'Dashboard balance could not be verified; review is required.':snapshot.balanceDue>0?'The dashboard reports an amount owed; review the bank payment and HOA account.':'The dashboard reports no current amount owed.',
+      'Individual bank payments are not reconciled by this balance monitor.'
+    ].join('\n')};
+    return {result,delivery:await deliver(env,'balance:'+snapshot.propertyId+':'+state.eventId,message,now)};
+  }
+
   const key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||(snapshot.kind==='hoa'&&snapshot.dueDate===null?result.asOfDate.slice(0,7):''),snapshot.dueDate,result.alertType,result.status==='stale'?result.asOfDate:''].join(':');
   const message={subject:`Adex ${snapshot.kind==='hoa'?'HOA':'Property Tax'} | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
     `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,

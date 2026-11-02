@@ -59,7 +59,13 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
 }
 export function evaluateSnapshot(snapshot, now = new Date()) {
   const asOfDate=localDate(now,snapshot.zone);
-  if(now-Date.parse(snapshot.observedAt)>48*3600000) return {status:'stale',paymentConfirmed:false,asOfDate,alertType:'monitor_stale'};
+  const balanceOnly=snapshot.kind==='hoa'&&snapshot.propertyId==='fallbrook-ca';
+  if(now-Date.parse(snapshot.observedAt)>48*3600000) return {status:'stale',paymentConfirmed:false,asOfDate,alertType:'monitor_stale',...(balanceOnly?{monitoringMode:'balance_only'}:{})};
+  if(balanceOnly) {
+    if(snapshot.balanceDue===null)return {status:'balance_unavailable',monitoringMode:'balance_only',paymentConfirmed:false,asOfDate,requiresHumanReview:true,alertType:'balance_unavailable'};
+    const status=snapshot.balanceDue<0?'credit_balance':snapshot.balanceDue===0?'no_balance_due':'balance_due';
+    return {status,monitoringMode:'balance_only',paymentConfirmed:false,asOfDate,requiresHumanReview:snapshot.balanceDue>0,alertType:snapshot.balanceDue>0?'balance_due':'balance_update'};
+  }
   if(snapshot.kind==='hoa' && (snapshot.dueDate===null || snapshot.amountDue===null))return {status:'payment_unverified',paymentConfirmed:false,asOfDate,requiresHumanReview:true,alertType:'payment_verification_due',sourceStale:snapshot.sourceUpdatedAt?now-Date.parse(snapshot.sourceUpdatedAt)>48*3600000:null};
   const proof=snapshot.countySettlement;
   if(snapshot.kind==='tax' && proof && proof.postedTotal>=snapshot.annualAssessment && proof.currentYearBalance===0 && snapshot.balanceDue===0)
