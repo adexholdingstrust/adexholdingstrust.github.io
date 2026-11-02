@@ -21,3 +21,12 @@ export function lcmSnapshot(rows,now=new Date()) {
  // Credits in this four-column view lack an allocation reference. Never invent one.
  return {kind:'hoa',propertyId:'aurora-oxford-co',provider:'LCM',sourceUrl:'https://lcmpropertymanagement.com/AccountStatus/40583~10533163/?type=Account&active=0',observedAt:now.toISOString(),dueDate:assessment.date,amountDue:assessment.charge,monthlyAssessment:assessment.charge,balanceDue:null,payments:[]};
 }
+
+export function frontStepsSnapshot(data,now=new Date()) {
+ const units=data?.payments?.filter(p=>/\b464\b.*\bcalabrese\b/i.test(p.unit_street_1||''));
+ if(units?.length!==1)throw Error('Property identity not unique');
+ const unit=units[0];
+ if(unit.service_unavailable || unit.accounting_errors?.length || typeof unit.balance!=='number' || !Number.isFinite(unit.balance) || Math.abs(unit.balance)>100000000 || Math.abs(unit.balance*100-Math.round(unit.balance*100))>0.00001)throw Error('Account balance unavailable');
+ const sourceUpdatedAt=unit.last_updated_at?new Date(unit.last_updated_at).toISOString():null;
+ return {kind:'hoa',propertyId:'fallbrook-ca',provider:'FrontSteps',sourceUrl:'https://horsecreekridge.frontsteps.com/dashboard',observedAt:now.toISOString(),sourceUpdatedAt,dueDate:null,amountDue:null,balanceDue:unit.balance,payments:[]};
+}

@@ -17,18 +17,19 @@ function keys(value, allowed) {
   if(!value || typeof value!=='object' || Array.isArray(value) || Object.keys(value).some(k=>!allowed.includes(k))) throw Error('Invalid fields');
 }
 export function validateSnapshot(value, taxProperties, now = new Date()) {
-  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement','installments']);
+  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','sourceUpdatedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement','installments']);
   const hoa=HOA_PROPERTIES[value.propertyId];
   const tax=taxProperties.find(p=>p.propertyId===value.propertyId);
   if(!['hoa','tax'].includes(value.kind) || (value.kind==='hoa'?!hoa:!tax)) throw Error('Unknown property');
   const zone=value.kind==='hoa'?hoa.zone:tax.state==='AZ'?'America/Phoenix':tax.state==='CA'||tax.state==='NV'?'America/Los_Angeles':'America/Denver';
   const observed=Date.parse(value.observedAt);
   if(typeof value.observedAt!=='string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value.observedAt) || !Number.isFinite(observed) || observed>now.getTime()+60000 || now-observed>48*3600000) throw Error('Stale observation');
+  if(value.sourceUpdatedAt!==undefined && value.sourceUpdatedAt!==null && (typeof value.sourceUpdatedAt!=='string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value.sourceUpdatedAt) || !Number.isFinite(Date.parse(value.sourceUpdatedAt)) || Date.parse(value.sourceUpdatedAt)>observed+60000))throw Error('Invalid source update');
   const host=value.kind==='hoa'?hoa.host:new URL(tax.taxPortalUrl).hostname;
   const url=new URL(value.sourceUrl);
   if(url.protocol!=='https:' || url.hostname!==host || url.username || url.password || url.hash) throw Error('Invalid source');
   if(value.kind==='hoa' && value.provider!==hoa.provider) throw Error('Provider mismatch');
-  if(!(validDate(value.dueDate) || value.kind==='tax' && value.dueDate===null) || !money(value.amountDue) || !(value.balanceDue===null || typeof value.balanceDue==='number' && Number.isFinite(value.balanceDue) && Math.abs(value.balanceDue)<=100000000) || !Array.isArray(value.payments) || value.payments.length>1000) throw Error('Invalid obligation');
+  if(!(validDate(value.dueDate) || value.dueDate===null) || !(money(value.amountDue) || value.kind==='hoa' && value.amountDue===null) || !(value.balanceDue===null || typeof value.balanceDue==='number' && Number.isFinite(value.balanceDue) && Math.abs(value.balanceDue)<=100000000) || !Array.isArray(value.payments) || value.payments.length>1000) throw Error('Invalid obligation');
   if(value.monthlyAssessment!==undefined && !money(value.monthlyAssessment)) throw Error('Invalid assessment');
   if(value.annualAssessment!==undefined && !money(value.annualAssessment)) throw Error('Invalid assessment');
   if(value.kind==='tax' && !/^20\d{2}(\/20\d{2})?$/.test(value.taxYear||'')) throw Error('Invalid tax year');
@@ -59,6 +60,7 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
 export function evaluateSnapshot(snapshot, now = new Date()) {
   const asOfDate=localDate(now,snapshot.zone);
   if(now-Date.parse(snapshot.observedAt)>48*3600000) return {status:'stale',paymentConfirmed:false,asOfDate,alertType:'monitor_stale'};
+  if(snapshot.kind==='hoa' && (snapshot.dueDate===null || snapshot.amountDue===null))return {status:'payment_unverified',paymentConfirmed:false,asOfDate,requiresHumanReview:true,alertType:'payment_verification_due',sourceStale:snapshot.sourceUpdatedAt?now-Date.parse(snapshot.sourceUpdatedAt)>48*3600000:null};
   const proof=snapshot.countySettlement;
   if(snapshot.kind==='tax' && proof && proof.postedTotal>=snapshot.annualAssessment && proof.currentYearBalance===0 && snapshot.balanceDue===0)
     return {status:'paid',paymentConfirmed:true,asOfDate,alertType:'payment_confirmed',evidence:'county_account_and_bill'};

@@ -36,3 +36,9 @@ test('HOA missing allocation is unverified and never asserts unpaid debt',()=>{
  const result=evaluateSnapshot(s,now);assert.equal(result.status,'payment_unverified');assert.equal(result.alertType,'unconfirmed_by_seventh');
  assert.equal(result.paymentConfirmed,false);assert.equal(result.requiresHumanReview,true);
 });
+
+test('FrontSteps balance-only observation cannot confirm an unknown assessment',()=>{
+ const snapshot=validate({...base,amountDue:null,dueDate:null,balanceDue:-605,sourceUpdatedAt:'2026-10-23T12:00:00.000Z'});
+ const result=evaluateSnapshot(snapshot,now);assert.equal(result.status,'payment_unverified');assert.equal(result.paymentConfirmed,false);assert.equal(result.sourceStale,true);
+ assert.throws(()=>validate({...base,sourceUpdatedAt:'2027-01-01T00:00:00.000Z'}));
+});

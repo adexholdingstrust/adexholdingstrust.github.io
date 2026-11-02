@@ -48,11 +48,11 @@ async function deliver(env,key,message,now,acceptance=false) {
 export async function processSnapshot(env,snapshot,now=new Date()) {
   const result=evaluateSnapshot(snapshot,now);
   if(!result.alertType)return {result,delivery:'none'};
-  const key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||'',snapshot.dueDate,result.alertType,result.status==='stale'?result.asOfDate:''].join(':');
+  const key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||(snapshot.kind==='hoa'&&snapshot.dueDate===null?result.asOfDate.slice(0,7):''),snapshot.dueDate,result.alertType,result.status==='stale'?result.asOfDate:''].join(':');
   const message={subject:`Adex ${snapshot.kind==='hoa'?'HOA':'Property Tax'} | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
     `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,
-    `Obligation due: ${snapshot.dueDate||"Deadline not verified"}`,`Obligation amount: $${snapshot.amountDue.toFixed(2)}`,
-    `Last portal balance: ${snapshot.balanceDue===null?"Not verified":"$"+snapshot.balanceDue.toFixed(2)}`,`Observed: ${snapshot.observedAt}`,`Check date: ${result.asOfDate}`,
+    `Obligation due: ${snapshot.dueDate||"Deadline not verified"}`,`Obligation amount: ${snapshot.amountDue===null?'Not verified':'$'+snapshot.amountDue.toFixed(2)}`,
+    `Last portal balance: ${snapshot.balanceDue===null?"Not verified":"$"+snapshot.balanceDue.toFixed(2)}`,`Observed: ${snapshot.observedAt}`, ...(snapshot.sourceUpdatedAt!==undefined?[`Provider last updated: ${snapshot.sourceUpdatedAt||'Not verified'}`]:[]),`Check date: ${result.asOfDate}`,
     `Status: ${result.status}`,result.paymentConfirmed?(result.evidence==='county_account_and_bill'?'County account ledger and tax bill reconcile paid annual assessment and zero account balance.':result.evidence==='hoa_account_ledger'?'HOA account ledger shows posted payments allocated to this assessment. No HOA email receipt is required.':'Posted payment evidence allocated to this obligation confirms payment.'):'Payment is NOT confirmed by this notice.',
     'Scheduled autopay and credit balances alone do not confirm payment. Review the source portal. No payment has been initiated.'
   ].join('\n')};

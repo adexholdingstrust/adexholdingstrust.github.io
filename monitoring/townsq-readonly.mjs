@@ -10,7 +10,7 @@ export async function checkTownSq(username,password) {
   const url=new URL(path,'https://api.townsq.io');
   if(url.origin!=='https://api.townsq.io'||!(url.pathname==='/rest/login'||/^\/api\/v1\/users\/[^/]+\/accounts(?:\/[^/]+\/transactions)?$/.test(url.pathname)))throw Error('Read endpoint rejected');
   const response=await fetch(url,{...options,headers,redirect:'error',signal:AbortSignal.timeout(25000)});
-  if(!response.ok){const e=Error('TownSq request rejected');e.httpStatus=response.status;throw e;}
+  if(!response.ok){const body=await response.text();const e=Error('TownSq request rejected');e.httpStatus=response.status;e.reason=/captcha|challenge-platform|verify you are human/i.test(body)?'interactive_challenge':/cloudfront|request could not be satisfied|request blocked/i.test(body)?'edge_request_rejected':response.status===403?'access_denied':'provider_rejected';throw e;}
   return response.json();
  };
  const login=await request('/rest/login',{method:'POST',body:JSON.stringify({email:username.trim(),password:createHash('sha1').update(password).digest('hex'),login_type:'CMN',platform:'webapp'})});

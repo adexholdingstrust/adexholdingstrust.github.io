@@ -1,7 +1,7 @@
 /* Read-only portal sign-in verification. No browser state or page contents are persisted. */
 import {chromium} from 'playwright';
 import {createHmac} from 'node:crypto';
-import {lcmSnapshot} from './hoa-ledger.js';
+import {lcmSnapshot,frontStepsSnapshot} from './hoa-ledger.js';
 import {checkTownSq} from './townsq-readonly.mjs';
 async function ingest(snapshot) {
  const token=process.env.CLOUDFLARE_API_TOKEN;
@@ -26,14 +26,26 @@ try {for(const portal of portals){
  const username=process.env[`ADEX_MONITOR_${portal.prefix}_USERNAME`];
  const password=process.env[`ADEX_MONITOR_${portal.prefix}_PASSWORD`];
  if(!username||!password){console.log(JSON.stringify({propertyId:portal.id,status:'credentials_missing'}));failures++;continue;}
- if(portal.name==='TownSq'){try{const report=await checkTownSq(username,password);console.log(JSON.stringify({propertyId:portal.id,...report}));if(report.status!=='authenticated')failures++;}catch(e){console.log(JSON.stringify({propertyId:portal.id,status:'api_check_failed',errorType:e.name,httpStatus:e.httpStatus||null}));failures++;}continue;}
+ if(portal.name==='TownSq'){try{const report=await checkTownSq(username,password);console.log(JSON.stringify({propertyId:portal.id,...report}));if(report.status!=='authenticated')failures++;}catch(e){console.log(JSON.stringify({propertyId:portal.id,status:'api_check_failed',errorType:e.name,httpStatus:e.httpStatus||null,reason:e.reason||'request_failed'}));failures++;}continue;}
  const context=await browser.newContext({acceptDownloads:false});
  const page=await context.newPage(); page.setDefaultTimeout(20000);
- let financialUrl=null; const networkErrors=[]; const errorTags=new Set(); const paymentHosts=new Set(); const authResponses=[]; const schemas=[];const denied=new Set(); const pageErrors=new Set(); let stage='open';
+ let frontStepsData=null; let financialHistory={status:'not_checked'}; let financialUrl=null; const networkErrors=[]; const errorTags=new Set(); const paymentHosts=new Set(); const authResponses=[]; const schemas=[];const denied=new Set(); const pageErrors=new Set(); let stage='open';
  page.on('pageerror',e=>{for(const tag of (e.message.match(/NG\d+|(?:installations|remoteconfig|auth|messaging)\/[a-z-]+|FirebaseError|ChunkLoadError|SecurityError|ReferenceError|TypeError|CORS|CSP|ERR_[A-Z_]+/g)||[]))errorTags.add(tag);pageErrors.add(/firebase/i.test(e.message)?'firebase_initialization':/chunk|loading/i.test(e.message)?'application_bundle_load':e.name||'unclassified');});
  const shape=(v,depth=0)=>{if(v===null)return 'null';if(Array.isArray(v))return {type:'array',count:v.length,item:depth<5?shape(v[0],depth+1):typeof v[0]};if(typeof v==='object')return Object.fromEntries(Object.entries(v).filter(([k])=>/^[A-Za-z_][A-Za-z_0-9]{0,45}$/.test(k)).slice(0,40).map(([k,x])=>[k,depth<5?shape(x,depth+1):typeof x]));return typeof v;};
  // Do not permit application writes. Authentication is the only allowed mutation.
  await context.route('**/*',async route=>{const q=route.request(),u=new URL(q.url());
+  if(portal.name==='FrontSteps'&&u.hostname==='fspay-api.frontsteps.com'&&u.pathname==='/api/v1/Payers'&&q.method()==='POST'){
+   // The UI tries to create/update a payer profile. Keep it blocked; try the client's existing-payer GET instead.
+   try{const payload=q.postDataJSON(),lookup=new URL('https://fspay-api.frontsteps.com/api/v1/Payers/external');
+    for(const k of ['communityId','communityExternalIdentifier','externalForeignKey'])if(payload[k]!==undefined&&payload[k]!==null)lookup.searchParams.set(k,String(payload[k]));
+    const h=await q.allHeaders();const headers={accept:'application/json',Authorization:h.authorization||'', 'X-FRONTSTEPS-Payments-UserType':h['x-frontsteps-payments-usertype']||''};
+    const res=await context.request.get(lookup.href,{headers,maxRedirects:0,timeout:20000});financialHistory={status:'existing_payer_lookup',httpStatus:res.status()};
+    if(res.ok()){const payer=await res.json();financialHistory.responseShape=shape(payer);
+     if(typeof payer.id==='string'&&/^[a-zA-Z0-9-]{1,100}$/.test(payer.id)){const history=await context.request.get('https://fspay-api.frontsteps.com/api/v1/Payers/'+encodeURIComponent(payer.id)+'/payments?limit=5&offset=0',{headers,maxRedirects:0,timeout:20000});financialHistory.historyHttpStatus=history.status();if(history.ok())financialHistory.historyShape=shape(await history.json());}
+    }
+   }catch{financialHistory={status:'existing_payer_lookup_failed'};}
+   denied.add(safePath(q.url()));return route.abort();
+  }
   if(u.hostname==='firebaseremoteconfig.googleapis.com' && u.pathname==='/v1/projects/firebase-socialcondo/namespaces/firebase:fetch')return route.continue();
   if(portal.name==='LCM' && u.hostname==='lcmpropertymanagement.com' && u.pathname==='/Member/ValidateEtrack')return route.continue();
   if(u.hostname==='firebaseinstallations.googleapis.com' && /^\/v1\/projects\/firebase-socialcondo\/installations(?:\/[^/]+\/authTokens:generate)?$/.test(u.pathname))return route.continue();
@@ -46,7 +58,7 @@ try {for(const portal of portals){
   if(portal.hosts.includes(u.hostname)&&req.method()==='POST'&&/(auth|login|session|sign_in)/i.test(u.pathname))authResponses.push({endpoint:safePath(response.url()),status:response.status()});
   if(!portal.hosts.includes(u.hostname)||req.method()!=='GET'||!response.ok()||!response.headers()['content-type']?.includes('application/json')||u.pathname.startsWith('/assets/'))return;
   const data=await response.json();
-  if(portal.name==='FrontSteps'&&Array.isArray(data.payments)){const units=data.payments.filter(p=>/464.*calabrese/i.test(p.unit_street_1));if(units.length===1){const accounts=units[0].accounts?.filter(a=>a.is_default);if(accounts?.length===1){try{const u=new URL(accounts[0].payment_url);if(u.protocol==='https:'&&u.hostname==='fspay.frontsteps.com')financialUrl=u.href;}catch{}}}}
+  if(portal.name==='FrontSteps'&&Array.isArray(data.payments)){frontStepsData=data;const units=data.payments.filter(p=>/464.*calabrese/i.test(p.unit_street_1));if(units.length===1){const accounts=units[0].accounts?.filter(a=>a.is_default);if(accounts?.length===1){try{const u=new URL(accounts[0].payment_url);if(u.protocol==='https:'&&u.hostname==='fspay.frontsteps.com')financialUrl=u.href;}catch{}}}}
   if(portal.name==='FrontSteps'&&Array.isArray(data.payments))for(const p of data.payments)for(const a of p.accounts||[])try{paymentHosts.add(new URL(a.payment_url).origin);}catch{}
   const sample=Array.isArray(data)?data[0]:data;
   if(sample && typeof sample==='object' && schemas.length<30)schemas.push({endpoint:safePath(response.url()),shape:shape(data)});
@@ -87,13 +99,14 @@ try {for(const portal of portals){
     const snapshot=lcmSnapshot(rows);collection=await ingest(snapshot);
    }catch{collection={status:'collection_failed'};failures++;}
   }
+  if(signedIn&&portal.name==='FrontSteps'&&process.env.HOA_INGEST_ENABLED==='true'){try{collection=await ingest(frontStepsSnapshot(frontStepsData));}catch{collection={status:'collection_failed'};failures++;}}
   let financialPortal=null;
   if(signedIn&&portal.name==='FrontSteps'&&financialUrl){
    await page.goto(financialUrl,{waitUntil:'domcontentloaded',timeout:45000});await page.waitForTimeout(10000);
    const body=await page.locator('body').innerText();
    financialPortal={destination:safePath(page.url()),hasPassword:await page.locator('input[type="password"]').filter({visible:true}).count()>0,hasLedger:/transaction history|account history|payment history|ledger/i.test(body),hasChallenge:/verification code|captcha|verify your identity/i.test(body),tableColumns:(await page.locator('th').allTextContents()).map(x=>x.trim()).filter(x=>/^(date|description|charge|charges|credit|credits|balance|amount|payment|payments|status|reference|transaction|transaction date|due date|type)$/i.test(x))};
   }
-  console.log(JSON.stringify({propertyId:portal.id,status,collection,financialPortal,authResponses,paymentHosts:[...paymentHosts],financialControls:financialControls.map(x=>x.trim()).filter(x=>x.length<60&&/account|payment|ledger|history|statement|financial/i.test(x)).slice(0,25),rowShapes,readLinks:readLinks.map(l=>({label:l.label,path:safePath(l.url)})),destination:safePath(page.url()),ledgerColumns:labels,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));
+  console.log(JSON.stringify({propertyId:portal.id,status,collection,financialPortal,financialHistory,authResponses,paymentHosts:[...paymentHosts],financialControls:financialControls.map(x=>x.trim()).filter(x=>x.length<60&&/account|payment|ledger|history|statement|financial/i.test(x)).slice(0,25),rowShapes,readLinks:readLinks.map(l=>({label:l.label,path:safePath(l.url)})),destination:safePath(page.url()),ledgerColumns:labels,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));
   if(!signedIn)failures++;
  }catch(error){const controls=await page.locator('input').evaluateAll(xs=>xs.map(x=>({id:x.id,name:x.name,type:x.type,visible:!!(x.offsetWidth||x.offsetHeight||x.getClientRects().length)}))).catch(()=>[]);console.log(JSON.stringify({propertyId:portal.id,status:'check_failed',stage,destination:safePath(page.url()),controls,authResponses,networkErrors,errorTags:[...errorTags],pageErrors:[...pageErrors],errorType:error.name,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));failures++;}
  finally{await context.close();}

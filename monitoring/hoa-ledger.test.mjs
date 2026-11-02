@@ -14,3 +14,11 @@ test('ledger parsing rejects invalid dates and ambiguous money',()=>{
  for(const value of ['1,23.00','NaN','(120.00)','120.001'])assert.throws(()=>ledgerMoney(value));
  assert.throws(()=>ledgerDate('02/30/2026'));
 });
+
+test('FrontSteps identifies the property and preserves balance without inventing assessment or payment',async()=>{
+ const {frontStepsSnapshot}=await import('./hoa-ledger.js');
+ const data={payments:[{unit_street_1:'464 Calabrese St',balance:-605,service_unavailable:false,last_updated_at:'2026-10-23T12:00:00Z',accounting_errors:[]}]};
+ const snapshot=frontStepsSnapshot(data,now);assert.equal(snapshot.balanceDue,-605);assert.equal(snapshot.amountDue,null);assert.equal(snapshot.dueDate,null);assert.deepEqual(snapshot.payments,[]);
+ assert.throws(()=>frontStepsSnapshot({payments:[{...data.payments[0],unit_street_1:'Other unit'}]},now));
+ assert.throws(()=>frontStepsSnapshot({payments:[{...data.payments[0],service_unavailable:true}]},now));
+});
