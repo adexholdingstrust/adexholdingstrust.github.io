@@ -1,0 +1,36 @@
+name: Verify authenticated HOA access
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'monitoring/hoa-auth-check.mjs'
+      - '.github/workflows/hoa-auth-check.yml'
+permissions:
+  contents: read
+concurrency:
+  group: adex-hoa-authentication
+  cancel-in-progress: false
+jobs:
+  verify:
+    environment: github-pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install pinned browser client
+        run: |
+          npm install --no-save --ignore-scripts --package-lock=false playwright@1.64.1
+          npx playwright install --with-deps chromium
+      - name: Verify portal authentication without payment actions
+        env:
+          ADEX_MONITOR_LCM_USERNAME: ${{ secrets.ADEX_MONITOR_LCM_USERNAME }}
+          ADEX_MONITOR_LCM_PASSWORD: ${{ secrets.ADEX_MONITOR_LCM_PASSWORD }}
+          ADEX_MONITOR_TOWNSQ_USERNAME: ${{ secrets.ADEX_MONITOR_TOWNSQ_USERNAME }}
+          ADEX_MONITOR_TOWNSQ_PASSWORD: ${{ secrets.ADEX_MONITOR_TOWNSQ_PASSWORD }}
+          ADEX_MONITOR_FRONTSTEPS_USERNAME: ${{ secrets.ADEX_MONITOR_FRONTSTEPS_USERNAME }}
+          ADEX_MONITOR_FRONTSTEPS_PASSWORD: ${{ secrets.ADEX_MONITOR_FRONTSTEPS_PASSWORD }}
+        run: node monitoring/hoa-auth-check.mjs
