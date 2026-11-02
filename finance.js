@@ -137,7 +137,7 @@ function applyLiveMonitorSummary(summary){
   LIVE_HOA_ACTUALS=new Map();LIVE_TAX_ACTUALS=new Map();
   for(const r of summary.records){if(!r.fresh)continue;
     if(r.kind==='hoa'&&Number.isFinite(r.monthlyAssessment)&&r.dueDate)LIVE_HOA_ACTUALS.set(r.financeId,{value:r.monthlyAssessment,month:r.dueDate.slice(0,7),observedAt:r.observedAt});
-    if(r.kind==='tax'&&Number.isFinite(r.annualAssessment)&&r.taxYear)LIVE_TAX_ACTUALS.set(r.financeId,{value:r.annualAssessment,taxYear:r.taxYear,observedAt:r.observedAt});
+    if(r.kind==='tax'&&r.assessmentScope!=='base_tax_only'&&Number.isFinite(r.annualAssessment)&&r.taxYear)LIVE_TAX_ACTUALS.set(r.financeId,{value:r.annualAssessment,taxYear:r.taxYear,observedAt:r.observedAt});
   }
   renderTable();renderHOATable();
 }

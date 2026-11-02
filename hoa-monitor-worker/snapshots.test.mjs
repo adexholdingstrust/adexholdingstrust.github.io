@@ -52,3 +52,10 @@ test('Calabrese uses dashboard balance policy without requiring individual payme
  const result=evaluateSnapshot({...account,balanceDue:-725,zone:'America/Los_Angeles'},new Date('2026-11-10T16:00:00Z'));
  assert.equal(result.monitoringMode,'balance_only');assert.equal(result.alertType,'monitor_stale');
 });
+
+test('assessor base taxes cannot confirm payment or imply a complete obligation',()=>{
+ const value={...base,kind:'tax',propertyId:'valencia',provider:'Valencia County Assessor',sourceUrl:'https://county.test/tax',taxYear:'2026',dueDate:null,amountDue:4.76,annualAssessment:4.76,balanceDue:null,assessmentScope:'base_tax_only',payments:[]};
+ const snapshot=validateSnapshot(value,[{propertyId:'valencia',state:'NM',taxPortalUrl:'https://county.test/'}],now);
+ const result=evaluateSnapshot(snapshot,now);assert.equal(result.status,'assessment_incomplete');assert.equal(result.paymentConfirmed,false);assert.equal(result.alertType,'assessment_verification_due');assert.equal(result.requiresHumanReview,true);
+ assert.throws(()=>validate({...base,assessmentScope:'base_tax_only'}));
+});

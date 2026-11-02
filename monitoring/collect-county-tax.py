@@ -1,4 +1,4 @@
-"""Read-only Elko and Nye collector and signed delivery to the isolated Worker.
+"""Read-only Elko, Nye and Valencia collector and signed delivery to the isolated Worker.
 No credentials required to read public county data. Prints summary fields only.
 Set ADEX_MONITOR_URL and ADEX_MONITOR_INGEST_SECRET for delivery; never pass
 secrets on command lines. --dry-run performs county reconciliation without delivery.
@@ -59,6 +59,13 @@ def normalize_nye(bill, now=None):
         'dueDate': next_due['dueDate'], 'amountDue': next_due['amount'],
         'balanceDue': None, 'payments': [], 'installments': installments,
     }
+
+
+def normalize_valencia(account, now=None):
+    now=now or datetime.now(timezone.utc)
+    if account.get('assessmentScope')!='base_tax_only' or account.get('paymentStatus')!='unverified':
+        raise ValueError('Expected assessor base-tax observation')
+    return {'kind':'tax','propertyId':account['propertyId'],'provider':'Valencia County Assessor','sourceUrl':account['sourceUrl'],'observedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'taxYear':account['taxYear'],'annualAssessment':account['annualAssessment'],'assessmentScope':'base_tax_only','amountDue':account['annualAssessment'],'dueDate':None,'balanceDue':None,'payments':[]}
 
 
 def nye_year(now=None):
@@ -143,6 +150,20 @@ def main():
         if isinstance(exc, HTTPError):
             details['httpStatus'] = exc.code
         print(json.dumps(details), file=sys.stderr)
+    valencia=load('valencia_assessor','valencia-tax-extractor.py')
+    for property_id in valencia.ACCOUNTS:
+        stage='assessor_guest_retrieval'
+        try:
+            account=valencia.extract(property_id,datetime.now(ZoneInfo('America/Denver')).year)
+            stage='assessor_normalization';snapshot=normalize_valencia(account)
+            stage='worker_delivery';result=None if args.dry_run else deliver(snapshot,endpoint,secret)
+            print(json.dumps({'propertyId':property_id,'assessmentScope':'base_tax_only','countyPaymentStatus':'unverified','delivered':bool(result),'mode':'dry_run' if args.dry_run else 'live'}))
+        except Exception as exc:
+            failures+=1
+            from urllib.error import HTTPError
+            details={'propertyId':property_id,'status':'collection_or_delivery_failed','stage':stage,'errorType':type(exc).__name__}
+            if isinstance(exc,HTTPError):details['httpStatus']=exc.code
+            print(json.dumps(details),file=sys.stderr)
     return 1 if failures else 0
 
 if __name__ == '__main__':

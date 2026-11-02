@@ -17,7 +17,7 @@ function keys(value, allowed) {
   if(!value || typeof value!=='object' || Array.isArray(value) || Object.keys(value).some(k=>!allowed.includes(k))) throw Error('Invalid fields');
 }
 export function validateSnapshot(value, taxProperties, now = new Date()) {
-  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','sourceUpdatedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement','installments']);
+  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','sourceUpdatedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement','installments','assessmentScope']);
   const hoa=HOA_PROPERTIES[value.propertyId];
   const tax=taxProperties.find(p=>p.propertyId===value.propertyId);
   if(!['hoa','tax'].includes(value.kind) || (value.kind==='hoa'?!hoa:!tax)) throw Error('Unknown property');
@@ -32,6 +32,7 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
   if(!(validDate(value.dueDate) || value.dueDate===null) || !(money(value.amountDue) || value.kind==='hoa' && value.amountDue===null) || !(value.balanceDue===null || typeof value.balanceDue==='number' && Number.isFinite(value.balanceDue) && Math.abs(value.balanceDue)<=100000000) || !Array.isArray(value.payments) || value.payments.length>1000) throw Error('Invalid obligation');
   if(value.monthlyAssessment!==undefined && !money(value.monthlyAssessment)) throw Error('Invalid assessment');
   if(value.annualAssessment!==undefined && !money(value.annualAssessment)) throw Error('Invalid assessment');
+  if(value.assessmentScope!==undefined && (value.kind!=='tax'||!['full_assessment','base_tax_only'].includes(value.assessmentScope)))throw Error('Invalid assessment scope');
   if(value.kind==='tax' && !/^20\d{2}(\/20\d{2})?$/.test(value.taxYear||'')) throw Error('Invalid tax year');
   if(value.autopayScheduled!==undefined && typeof value.autopayScheduled!=='boolean') throw Error('Invalid autopay');
   if(value.installments!==undefined) {
@@ -67,6 +68,7 @@ export function evaluateSnapshot(snapshot, now = new Date()) {
     return {status,monitoringMode:'balance_only',paymentConfirmed:false,asOfDate,requiresHumanReview:snapshot.balanceDue>0,alertType:snapshot.balanceDue>0?'balance_due':'balance_update'};
   }
   if(snapshot.kind==='hoa' && (snapshot.dueDate===null || snapshot.amountDue===null))return {status:'payment_unverified',paymentConfirmed:false,asOfDate,requiresHumanReview:true,alertType:'payment_verification_due',sourceStale:snapshot.sourceUpdatedAt?now-Date.parse(snapshot.sourceUpdatedAt)>48*3600000:null};
+  if(snapshot.kind==='tax'&&snapshot.assessmentScope==='base_tax_only')return {status:'assessment_incomplete',paymentConfirmed:false,asOfDate,requiresHumanReview:true,alertType:'assessment_verification_due'};
   const proof=snapshot.countySettlement;
   if(snapshot.kind==='tax' && proof && proof.postedTotal>=snapshot.annualAssessment && proof.currentYearBalance===0 && snapshot.balanceDue===0)
     return {status:'paid',paymentConfirmed:true,asOfDate,alertType:'payment_confirmed',evidence:'county_account_and_bill'};

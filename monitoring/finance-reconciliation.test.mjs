@@ -22,3 +22,9 @@ test('fresh live assessments apply only to their period and never use credits as
  assert.equal(vm.runInContext(`annualTaxFor({id:'elko-nv-10a-1'},{tax:99},'2026-11')`,context),11.73);assert.equal(vm.runInContext(`annualTaxFor({id:'elko-nv-10a-1'},{tax:99},'2026-06')`,context),99);
  assert.equal(vm.runInContext(`monthlyHOAFor({id:'ca-sfh-fallbrook'},{hoa:-725},'2026-11')`,context),205);assert.equal(vm.runInContext(`FINANCIALS['co-condo'].hoa`,context),500);
 });
+
+test('base taxes excluding special assessments cannot overwrite the full annual tax budget',()=>{
+ const context=vm.createContext({console,document:{body:{dataset:{page:'finance'}},getElementById:()=>null,addEventListener(){}}});vm.runInContext(source,context);
+ vm.runInContext(`renderTable=()=>{};renderHOATable=()=>{};applyLiveMonitorSummary({records:[{kind:'tax',financeId:'valencia-nm-rge-1',fresh:true,annualAssessment:4.76,taxYear:'2026',assessmentScope:'base_tax_only'}]});`,context);
+ assert.equal(vm.runInContext(`LIVE_TAX_ACTUALS.size`,context),0);assert.equal(vm.runInContext(`annualTaxFor({id:'valencia-nm-rge-1'},{tax:100},'2026-11')`,context),100);
+});

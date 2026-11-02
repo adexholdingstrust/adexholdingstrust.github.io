@@ -22,3 +22,13 @@ test('FrontSteps identifies the property and preserves balance without inventing
  assert.throws(()=>frontStepsSnapshot({payments:[{...data.payments[0],unit_street_1:'Other unit'}]},now));
  assert.throws(()=>frontStepsSnapshot({payments:[{...data.payments[0],service_unavailable:true}]},now));
 });
+
+test('LCM only accepts explicit, unambiguous account balance labels',async()=>{
+ const {lcmDashboardBalance}=await import('./hoa-ledger.js');
+ assert.equal(lcmDashboardBalance([['Balance Due:','$684.28']]),684.28);
+ assert.equal(lcmDashboardBalance([['Current Balance','($725.00)']]),-725);
+ assert.equal(lcmDashboardBalance([['Assessment','$635.03']]),null);
+ assert.equal(lcmDashboardBalance([['Balance Due','$684.28'],['Current Balance','$700.00']]),null);
+ assert.equal(lcmDashboardBalance([['Balance Due','unknown']]),null);
+ const result=lcmSnapshot([['11/01/2026','Monthly assessment','635.03','']],new Date('2026-11-02T12:00:00Z'),684.28);assert.equal(result.balanceDue,684.28);assert.deepEqual(result.payments,[]);
+});

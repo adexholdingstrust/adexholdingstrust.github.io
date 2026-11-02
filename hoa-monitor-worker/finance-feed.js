@@ -16,6 +16,7 @@ export async function financeSummary(env,now=new Date()) {
   if(s.monthlyAssessment!==undefined)record.monthlyAssessment=s.monthlyAssessment;
   if(s.annualAssessment!==undefined)record.annualAssessment=s.annualAssessment;
   if(s.taxYear!==undefined)record.taxYear=s.taxYear;
+  if(s.assessmentScope!==undefined)record.assessmentScope=s.assessmentScope;
   if(result.monitoringMode)record.monitoringMode=result.monitoringMode;
   records.push(record);
  }
