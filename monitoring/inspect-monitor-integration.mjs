@@ -13,3 +13,8 @@ const zones=await get('/zones?name=adexholdings.com&per_page=20');
 const matching=Array.isArray(zones)?zones.filter(z=>z.account?.id===account&&z.name==='adexholdings.com'):[];
 console.log(JSON.stringify({zoneAccess:matching.map(z=>({id:z.id,name:z.name})),zoneHttpStatus:zones.httpStatus||null}));
 if(matching.length===1){const routes=await get(`/zones/${matching[0].id}/workers/routes`);console.log(JSON.stringify({routes:Array.isArray(routes)?routes.map(r=>({pattern:r.pattern,script:r.script})):{httpStatus:routes.httpStatus||null}}));}
+
+const production=await fetch(`https://api.cloudflare.com/client/v4/accounts/${account}/workers/scripts/adex-trust-security`,{headers:{Authorization:'Bearer '+token},redirect:'error',signal:AbortSignal.timeout(25000)});
+if(production.ok){const source=await production.text();const domains=[...new Set(source.match(/[a-z0-9-]+\.cloudflareaccess\.com/gi)||[])];console.log(JSON.stringify({productionAccessDomains:domains,signatureVerificationPresent:/crypto\.subtle\.verify|jwtVerify|verifyJwt|verifyJWT|createRemoteJWKSet/.test(source)}));}else console.log(JSON.stringify({productionSourceHttpStatus:production.status}));
+const policies=await get(`/accounts/${account}/access/apps/bde4d1da-960f-49dd-9f6b-b1b69228ba26/policies`);
+console.log(JSON.stringify({financePolicyMetadata:Array.isArray(policies)?policies.map(p=>({id:p.id,decision:p.decision,includeTypes:(p.include||[]).flatMap(x=>Object.keys(x)),requireTypes:(p.require||[]).flatMap(x=>Object.keys(x)),excludeTypes:(p.exclude||[]).flatMap(x=>Object.keys(x))})):{httpStatus:policies.httpStatus||null}}));
