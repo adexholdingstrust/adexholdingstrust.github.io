@@ -161,7 +161,7 @@ def main():
         except Exception as exc:
             failures+=1
             from urllib.error import HTTPError
-            details={'propertyId':property_id,'status':'collection_or_delivery_failed','stage':stage,'errorType':type(exc).__name__}
+            details={'propertyId':property_id,'status':'collection_or_delivery_failed','stage':getattr(exc,'county_stage',stage),'errorType':type(exc).__name__,'interactiveChallenge':getattr(exc,'challenge',False)}
             if isinstance(exc,HTTPError):details['httpStatus']=exc.code
             print(json.dumps(details),file=sys.stderr)
     return 1 if failures else 0

@@ -44,13 +44,20 @@ class SafeRedirect(HTTPRedirectHandler):
 def read_account(property_id):
     account,parcel=ACCOUNTS[property_id]
     opener=build_opener(HTTPCookieProcessor(http.cookiejar.CookieJar()),SafeRedirect())
-    def read(url,data=None):
+    def read(url,data=None,referer=None,stage='account_lookup'):
         if urlsplit(url).hostname!=HOST or urlsplit(url).scheme!='https':raise ValueError('Unexpected county origin')
-        req=Request(url,data=data,headers={'User-Agent':'AdexPropertyMonitor/2.0 (+https://adexholdings.com)'})
-        with opener.open(req,timeout=25) as r:
-            raw=r.read(2000000)
-            if len(raw)>=2000000:raise ValueError('County page too large')
-            return r.url,raw.decode(r.headers.get_content_charset() or 'cp1252')
+        headers={'User-Agent':'AdexPropertyMonitor/2.0 (+https://adexholdings.com)'}
+        if data is not None:headers.update({'Origin':ORIGIN,'Referer':referer or ORIGIN+'/assessor/web/login.jsp','Content-Type':'application/x-www-form-urlencoded'})
+        req=Request(url,data=data,headers=headers)
+        try:
+            with opener.open(req,timeout=25) as r:
+                raw=r.read(2000000)
+                if len(raw)>=2000000:raise ValueError('County page too large')
+                return r.url,raw.decode(r.headers.get_content_charset() or 'cp1252')
+        except Exception as exc:
+            exc.county_stage=stage
+            if hasattr(exc,'headers'):exc.challenge=exc.headers.get('cf-mitigated')=='challenge'
+            raise
     url=ORIGIN+'/assessor/taxweb/account.jsp?'+urlencode({'accountNum':account})
     current,html=read(url);page=Page.parse(html)
     guest=[f for f in page.forms if f['fields'].get('guest')=='true']
@@ -58,10 +65,10 @@ def read_account(property_id):
         if len(guest)!=1:raise ValueError('Ambiguous public guest form')
         action=urljoin(current,guest[0]['action'])
         if not urlsplit(action).path.startswith('/assessor/web/loginPOST.jsp'):raise ValueError('Unexpected guest action')
-        read(action,urlencode(guest[0]['fields']).encode());_,html=read(url);page=Page.parse(html)
+        read(action,urlencode(guest[0]['fields']).encode(),referer=current,stage='public_guest_login');_,html=read(url,stage='guest_account_reload');page=Page.parse(html)
     text=' '.join(page.text)
     if not re.search(r'Account:\s*'+re.escape(account)+r'\b',text) or parcel not in text:raise ValueError('County property identity mismatch')
-    _,detail=read(url+'&doc=TaxDocument')
+    _,detail=read(url+'&doc=TaxDocument',stage='public_tax_history')
     if not re.search(r'Account:\s*'+re.escape(account)+r'\b',' '.join(Page.parse(detail).text)):raise ValueError('Tax history identity mismatch')
     return page,Page.parse(detail)
 
