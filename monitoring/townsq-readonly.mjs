@@ -13,7 +13,7 @@ export async function checkTownSq(username,password) {
   if(!response.ok){const body=await response.text();const e=Error('TownSq request rejected');e.httpStatus=response.status;e.reason=/captcha|challenge-platform|verify you are human/i.test(body)?'interactive_challenge':/cloudfront|request could not be satisfied|request blocked/i.test(body)?'edge_request_rejected':response.status===403?'access_denied':'provider_rejected';throw e;}
   return response.json();
  };
- const login=await request('/rest/login',{method:'POST',body:JSON.stringify({email:username.trim(),password:createHash('sha1').update(password).digest('hex'),login_type:'CMN',platform:'webapp'})});
+ const login=await request('/rest/login',{method:'POST',body:JSON.stringify({fb_user:null,last_name:'',linkedToAssociaAccount:false,properties:[],userProperties:[],roles:[],vehicles:[],phones:[],canEditPassword:true,email:username.trim(),password:createHash('sha1').update(password).digest('hex'),login_type:'CMN',platform:'webapp'})});
  if(login.success!==true||typeof login.jwt!=='string'||!login.user?.id)return {status:'authentication_unverified',responseShape:shape(login),reason:/^[A-Z_0-9]{1,60}$/.test(login.errorType)?login.errorType:'provider_response'};
  headers.Authorization='Bearer '+login.jwt;
  headers['X-Scope-Type']='COMMUNITY';headers['X-Scope-Id']=community;

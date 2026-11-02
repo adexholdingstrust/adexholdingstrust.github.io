@@ -1,7 +1,7 @@
 # Adex HOA and property tax monitoring
 
 Implementation state, November 2, 2026: the isolated Worker is deployed and its health/authentication acceptance checks passed. Both Elko public account/bill observations and the validated Nye tax bill were delivered live.
-**County email notifications are enabled after Cloudflare runtime acceptance and Gmail inbox verification. Authenticated HOA collection, remaining county readers, and live finance reconciliation remain incomplete.**
+**County email notifications are enabled after Cloudflare runtime acceptance and Gmail inbox verification. LCM assessment collection and FrontSteps balance-only collection are connected. TownSq access, complete HOA payment-allocation evidence, remaining county readers, and live finance reconciliation remain incomplete.**
 No payment initiation is implemented. No existing finance KV records are modified.
 
 ## Components
@@ -70,8 +70,8 @@ python monitoring/collect-county-tax.py --dry-run
    collector manually in dry-run, then delivery mode with emails disabled. Read
    back dedicated monitoring storage; verify no finance writes occurred.
 7. Connect provider-specific read-only collectors for LCM Oxford Place, TownSq
-   Hoye Drive, and FrontSteps Calabrese. **These are not implemented:** authenticated
-   sessions/API contracts must be inspected and validated first. MFA or interactive
+   Hoye Drive, and FrontSteps Calabrese. LCM and FrontSteps authentication is verified;
+   TownSq currently rejects API authentication with HTTP 403. MFA or interactive
    challenges require account-holder involvement. No guessed login endpoints.
 8. Validate remaining county account mappings and allowed retrieval methods:
    Navajo, Iron (email verification), Valencia (special assessments), Los Angeles
@@ -102,7 +102,7 @@ Verified latest deployment and three live county deliveries: https://github.com/
 
 Worker origin: `https://adex-hoa-monitor.tenantservices.workers.dev`. Dedicated KV: `a26688b05efe477eb9460c684dcfc08a`. The November 2 activation deploy sets live notifications on; its health check verifies storage, signing and the expected notification flag. Unsigned ingestion and status return 401; signed invalid input returns 400; signed status succeeds. Both Elko observations were delivered and classified `paid_confirmed`. The Nye bill was delivered with payment status unverified. GitHub scheduled county collection has run successfully for Elko; the expanded Nye collector was verified in the deployment run. Cloudflare cron triggers are installed for 14:15/21:15 UTC; a natural Worker cron execution still requires verification. Existing production Worker and finance KV were not modified.
 
-Email credentials are now configured for the isolated Worker. The acceptance message, both real Elko payment-confirmation messages, and the Nye payment-verification notice were verified in the connected Gmail inbox, addressed to both requested recipients. Separate tenantservices inbox delivery has not been inspected. Remaining implementation gaps are the three authenticated HOA collectors, remaining county collectors, and live finance reconciliation. HOA credentials remain encrypted in the original Worker and cannot be read back. Preserve the working Cloudflare and Brevo secrets in the existing github-pages environment.
+Email credentials are now configured for the isolated Worker. The acceptance message, both real Elko payment-confirmation messages, and the Nye payment-verification notice were verified in the connected Gmail inbox, addressed to both requested recipients. Separate tenantservices inbox delivery has not been inspected. The six new HOA credentials are provided securely through the protected GitHub environment. LCM and FrontSteps authentication succeeded. LCM assessment observations and FrontSteps balance-only observations were ingested, and their verification notices were received in Gmail. TownSq access is denied with HTTP 403; full HOA payment-allocation evidence, remaining county collectors, and live finance reconciliation remain incomplete. Preserve the working Cloudflare and Brevo secrets in the existing github-pages environment.
 
 Health and ingestion clients use `AdexPropertyMonitor/2.0 (+https://adexholdings.com)` as their truthful service identity. Python's default User-Agent was rejected with Cloudflare 1010. No security protections were disabled.
 
@@ -151,4 +151,15 @@ The worker's notification flag is separate from coverage: an enabled notificatio
 
 HOA confirmation does not depend on receipt emails. Every HOA payment observation must carry `evidence: "hoa_account_ledger"`, a stable portal transaction reference, posting date, amount, status, and the due date of the assessment to which it is allocated. Collectors must verify these fields in the authenticated HOA account. A bank debit, scheduled autopay, receipt email, or account credit alone is insufficient. Partial payments and payments allocated to another month cannot confirm the current assessment. Reversals remove the corresponding paid amount. Stored records without ledger evidence cannot generate confirmation.
 
-Tax receipt emails acknowledge a transaction; county account/bill reconciliation independently verifies posting. Missing receipt email does not prove nonpayment. Receipt-mail ingestion is not yet connected. Authenticated HOA collection still requires secure portal access.
+Tax receipt emails acknowledge a transaction; county account/bill reconciliation independently verifies posting. Missing receipt email does not prove nonpayment. Receipt-mail ingestion is not yet connected. Secure portal access is now configured for all three providers; LCM and FrontSteps authentication is verified, while TownSq returns HTTP 403.
+
+## Authenticated HOA monitoring, November 2 update
+
+`Verify authenticated HOA access` runs independently for LCM, TownSq and FrontSteps using only the selected provider's protected environment credentials. The collection schedule is 14:30 and 21:30 UTC (6:30 a.m. and 1:30 p.m. Pacific Standard Time). These UTC times shift relative to Pacific daylight time. Natural executions of the new schedule are not yet verified. Existing production Worker and finance KV remain unchanged.
+
+- LCM: account sign-in and four-column ledger retrieval verified. A uniquely identified current-month assessment is ingested. Unreferenced ledger credits are not assigned to an assessment. Current payment status is unverified; its notification was received in Gmail. An intermittent login HTTP 409 has also occurred; successful subsequent observations do not eliminate that reliability limitation.
+- FrontSteps: community sign-in and unique Calabrese unit matching verified. The provider balance and update timestamp are ingested. Assessment amount, deadline and payment allocation remain unknown in this view. A credit balance is not a paid confirmation. Its verification notification was received in Gmail.
+- TownSq: the public client implements SHA1 password transformation and `POST /rest/login`, followed by authenticated own-user account and transaction GETs. The API returned HTTP 403. No credentials were declared invalid based on that response. Scheduled authentication retries are paused for TownSq until access is resolved; its missing collector remains visible.
+- FrontSteps payment history: the payment UI calls `createOrUpdatePayer` before loading history. That write remains blocked. A read-only existing-payer lookup returned HTTP 400. The exact-account-bound profile initialization exception in `hoa-request-policy.js` remains disabled (`HOA_ALLOW_PROFILE_INIT` is unset). Enabling it requires account-holder authorization because it can create/update a payment-provider payer profile. It does not authorize payment methods, transfers, schedules, or payment submission; all those writes remain blocked.
+
+Payment-unverified means evidence is insufficient; it is not an assertion of unpaid debt. No incoming tax receipt-mail collector is connected yet. Finance still uses published assessment/tax registry overrides, not private monitoring KV records.

@@ -5,7 +5,7 @@ import {checkTownSq} from './townsq-readonly.mjs';
 test('TownSq authenticates using observed client protocol and reads only own accounts and ledger',async()=>{
  const previous=globalThis.fetch;let calls=0;
  globalThis.fetch=async(url,options)=>{calls++;assert.equal(new URL(url).origin,'https://api.townsq.io');
-  if(calls===1){assert.equal(new URL(url).pathname,'/rest/login');assert.deepEqual(JSON.parse(options.body),{email:'owner@example.test',password:createHash('sha1').update('test-password').digest('hex'),login_type:'CMN',platform:'webapp'});return Response.json({success:true,jwt:'private-token',user:{id:'own-user'}});}
+  if(calls===1){assert.equal(new URL(url).pathname,'/rest/login');assert.deepEqual(JSON.parse(options.body),{fb_user:null,last_name:'',linkedToAssociaAccount:false,properties:[],userProperties:[],roles:[],vehicles:[],phones:[],canEditPassword:true,email:'owner@example.test',password:createHash('sha1').update('test-password').digest('hex'),login_type:'CMN',platform:'webapp'});return Response.json({success:true,jwt:'private-token',user:{id:'own-user'}});}
   assert.equal(options.headers.Authorization,'Bearer private-token');assert.ok(!options.method||options.method==='GET');
   if(calls===2){assert.equal(new URL(url).pathname,'/api/v1/users/own-user/accounts');return Response.json({content:[{account:{accountUuid:'own-account'}}]});}
   assert.equal(new URL(url).pathname,'/api/v1/users/own-user/accounts/own-account/transactions');return Response.json({transactions:[{amount:120}]});
