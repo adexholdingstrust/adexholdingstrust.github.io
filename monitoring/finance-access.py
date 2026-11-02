@@ -29,14 +29,14 @@ def provision(token,api):
     if source.get('domain')!='adexholdings.com/finance.html*':raise ValueError('Finance application identity mismatch')
     rules=policy_rules(api(token,prefix+'/'+SOURCE_APP+'/policies')['result'])
     apps=api(token,prefix+'?per_page=100')['result']
-    if not isinstance(apps,list):raise ValueError('Access application list unavailable')
+    if not isinstance(apps,list) or len(apps)>=100:raise ValueError('Access application list unavailable or requires pagination')
     found=[a for a in apps if a.get('domain')==DOMAIN]
     if len(found)>1:raise ValueError('Ambiguous isolated finance application')
     if found:
         app=found[0]
         if app.get('name')!=NAME:raise ValueError('Existing application ownership mismatch')
         existing=policy_rules(api(token,prefix+'/'+app['id']+'/policies')['result'])
-        comparable=lambda ps:sorted(json.dumps({k:p[k] for k in ['decision','include','require','exclude']},sort_keys=True) for p in ps)
+        comparable=lambda ps:sorted(json.dumps({'decision':p['decision'],**{k:sorted(json.dumps(r,sort_keys=True) for r in p[k]) for k in ['include','require','exclude']}},sort_keys=True) for p in ps)
         if comparable(existing)!=comparable(rules):raise ValueError('Finance policy drift requires review')
     else:
         body={'name':NAME,'domain':DOMAIN,'type':'self_hosted','session_duration':'8h','http_only_cookie_attribute':True,'same_site_cookie_attribute':'lax','policies':rules}

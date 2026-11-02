@@ -498,6 +498,14 @@ tr {
 
 <!-- HOA MONITORING NAVIGATION -->
 <div class="card" style="margin-bottom:18px"><div class="cardBody" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap"><div><strong>HOA Payment Monitoring</strong><div style="font-size:13px;opacity:.75;margin-top:4px">Review assessments, contacts and payment-verification readiness.</div></div><a href="/hoa-monitor.html" style="display:inline-block;padding:11px 16px;border:1px solid #5b9de4;border-radius:10px;color:inherit;text-decoration:none;font-weight:700">Open HOA Dashboard →</a></div></div>
+
+<!-- PRIVATE LIVE MONITORING -->
+<div class="card">
+  <div class="cardHead"><span>Live HOA &amp; Tax Monitoring</span><button id="monitorRefresh" type="button">Refresh live data</button></div>
+  <div class="cardBody"><p id="monitorStatus" role="status" aria-live="polite">Live data has not been loaded. Published assessment and tax values are shown.</p>
+  <table><thead><tr><th>Property</th><th>Monitoring status</th><th>Portal balance</th><th>Portal assessment</th><th>Last checked</th></tr></thead><tbody id="monitorRows"></tbody></table>
+  <p style="font-size:12px;opacity:.75">Portal balances and bank contributions are separate from HOA and tax expenses.</p></div>
+</div>
 <!-- PORTFOLIO SNAPSHOT -->
 <div class="card">
   <div class="cardHead">
@@ -577,6 +585,7 @@ tr {
 </footer>
 
 <script src="/assets/financials.js"></script>
+<script src="/finance-live.js"></script>
 <script src="/finance.js"></script>
 
 </body>

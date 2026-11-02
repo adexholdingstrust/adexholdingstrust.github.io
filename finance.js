@@ -130,11 +130,26 @@ async function loadHOAAssessments() {
       .map(a => [({ "aurora-oxford-co":"co-condo", "aurora-hoye-co":"co-townhouse", "fallbrook-ca":"ca-sfh-fallbrook" })[a.propertyId] || a.propertyId,a.monthlyAssessment]));
   } catch(err) {console.warn("HOA assessment registry unavailable; retaining finance values",err);}
 }
-function monthlyHOAFor(property,record) {
+let LIVE_HOA_ACTUALS=new Map();
+let LIVE_TAX_ACTUALS=new Map();
+function monitorMonth(month){return month||getActiveMonth()||new Date().toISOString().slice(0,7);}
+function applyLiveMonitorSummary(summary){
+  LIVE_HOA_ACTUALS=new Map();LIVE_TAX_ACTUALS=new Map();
+  for(const r of summary.records){if(!r.fresh)continue;
+    if(r.kind==='hoa'&&Number.isFinite(r.monthlyAssessment)&&r.dueDate)LIVE_HOA_ACTUALS.set(r.financeId,{value:r.monthlyAssessment,month:r.dueDate.slice(0,7),observedAt:r.observedAt});
+    if(r.kind==='tax'&&Number.isFinite(r.annualAssessment)&&r.taxYear)LIVE_TAX_ACTUALS.set(r.financeId,{value:r.annualAssessment,taxYear:r.taxYear,observedAt:r.observedAt});
+  }
+  renderTable();renderHOATable();
+}
+function monthlyHOAFor(property,record,month) {
+  const live=LIVE_HOA_ACTUALS.get(property?.id);
+  if(live?.month===monitorMonth(month)&&(!live.observedAt||Date.now()-Date.parse(live.observedAt)<=48*3600000))return live.value;
   return HOA_ASSESSMENT_ACTUALS.has(property?.id)
     ? HOA_ASSESSMENT_ACTUALS.get(property.id) : num(record.hoa);
 }
-function annualTaxFor(property, record) {
+function annualTaxFor(property, record,month) {
+  const live=LIVE_TAX_ACTUALS.get(property?.id),period=monitorMonth(month);
+  if(live&&(!live.observedAt||Date.now()-Date.parse(live.observedAt)<=48*3600000)){const years=live.taxYear.split('/');if(years.length===1?period.slice(0,4)===years[0]:period>=years[0]+'-07'&&period<=years[1]+'-06')return live.value;}
   return COUNTY_TAX_ACTUALS.has(property?.id)
     ? COUNTY_TAX_ACTUALS.get(property.id) : num(record.tax);
 }
@@ -427,8 +442,8 @@ function computeAnnualPL(property, record = {}) {
 function computeMonthlyPL(property, record = {}, month) {
   const rent = num(record.rent);
   const mortgage = num(record.mortgage);
-  const hoa = monthlyHOAFor(property, record);
-  const tax = annualTaxFor(property, record) / 12;
+  const hoa = monthlyHOAFor(property, record,month);
+  const tax = annualTaxFor(property, record,month) / 12;
 
   const maintenance =
     record.maintenanceActuals?.[month] ??
@@ -926,6 +941,7 @@ async function initFinance() {
     await loadFinancials();
     await loadCountyTaxActuals();
     await loadHOAAssessments();
+    window.AdexMonitor?.mount(applyLiveMonitorSummary);
 
     renderPropertySelector();
     bindFinancialsSelect();

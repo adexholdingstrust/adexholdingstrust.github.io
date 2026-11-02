@@ -55,7 +55,7 @@ def signing_secret(token):
     return hmac.new(token.encode(), b'adex-hoa-monitor-ingestion-v2', hashlib.sha256).hexdigest()
 
 
-def make_config(base, namespace_id):
+def make_config(base, namespace_id, finance_aud=None):
     if base.get('name') != WORKER or base.get('account_id') != ACCOUNT or base.get('main') != 'index.js':
         raise ValueError('Deployment identity mismatch')
     if any(base.get(k) for k in ['routes', 'route', 'services', 'assets', 'env']):
@@ -65,9 +65,13 @@ def make_config(base, namespace_id):
     notification_flag = base.get('vars', {}).get('NOTIFICATIONS_ENABLED', 'false')
     if notification_flag not in ('true', 'false'):
         raise ValueError('Invalid notification activation flag')
+    vars_value={'NOTIFICATIONS_ENABLED': notification_flag, 'HOA_SENDER_EMAIL': 'sitealert@adexholdings.com'}
+    if finance_aud:
+        if not re.fullmatch(r'[a-f0-9]{64}',finance_aud):raise ValueError('Invalid finance Access audience')
+        vars_value['MONITOR_FINANCE_ACCESS_AUD']=finance_aud
     return {'name': WORKER, 'account_id': ACCOUNT, 'main': 'index.js',
             'compatibility_date': base['compatibility_date'], 'workers_dev': True,
-            'vars': {'NOTIFICATIONS_ENABLED': notification_flag, 'HOA_SENDER_EMAIL': 'sitealert@adexholdings.com'},
+            'vars': vars_value,
             'triggers': base['triggers'],
             'kv_namespaces': [{'binding': 'HOA_MONITOR_KV', 'id': namespace_id}]}
 
@@ -131,6 +135,17 @@ def smoke(origin, secret, notifications_enabled=False):
         raise RuntimeError('Invalid signed snapshot was not rejected')
     if request('/status', signed=True)[0] != 200:
         raise RuntimeError('Authenticated status failed')
+    status_code,feed=request('/internal/finance-summary',signed=True)
+    if status_code!=200 or feed.get('schemaVersion')!=1 or len(feed.get('records',[]))!=14:
+        raise RuntimeError('Private finance export verification failed')
+    class NoFollow(HTTPRedirectHandler):
+        def redirect_request(self,*args,**kwargs):return None
+    try:
+        with build_opener(NoFollow()).open(Request(origin+'/finance/summary',headers={'User-Agent':'AdexPropertyMonitor/2.0 (+https://adexholdings.com)'}),timeout=25) as response:
+            denied=response.status
+    except HTTPError as exc:denied=exc.code
+    if denied not in [302,401,403]:raise RuntimeError('Unauthenticated finance access was not rejected')
+    print(json.dumps({'privateFinanceExport':'verified','records':len(feed['records']),'fresh':sum(r.get('fresh') is True for r in feed['records']),'unauthenticatedFinanceHttpStatus':denied}),flush=True)
 
 
 def verify_runtime_email(origin, secret):
@@ -172,7 +187,12 @@ def main():
     secret = signing_secret(token)
     print('::add-mask::' + secret, flush=True)
     namespace_id = namespace(token)
-    config = make_config(base, namespace_id)
+    import importlib.util
+    spec=importlib.util.spec_from_file_location('finance_access',ROOT/'monitoring/finance-access.py')
+    access=importlib.util.module_from_spec(spec);spec.loader.exec_module(access)
+    finance_aud=access.provision(token,api)
+    print(json.dumps({'isolatedFinanceAccess':'configured','existingFinanceApplicationChanged':False}),flush=True)
+    config = make_config(base, namespace_id, finance_aud)
     config_path = ROOT / 'hoa-monitor-worker/wrangler.ci.json'
     config_path.write_text(json.dumps(config))  # Resource IDs only; no credentials.
     try:
@@ -201,7 +221,7 @@ def main():
                              '- Health/authentication checks: passed',
                              '- Both Elko county observations: delivered after account/bill reconciliation',
                              '- Email notifications: ' + ('enabled' if config['vars']['NOTIFICATIONS_ENABLED'] == 'true' else 'disabled'),
-                             '- Authenticated HOA and remaining county collectors: still pending']) + '\n'
+                             '- Live finance view: protected by an isolated Access application', '- LCM assessment and Calabrese balance collectors are connected; TownSq and remaining counties are incomplete']) + '\n'
         if os.environ.get('GITHUB_STEP_SUMMARY'):
             with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
                 out.write(summary)

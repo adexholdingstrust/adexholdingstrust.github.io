@@ -14,3 +14,11 @@ test('modal and monthly P&L use assessment expense, not biweekly cash outflow or
   assert.match(nodes.modalContent.innerHTML,/\$205\.00/);assert.match(nodes.modalContent.innerHTML,/\$100\.00/);
   assert.equal(vm.runInContext(`FINANCIALS['ca-sfh-fallbrook'].hoa`,context),100);
 });
+
+test('fresh live assessments apply only to their period and never use credits as HOA expense',()=>{
+ const context=vm.createContext({console,document:{body:{dataset:{page:'finance'}},getElementById:()=>null,addEventListener(){}}});vm.runInContext(source,context);
+ vm.runInContext(`HOA_ASSESSMENT_ACTUALS.set('co-condo',600);HOA_ASSESSMENT_ACTUALS.set('ca-sfh-fallbrook',205);FINANCIALS['co-condo']={hoa:500,tax:100};LIVE_HOA_ACTUALS.set('co-condo',{value:635.03,month:'2026-11'});LIVE_TAX_ACTUALS.set('elko-nv-10a-1',{value:11.73,taxYear:'2026/2027'});`,context);
+ assert.equal(vm.runInContext(`computeMonthlyPL({id:'co-condo'},FINANCIALS['co-condo'],'2026-11').hoa`,context),635.03);assert.equal(vm.runInContext(`computeMonthlyPL({id:'co-condo'},FINANCIALS['co-condo'],'2025-11').hoa`,context),600);
+ assert.equal(vm.runInContext(`annualTaxFor({id:'elko-nv-10a-1'},{tax:99},'2026-11')`,context),11.73);assert.equal(vm.runInContext(`annualTaxFor({id:'elko-nv-10a-1'},{tax:99},'2026-06')`,context),99);
+ assert.equal(vm.runInContext(`monthlyHOAFor({id:'ca-sfh-fallbrook'},{hoa:-725},'2026-11')`,context),205);assert.equal(vm.runInContext(`FINANCIALS['co-condo'].hoa`,context),500);
+});

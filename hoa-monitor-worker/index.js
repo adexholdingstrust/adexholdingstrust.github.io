@@ -2,6 +2,7 @@
 import registry from '../monitoring/county-tax-registry.json' with {type:'json'};
 import {HOA_ALERT_RECIPIENTS} from '../monitoring/hoa-rules.js';
 import {HOA_PROPERTIES,validateSnapshot,evaluateSnapshot} from './snapshots.js';
+import {financeSummary,financeAccess,financeBridge} from './finance-feed.js';
 const MAX_BYTES=100000;
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'}});
 export async function readBody(request) {
@@ -98,8 +99,21 @@ export async function runScheduled(env,now=new Date()) {
   return summary;
 }
 export default {
-  async fetch(request,env) {
+  async fetch(request,env,ctx={}) {
     const path=new URL(request.url).pathname;
+    if(path==='/internal/finance-summary'&&request.method==='GET'){
+      if(!await authorized(request,'',env.HOA_INGEST_SECRET))return reply({error:'Unauthorized'},401);
+      try{return reply(await financeSummary(env));}catch{return reply({error:'Monitoring data unavailable'},503);}
+    }
+    if(path.startsWith('/finance/')) {
+      if(!await financeAccess(ctx,env))return reply({error:'Authenticated finance access required'},403);
+      if(request.method!=='GET')return reply({error:'Method not allowed'},405);
+      try{
+        if(path==='/finance/summary')return reply(await financeSummary(env));
+        if(path==='/finance/bridge')return financeBridge(await financeSummary(env),new URL(request.url).searchParams.get('nonce'));
+      }catch{return reply({error:'Monitoring data unavailable'},503);}
+      return reply({error:'Not found'},404);
+    }
     if(path==='/health' && request.method==='GET')return reply({service:'adex-hoa-monitor',version:2,storageConfigured:!!env.HOA_MONITOR_KV,signingConfigured:!!env.HOA_INGEST_SECRET,notificationsEnabled:env.NOTIFICATIONS_ENABLED==='true'});
     if(path==='/status' && request.method==='GET') {
       if(!await authorized(request,'',env.HOA_INGEST_SECRET))return reply({error:'Unauthorized'},401);
