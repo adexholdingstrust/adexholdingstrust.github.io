@@ -1,11 +1,10 @@
 name: Verify monitoring email delivery
 on:
   workflow_dispatch:
-  push:
+  workflow_run:
+    workflows: [Deploy isolated Adex monitor]
+    types: [completed]
     branches: [main]
-    paths:
-      - '.github/workflows/monitor-email-acceptance.yml'
-      - 'monitoring/verify-email-delivery.py'
 permissions:
   contents: read
 concurrency:
@@ -13,6 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   verify-email:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     environment: github-pages
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -25,5 +25,7 @@ jobs:
         run: python -m unittest discover -s monitoring -p 'test_email_acceptance.py'
       - name: Send monitoring test to both recipients
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          ADEX_MONITOR_INGEST_SECRET: ${{ secrets.ADEX_MONITOR_INGEST_SECRET }}
           ADEX_MONITOR_BREVO_API_KEY: ${{ secrets.ADEX_MONITOR_BREVO_API_KEY || secrets.BREVO_API_KEY }}
         run: python monitoring/verify-email-delivery.py

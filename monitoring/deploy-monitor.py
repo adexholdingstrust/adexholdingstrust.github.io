@@ -130,6 +130,33 @@ def smoke(origin, secret):
         raise RuntimeError('Authenticated status failed')
 
 
+def verify_runtime_email(origin, secret):
+    stamp = str(int(time.time()))
+    test_id = 'monitor-email-' + time.strftime('%Y-%m-%d', time.gmtime())
+    body = json.dumps({'testId': test_id}, separators=(',', ':')).encode()
+    signature = hmac.new(secret.encode(), stamp.encode() + b'.' + body, hashlib.sha256).hexdigest()
+    req = Request(origin + '/test-email', data=body, method='POST', headers={
+        'Content-Type': 'application/json', 'User-Agent': 'AdexPropertyMonitor/2.0 (+https://adexholdings.com)',
+        'X-Adex-Timestamp': stamp, 'X-Adex-Signature': 'sha256=' + signature})
+    try:
+        with build_opener(NoRedirect()).open(req, timeout=30) as response:
+            result = json.loads(response.read(10000))
+    except HTTPError as exc:
+        reason = 'runtime_rejected'
+        try:
+            data = json.loads(exc.read(10000))
+            candidate = data.get('reason')
+            if candidate in ['source_ip_not_authorized', 'api_key_not_recognized_or_enabled', 'provider_rejected', 'delivery_failed']:
+                reason = candidate
+        except (ValueError, AttributeError, TypeError):
+            pass
+        raise RuntimeError(f'Worker email acceptance failed: HTTP {exc.code}; reason={reason}') from None
+    if result.get('ok') is not True or result.get('delivery') not in ['sent', 'suppressed']:
+        raise RuntimeError('Worker email acceptance did not complete')
+    print('Worker email acceptance: ' + result['delivery'] + '; inbox delivery still requires verification.')
+    return result
+
+
 def main():
     token = os.environ.get('CLOUDFLARE_API_TOKEN', '')
     if not token:
@@ -148,7 +175,7 @@ def main():
         # CLI receives signing material on stdin, never command arguments or files.
         subprocess.run(WRANGLER + ['secret', 'put', 'HOA_INGEST_SECRET', '--config', str(config_path)],
                        input=secret + '\n', text=True, cwd=ROOT, check=True)
-        brevo = os.environ.get('ADEX_MONITOR_BREVO_API_KEY', '')
+        brevo = os.environ.get('ADEX_MONITOR_BREVO_API_KEY', '').strip()
         if brevo:
             subprocess.run(WRANGLER + ['secret', 'put', 'BREVO_API_KEY', '--config', str(config_path)],
                            input=brevo + '\n', text=True, cwd=ROOT, check=True)
@@ -162,6 +189,8 @@ def main():
         child_env = dict(os.environ, ADEX_MONITOR_URL=origin, ADEX_MONITOR_INGEST_SECRET=secret)
         subprocess.run([sys.executable, 'monitoring/collect-county-tax.py'], env=child_env, cwd=ROOT, check=True)
         smoke(origin, secret)
+        if brevo:
+            verify_runtime_email(origin, secret)
         summary = '\n'.join(['## Isolated monitoring deployment', '- Worker: ' + WORKER,
                              '- Origin: ' + origin, '- Namespace: ' + namespace_id,
                              '- Health/authentication checks: passed',

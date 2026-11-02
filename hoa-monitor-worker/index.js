@@ -21,8 +21,8 @@ export async function authorized(request,body,secret,now=Date.now()) {
   return crypto.subtle.verify('HMAC',key,bytes,new TextEncoder().encode(time+'.'+body));
 }
 const snapshotKey=(kind,id)=>`monitor:snapshot:${kind}:${id}`;
-async function deliver(env,key,message,now) {
-  if(env.NOTIFICATIONS_ENABLED!=='true')return 'disabled';
+async function deliver(env,key,message,now,acceptance=false) {
+  if(env.NOTIFICATIONS_ENABLED!=='true' && !acceptance)return 'disabled';
   if(!env.BREVO_API_KEY || !(env.HOA_SENDER_EMAIL||env.EMAIL_FROM))throw Error('Email configuration missing');
   const storageKey='monitor:delivery:'+key;
   const previous=await env.HOA_MONITOR_KV.get(storageKey,'json');
@@ -33,9 +33,17 @@ async function deliver(env,key,message,now) {
   await env.HOA_MONITOR_KV.put(storageKey,record('pending'));
   try {
     const res=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',signal:AbortSignal.timeout(15000),headers:{'api-key':env.BREVO_API_KEY,'content-type':'application/json'},body:JSON.stringify({sender:{email:env.HOA_SENDER_EMAIL||env.EMAIL_FROM,name:'Adex Property Monitoring'},to:HOA_ALERT_RECIPIENTS.map(email=>({email})),subject:message.subject,textContent:message.text})});
-    if(!res.ok)throw Error('Email rejected');
+    if(!res.ok) {
+      let reason='provider_rejected';
+      try {
+        const data=await res.json(),message=String(data.message||'').toLowerCase();
+        if(message.includes('ip') && ['unrecogn','unauthor','not author','whitelist','blocked'].some(x=>message.includes(x)))reason='source_ip_not_authorized';
+        else if(['key not found','invalid api key','api key is not enabled','invalid authentication'].some(x=>message.includes(x)))reason='api_key_not_recognized_or_enabled';
+      }catch{}
+      const error=Error('Email rejected');error.reason=reason;throw error;
+    }
     await env.HOA_MONITOR_KV.put(storageKey,record('sent'));return 'sent';
-  } catch {await env.HOA_MONITOR_KV.put(storageKey,record('failed'));throw Error('Notification delivery failed');}
+  } catch(error) {await env.HOA_MONITOR_KV.put(storageKey,record('failed'));const failure=Error('Notification delivery failed');failure.reason=error.reason||'delivery_failed';throw failure;}
 }
 export async function processSnapshot(env,snapshot,now=new Date()) {
   const result=evaluateSnapshot(snapshot,now);
@@ -81,10 +89,19 @@ export default {
       if(!await authorized(request,'',env.HOA_INGEST_SECRET))return reply({error:'Unauthorized'},401);
       return reply({health:env.HOA_MONITOR_KV?await env.HOA_MONITOR_KV.get('monitor:health','json'):null});
     }
-    if(path!=='/ingest' || request.method!=='POST')return reply({error:'Not found'},404);
+    if(!['/ingest','/test-email'].includes(path) || request.method!=='POST')return reply({error:'Not found'},404);
     if(!env.HOA_MONITOR_KV||!env.HOA_INGEST_SECRET)return reply({error:'Not configured'},503);
     let body;try{body=await readBody(request);}catch(e){return reply({error:e.message==='too_large'?'Payload too large':'Invalid encoding'},e.message==='too_large'?413:400);}
     if(!await authorized(request,body,env.HOA_INGEST_SECRET))return reply({error:'Unauthorized'},401);
+    if(path==='/test-email') {
+      let input;try{input=JSON.parse(body);}catch{return reply({error:'Invalid JSON'},400);}
+      if(!input || Object.keys(input).length!==1 || typeof input.testId!=='string' || !/^[a-zA-Z0-9_-]{8,64}$/.test(input.testId))return reply({error:'Invalid test ID'},400);
+      if(!env.BREVO_API_KEY || !(env.HOA_SENDER_EMAIL||env.EMAIL_FROM))return reply({error:'Email configuration missing'},503);
+      try {
+        const delivery=await deliver(env,'acceptance:'+input.testId,{subject:'Adex property monitoring: test notification',text:'This is a test of Adex Holdings HOA and property tax monitoring email delivery from the Cloudflare monitoring Worker. No payment was made or requested. Monitoring coverage and payment status must be verified separately.'},new Date(),true);
+        return reply({ok:true,delivery,notificationsEnabled:env.NOTIFICATIONS_ENABLED==='true'});
+      }catch(error){return reply({ok:false,error:'Email delivery failed',reason:error.reason||'delivery_failed'},502);}
+    }
     let snapshot;try{snapshot=validateSnapshot(JSON.parse(body),registry.properties);}catch{return reply({error:'Invalid snapshot'},400);}
     const key=snapshotKey(snapshot.kind,snapshot.propertyId);
     try {
