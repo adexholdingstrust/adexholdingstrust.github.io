@@ -35,4 +35,10 @@ class DeploymentTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             deployment.api('test-only','/accounts/other/workers/scripts')
 
+    def test_explicit_activation_and_invalid_flag(self):
+        config=deployment.make_config({**self.base(),'vars':{'NOTIFICATIONS_ENABLED':'true'}},'a'*32)
+        self.assertEqual(config['vars']['NOTIFICATIONS_ENABLED'],'true')
+        with self.assertRaises(ValueError):
+            deployment.make_config({**self.base(),'vars':{'NOTIFICATIONS_ENABLED':'yes'}},'a'*32)
+
 if __name__=='__main__':unittest.main()

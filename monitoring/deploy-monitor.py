@@ -62,9 +62,12 @@ def make_config(base, namespace_id):
         raise ValueError('Unexpected production integration rejected')
     if not re.fullmatch(r'[a-f0-9]{32}', namespace_id):
         raise ValueError('Invalid namespace ID')
+    notification_flag = base.get('vars', {}).get('NOTIFICATIONS_ENABLED', 'false')
+    if notification_flag not in ('true', 'false'):
+        raise ValueError('Invalid notification activation flag')
     return {'name': WORKER, 'account_id': ACCOUNT, 'main': 'index.js',
             'compatibility_date': base['compatibility_date'], 'workers_dev': True,
-            'vars': {'NOTIFICATIONS_ENABLED': 'false', 'HOA_SENDER_EMAIL': 'sitealert@adexholdings.com'},
+            'vars': {'NOTIFICATIONS_ENABLED': notification_flag, 'HOA_SENDER_EMAIL': 'sitealert@adexholdings.com'},
             'triggers': base['triggers'],
             'kv_namespaces': [{'binding': 'HOA_MONITOR_KV', 'id': namespace_id}]}
 
@@ -86,7 +89,7 @@ def namespace(token):
     return api(token, f'/accounts/{ACCOUNT}/storage/kv/namespaces', 'POST', {'title': NAMESPACE})['result']['id']
 
 
-def smoke(origin, secret):
+def smoke(origin, secret, notifications_enabled=False):
     def request(path, method='GET', body=None, signed=False):
         headers = {'Content-Type': 'application/json', 'User-Agent': 'AdexPropertyMonitor/2.0 (+https://adexholdings.com)'}
         if signed:
@@ -114,7 +117,7 @@ def smoke(origin, secret):
         ready = (status == 200 and isinstance(health, dict) and
                  health.get('service') == WORKER and health.get('version') == 2 and
                  health.get('storageConfigured') and health.get('signingConfigured') and
-                 not health.get('notificationsEnabled'))
+                 health.get('notificationsEnabled') is notifications_enabled)
         if ready:
             break
         if attempt < 6:
@@ -164,6 +167,8 @@ def main():
     base = tomllib.loads((ROOT / 'hoa-monitor-worker/wrangler.toml').read_text())
     # Validate target before API mutations.
     make_config(base, '0' * 32)
+    if base.get('vars', {}).get('NOTIFICATIONS_ENABLED') == 'true' and not os.environ.get('ADEX_MONITOR_BREVO_API_KEY', '').strip():
+        raise RuntimeError('Live notifications require the configured Brevo key before deployment')
     secret = signing_secret(token)
     print('::add-mask::' + secret, flush=True)
     namespace_id = namespace(token)
@@ -185,17 +190,17 @@ def main():
         origin = f'https://{WORKER}.{subdomain}.workers.dev'
         subdomain_settings = api(token, f'/accounts/{ACCOUNT}/workers/scripts/{WORKER}/subdomain')['result']
         print(json.dumps({'workerSubdomainSettings': {k: subdomain_settings.get(k) for k in ['enabled', 'previews_enabled']}}), flush=True)
-        smoke(origin, secret)
+        smoke(origin, secret, config['vars']['NOTIFICATIONS_ENABLED'] == 'true')
         child_env = dict(os.environ, ADEX_MONITOR_URL=origin, ADEX_MONITOR_INGEST_SECRET=secret)
         subprocess.run([sys.executable, 'monitoring/collect-county-tax.py'], env=child_env, cwd=ROOT, check=True)
-        smoke(origin, secret)
+        smoke(origin, secret, config['vars']['NOTIFICATIONS_ENABLED'] == 'true')
         if brevo:
             verify_runtime_email(origin, secret)
         summary = '\n'.join(['## Isolated monitoring deployment', '- Worker: ' + WORKER,
                              '- Origin: ' + origin, '- Namespace: ' + namespace_id,
                              '- Health/authentication checks: passed',
                              '- Both Elko county observations: delivered after account/bill reconciliation',
-                             '- Email notifications: disabled pending acceptance',
+                             '- Email notifications: ' + ('enabled' if config['vars']['NOTIFICATIONS_ENABLED'] == 'true' else 'disabled'),
                              '- Authenticated HOA and remaining county collectors: still pending']) + '\n'
         if os.environ.get('GITHUB_STEP_SUMMARY'):
             with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:

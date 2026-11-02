@@ -13,7 +13,8 @@ workers_dev = true
 # Securely provision HOA_INGEST_SECRET, BREVO_API_KEY, and a verified
 # HOA_SENDER_EMAIL or EMAIL_FROM. No HOA portal credentials belong here.
 [vars]
-NOTIFICATIONS_ENABLED = "false"
+# Enabled after Cloudflare runtime acceptance and Gmail inbox verification.
+NOTIFICATIONS_ENABLED = "true"
 
 # Evaluates stored observations; collectors run separately.
 [triggers]
