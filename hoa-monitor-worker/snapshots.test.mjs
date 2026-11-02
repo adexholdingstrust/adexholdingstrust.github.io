@@ -4,7 +4,7 @@ import {validateSnapshot,evaluateSnapshot,localDate} from './snapshots.js';
 const now=new Date('2026-11-07T16:00:00.000Z');
 const base={kind:'hoa',propertyId:'fallbrook-ca',provider:'FrontSteps',sourceUrl:'https://horsecreekridge.frontsteps.com/dashboard',observedAt:now.toISOString(),dueDate:'2026-11-01',amountDue:205,balanceDue:-605,payments:[],monthlyAssessment:205,autopayScheduled:true};
 const validate=value=>validateSnapshot(value,[],now);
-test('credit and scheduled autopay never prove payment',()=>{const e=evaluateSnapshot(validate(base),now);assert.equal(e.paymentConfirmed,false);assert.equal(e.status,'overdue');});
+test('credit and scheduled autopay never prove payment',()=>{const e=evaluateSnapshot(validate(base),now);assert.equal(e.paymentConfirmed,false);assert.equal(e.status,'payment_unverified');});
 test('allocated posted evidence confirms the assessment',()=>{const payments=[{reference:'posted-123',amount:205,dueDate:'2026-11-01',postedOn:'2026-11-02',status:'posted',evidence:'hoa_account_ledger'}];assert.equal(evaluateSnapshot(validate({...base,payments}),now).paymentConfirmed,true);});
 test('reversal removes confirmation',()=>{const payments=[{reference:'a',amount:205,dueDate:base.dueDate,postedOn:'2026-11-02',status:'posted',evidence:'hoa_account_ledger'},{reference:'b',amount:205,dueDate:base.dueDate,postedOn:'2026-11-03',status:'reversed',evidence:'hoa_account_ledger'}];assert.equal(evaluateSnapshot(validate({...base,payments}),now).paymentConfirmed,false);});
 test('stale snapshot cannot be confirmed on scheduled recheck',()=>assert.equal(evaluateSnapshot(validate(base),new Date('2026-11-10T16:00:00Z')).alertType,'monitor_stale'));
@@ -29,4 +29,10 @@ test('partial and prior-month HOA payments cannot confirm current assessment',()
  assert.equal(evaluateSnapshot(validate({...base,payments:[p]}),now).paymentConfirmed,false);
  assert.equal(evaluateSnapshot(validate({...base,payments:[{...p,amount:205,dueDate:'2026-10-01'}]}),now).paymentConfirmed,false);
  assert.equal(evaluateSnapshot(validate({...base,payments:[p,{...p,reference:'b',amount:85}]}),now).evidence,'hoa_account_ledger');
+});
+
+test('HOA missing allocation is unverified and never asserts unpaid debt',()=>{
+ const s=validate({...base,balanceDue:null});
+ const result=evaluateSnapshot(s,now);assert.equal(result.status,'payment_unverified');assert.equal(result.alertType,'unconfirmed_by_seventh');
+ assert.equal(result.paymentConfirmed,false);assert.equal(result.requiresHumanReview,true);
 });

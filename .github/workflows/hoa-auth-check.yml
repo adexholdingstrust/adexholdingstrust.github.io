@@ -1,6 +1,12 @@
 name: Verify authenticated HOA access
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '30 14,21 * * *'
+  workflow_run:
+    workflows: [Deploy isolated Adex monitor]
+    branches: [main]
+    types: [completed]
   push:
     branches: [main]
     paths:
@@ -13,6 +19,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   verify:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment: github-pages
     runs-on: ubuntu-latest
     timeout-minutes: 12
@@ -27,6 +34,9 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify portal authentication without payment actions
         env:
+          HOA_INGEST_ENABLED: ${{ github.event_name != 'push' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          ADEX_MONITOR_INGEST_SECRET: ${{ secrets.ADEX_MONITOR_INGEST_SECRET }}
           ADEX_MONITOR_LCM_USERNAME: ${{ secrets.ADEX_MONITOR_LCM_USERNAME }}
           ADEX_MONITOR_LCM_PASSWORD: ${{ secrets.ADEX_MONITOR_LCM_PASSWORD }}
           ADEX_MONITOR_TOWNSQ_USERNAME: ${{ secrets.ADEX_MONITOR_TOWNSQ_USERNAME }}

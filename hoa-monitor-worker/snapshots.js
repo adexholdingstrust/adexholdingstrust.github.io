@@ -28,7 +28,7 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
   const url=new URL(value.sourceUrl);
   if(url.protocol!=='https:' || url.hostname!==host || url.username || url.password || url.hash) throw Error('Invalid source');
   if(value.kind==='hoa' && value.provider!==hoa.provider) throw Error('Provider mismatch');
-  if(!(validDate(value.dueDate) || value.kind==='tax' && value.dueDate===null) || !money(value.amountDue) || !(value.kind==='tax' && value.balanceDue===null || typeof value.balanceDue==='number' && Number.isFinite(value.balanceDue) && Math.abs(value.balanceDue)<=100000000) || !Array.isArray(value.payments) || value.payments.length>1000) throw Error('Invalid obligation');
+  if(!(validDate(value.dueDate) || value.kind==='tax' && value.dueDate===null) || !money(value.amountDue) || !(value.balanceDue===null || typeof value.balanceDue==='number' && Number.isFinite(value.balanceDue) && Math.abs(value.balanceDue)<=100000000) || !Array.isArray(value.payments) || value.payments.length>1000) throw Error('Invalid obligation');
   if(value.monthlyAssessment!==undefined && !money(value.monthlyAssessment)) throw Error('Invalid assessment');
   if(value.annualAssessment!==undefined && !money(value.annualAssessment)) throw Error('Invalid assessment');
   if(value.kind==='tax' && !/^20\d{2}(\/20\d{2})?$/.test(value.taxYear||'')) throw Error('Invalid tax year');
@@ -71,6 +71,9 @@ export function evaluateSnapshot(snapshot, now = new Date()) {
   // Stored observations must also satisfy the current evidence requirement.
   const payments=snapshot.kind==='hoa'?snapshot.payments.filter(p=>p.evidence==='hoa_account_ledger'):snapshot.payments;
   const result=classifyHOAPayment({...snapshot,payments,asOfDate});
+  if(snapshot.kind==='hoa' && result.status==='overdue') {
+    return {...result,status:'payment_unverified',asOfDate,paymentConfirmed:false,requiresHumanReview:true,alertType:asOfDate>=snapshot.dueDate.slice(0,7)+'-07'?'unconfirmed_by_seventh':'payment_verification_due'};
+  }
   const daysUntilDue=Math.round((Date.parse(snapshot.dueDate+'T00:00:00Z')-Date.parse(asOfDate+'T00:00:00Z'))/86400000);
   const paymentConfirmed=result.status==='paid';
   const alertType=paymentConfirmed?'payment_confirmed':result.status==='payment_failed'?'payment_problem':

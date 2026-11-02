@@ -1,5 +1,18 @@
 /* Read-only portal sign-in verification. No browser state or page contents are persisted. */
 import {chromium} from 'playwright';
+import {createHmac} from 'node:crypto';
+import {lcmSnapshot} from './hoa-ledger.js';
+async function ingest(snapshot) {
+ const token=process.env.CLOUDFLARE_API_TOKEN;
+ const secret=process.env.ADEX_MONITOR_INGEST_SECRET||(token?createHmac('sha256',token).update('adex-hoa-monitor-ingestion-v2').digest('hex'):null);
+ if(!secret)throw Error('Ingestion signing unavailable');
+ const body=JSON.stringify(snapshot),timestamp=String(Math.floor(Date.now()/1000));
+ const signature=createHmac('sha256',secret).update(timestamp+'.'+body).digest('hex');
+ const response=await fetch('https://adex-hoa-monitor.tenantservices.workers.dev/ingest',{method:'POST',redirect:'error',signal:AbortSignal.timeout(25000),body,headers:{'content-type':'application/json','X-Adex-Timestamp':timestamp,'X-Adex-Signature':'sha256='+signature}});
+ if(!response.ok)throw Error('Ingestion rejected');
+ const result=await response.json();
+ return {status:result.result?.status||'stored',paymentConfirmed:result.result?.paymentConfirmed===true,delivery:result.delivery};
+}
 const portals=[
  {id:'aurora-oxford-co',name:'LCM',prefix:'LCM',url:'https://lcmpropertymanagement.com/AccountStatus/40583~10533163/?type=Account&active=0',hosts:['lcmpropertymanagement.com'],user:'#user_name',password:'#password',submit:'form#form1'},
  {id:'aurora-hoye-co',name:'TownSq',prefix:'TOWNSQ',url:'https://app.townsq.io/w/672048ef610bb549fcae2a41/user-accounts',hosts:['app.townsq.io','api.townsq.io'],user:'input[formcontrolname="username"], input[name="email"], input[type="email"]',password:'input[type="password"]'},
@@ -14,19 +27,23 @@ try {for(const portal of portals){
  if(!username||!password){console.log(JSON.stringify({propertyId:portal.id,status:'credentials_missing'}));failures++;continue;}
  const context=await browser.newContext({acceptDownloads:false});
  const page=await context.newPage(); page.setDefaultTimeout(20000);
- const schemas=[];const denied=new Set(); const pageErrors=new Set(); let stage='open';
+ const paymentHosts=new Set(); const authResponses=[]; const schemas=[];const denied=new Set(); const pageErrors=new Set(); let stage='open';
  page.on('pageerror',e=>pageErrors.add(/firebase/i.test(e.message)?'firebase_initialization':/chunk|loading/i.test(e.message)?'application_bundle_load':e.name));
  const shape=(v,depth=0)=>{if(v===null)return 'null';if(Array.isArray(v))return {type:'array',count:v.length,item:depth<5?shape(v[0],depth+1):typeof v[0]};if(typeof v==='object')return Object.fromEntries(Object.entries(v).filter(([k])=>/^[A-Za-z_][A-Za-z_0-9]{0,45}$/.test(k)).slice(0,40).map(([k,x])=>[k,depth<5?shape(x,depth+1):typeof x]));return typeof v;};
  // Do not permit application writes. Authentication is the only allowed mutation.
  await context.route('**/*',async route=>{const q=route.request(),u=new URL(q.url());
+  if(u.hostname==='firebaseremoteconfig.googleapis.com' && u.pathname==='/v1/projects/firebase-socialcondo/namespaces/firebase:fetch')return route.continue();
+  if(portal.name==='LCM' && u.hostname==='lcmpropertymanagement.com' && u.pathname==='/Member/ValidateEtrack')return route.continue();
   if(u.hostname==='firebaseinstallations.googleapis.com' && /^\/v1\/projects\/firebase-socialcondo\/installations(?:\/[^/]+\/authTokens:generate)?$/.test(u.pathname))return route.continue();
   if(!['GET','HEAD','OPTIONS'].includes(q.method()) && (!portal.hosts.includes(u.hostname)||!/(auth|login|session|token|sign_in)/i.test(u.pathname))){denied.add(safePath(q.url()));return route.abort();}
   return route.continue();
  });
  page.on('response',async response=>{try{
   const req=response.request();const u=new URL(response.url());
+  if(portal.hosts.includes(u.hostname)&&req.method()==='POST'&&/(auth|login|session|sign_in)/i.test(u.pathname))authResponses.push({endpoint:safePath(response.url()),status:response.status()});
   if(!portal.hosts.includes(u.hostname)||req.method()!=='GET'||!response.ok()||!response.headers()['content-type']?.includes('application/json')||u.pathname.startsWith('/assets/'))return;
   const data=await response.json();
+  if(portal.name==='FrontSteps'&&Array.isArray(data.payments))for(const p of data.payments)for(const a of p.accounts||[])try{paymentHosts.add(new URL(a.payment_url).origin);}catch{}
   const sample=Array.isArray(data)?data[0]:data;
   if(sample && typeof sample==='object' && schemas.length<30)schemas.push({endpoint:safePath(response.url()),shape:shape(data)});
  }catch{/* Never log raw provider errors. */}});
@@ -58,12 +75,17 @@ try {for(const portal of portals){
   const headings=await page.locator('th').allTextContents();
   const labels=headings.map(x=>x.trim()).filter(x=>/^(date|description|charge|charges|credit|credits|balance|amount|payment|payments|status|reference|transaction|transaction date|due date|type)$/i.test(x));
   const readLinks=await page.locator('a[href]').evaluateAll(links=>links.filter(a=>/^(account status|account history|account ledger|my account|payments|payment history|financials|accounting|balance|transaction history)$/i.test(a.textContent.trim())).map(a=>({label:a.textContent.trim(),url:a.href})));
-  const lcmSummary=portal.name==='LCM'?await page.locator('table').evaluateAll(tables=>{const table=tables.find(t=>{const hs=[...t.querySelectorAll('th')].map(h=>h.textContent.trim());return ['Date','Description','Charge','Credit'].every(h=>hs.includes(h));});if(!table)return null;return [...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())).filter(r=>r.length===4 && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(r[0])).map(r=>({date:r[0],kind:/assessment/i.test(r[1])?'assessment':/nsf|returned|reversal|frozen|reject/i.test(r[1])?'payment_problem':/late|interest/i.test(r[1])?'penalty':/payment|paylease|direct debit|credit/i.test(r[1])?'payment_entry':'other',charge:r[2].replace(/[^\d.()-]/g,''),credit:r[3].replace(/[^\d.()-]/g,'')}));}):null;
   const financialControls=await page.locator('a,button').allTextContents();
   const rowShapes=await page.locator('table').evaluateAll(tables=>tables.filter(t=>[...t.querySelectorAll('th')].some(h=>h.textContent.trim()==='Charge')).map(t=>({rows:t.rows.length,columns:[...t.rows].slice(0,3).map(r=>r.cells.length)})));
-  console.log(JSON.stringify({propertyId:portal.id,status,lcmSummary,financialControls:financialControls.map(x=>x.trim()).filter(x=>x.length<60&&/account|payment|ledger|history|statement|financial/i.test(x)).slice(0,25),rowShapes,readLinks:readLinks.map(l=>({label:l.label,path:safePath(l.url)})),destination:safePath(page.url()),ledgerColumns:labels,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));
+  let collection={status:'not_collected'};
+  if(signedIn&&portal.name==='LCM'&&process.env.HOA_INGEST_ENABLED==='true') {
+   try{const rows=await page.locator('table').evaluateAll(tables=>{const table=tables.find(t=>{const hs=[...t.querySelectorAll('th')].map(h=>h.textContent.trim());return ['Date','Description','Charge','Credit'].every(h=>hs.includes(h));});return table?[...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())):[];});
+    const snapshot=lcmSnapshot(rows);collection=await ingest(snapshot);
+   }catch{collection={status:'collection_failed'};failures++;}
+  }
+  console.log(JSON.stringify({propertyId:portal.id,status,collection,authResponses,paymentHosts:[...paymentHosts],financialControls:financialControls.map(x=>x.trim()).filter(x=>x.length<60&&/account|payment|ledger|history|statement|financial/i.test(x)).slice(0,25),rowShapes,readLinks:readLinks.map(l=>({label:l.label,path:safePath(l.url)})),destination:safePath(page.url()),ledgerColumns:labels,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));
   if(!signedIn)failures++;
- }catch(error){const controls=await page.locator('input').evaluateAll(xs=>xs.map(x=>({id:x.id,name:x.name,type:x.type,visible:!!(x.offsetWidth||x.offsetHeight||x.getClientRects().length)}))).catch(()=>[]);console.log(JSON.stringify({propertyId:portal.id,status:'check_failed',stage,destination:safePath(page.url()),controls,pageErrors:[...pageErrors],errorType:error.name,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));failures++;}
+ }catch(error){const controls=await page.locator('input').evaluateAll(xs=>xs.map(x=>({id:x.id,name:x.name,type:x.type,visible:!!(x.offsetWidth||x.offsetHeight||x.getClientRects().length)}))).catch(()=>[]);console.log(JSON.stringify({propertyId:portal.id,status:'check_failed',stage,destination:safePath(page.url()),controls,authResponses,pageErrors:[...pageErrors],errorType:error.name,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));failures++;}
  finally{await context.close();}
 }}finally{await browser.close();}
 if(failures)process.exitCode=1;
