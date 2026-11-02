@@ -6,10 +6,10 @@ on:
         description: Read and reconcile county records without sending to the Worker
         type: boolean
         default: true
-  push:
+  workflow_run:
+    workflows: [Deploy isolated Adex monitor]
     branches: [main]
-    paths:
-      - '.github/workflows/county-tax-monitor.yml'
+    types: [completed]
   schedule:
     - cron: '45 13,20 * * *'
 permissions:
@@ -19,6 +19,12 @@ concurrency:
   cancel-in-progress: false
 jobs:
   collect:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        county: [elko, nye, valencia, navajo, apache]
+    name: ${{ matrix.county }} tax monitoring
     environment: github-pages
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -28,6 +34,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install PDF text extraction
+        if: matrix.county == 'elko' || matrix.county == 'nye'
         timeout-minutes: 3
         run: |
           if ! command -v pdftotext >/dev/null 2>&1; then
@@ -42,7 +49,7 @@ jobs:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         run: |
           if [ "$DRY_RUN" = "true" ]; then
-            python monitoring/collect-county-tax.py --dry-run
+            python monitoring/collect-county-tax.py --county "${{ matrix.county }}" --dry-run
           else
-            python monitoring/collect-county-tax.py
+            python monitoring/collect-county-tax.py --county "${{ matrix.county }}"
           fi

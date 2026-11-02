@@ -46,8 +46,21 @@ async function deliver(env,key,message,now,acceptance=false) {
     await env.HOA_MONITOR_KV.put(storageKey,record('sent'));return 'sent';
   } catch(error) {await env.HOA_MONITOR_KV.put(storageKey,record('failed'));const failure=Error('Notification delivery failed');failure.reason=error.reason||'delivery_failed';throw failure;}
 }
-export async function processSnapshot(env,snapshot,now=new Date()) {
+export async function processSnapshot(env,snapshot,now=new Date(),previous=null) {
   const result=evaluateSnapshot(snapshot,now);
+  let paymentState=null,paymentStateKey=null;
+  if(result.monitoringMode!=='balance_only'&&result.status!=='stale'){
+    const period=snapshot.kind==='tax'?snapshot.taxYear:snapshot.dueDate;
+    paymentStateKey=['monitor:payment-state',snapshot.kind,snapshot.propertyId,period].join(':');
+    const stored=await env.HOA_MONITOR_KV.get(paymentStateKey,'json');
+    const same=previous&&previous.kind===snapshot.kind&&previous.propertyId===snapshot.propertyId&&(snapshot.kind==='tax'?previous.taxYear===snapshot.taxYear:previous.dueDate===snapshot.dueDate);
+    const before=stored?.confirmed??(same?evaluateSnapshot(previous,new Date(previous.observedAt)).paymentConfirmed:false);
+    const ever=stored?.everConfirmed||before;
+    paymentState={confirmed:result.paymentConfirmed,everConfirmed:ever||result.paymentConfirmed,pending:stored?.pending||null};
+    if(before!==result.paymentConfirmed&&ever)paymentState.pending={id:crypto.randomUUID(),type:result.paymentConfirmed?'payment_reconfirmed':'payment_verification_changed'};
+    if(JSON.stringify(stored)!==JSON.stringify(paymentState))await env.HOA_MONITOR_KV.put(paymentStateKey,JSON.stringify(paymentState));
+    if(paymentState.pending){result.alertType=paymentState.pending.type;result.requiresHumanReview=!result.paymentConfirmed;}
+  }
   if(!result.alertType)return {result,delivery:'none'};
   if(result.monitoringMode==='balance_only') {
     const signature=JSON.stringify([result.status,snapshot.balanceDue]);
@@ -65,15 +78,24 @@ export async function processSnapshot(env,snapshot,now=new Date()) {
     return {result,delivery:await deliver(env,'balance:'+snapshot.propertyId+':'+state.eventId,message,now)};
   }
 
-  const key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||(snapshot.kind==='hoa'&&snapshot.dueDate===null?result.asOfDate.slice(0,7):''),snapshot.dueDate,result.alertType,result.status==='stale'?result.asOfDate:''].join(':');
+  let key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||(snapshot.kind==='hoa'&&snapshot.dueDate===null?result.asOfDate.slice(0,7):''),snapshot.dueDate,result.alertType,result.status==='stale'?result.asOfDate:''].join(':');
+  if(paymentState?.pending)key+=':event:'+paymentState.pending.id;
   const message={subject:`Adex ${snapshot.kind==='hoa'?'HOA':'Property Tax'} | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
     `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,
+    ...(snapshot.kind==='tax'?[`Tax year: ${snapshot.taxYear}`]:[]),
+    ...(snapshot.paymentOptions?[`Payment options (alternatives, not additive installments): ${snapshot.paymentOptions.map(o=>o.type.replaceAll('_',' ')+' '+o.dueDate+' $'+o.amount.toFixed(2)).join('; ')}`]:[]),
+    ...(snapshot.countySettlement?.latestReceiptOn?[`Latest county recorded payment: ${snapshot.countySettlement.latestReceiptOn}`]:[]),
     `Obligation due: ${snapshot.dueDate||"Deadline not verified"}`,`${snapshot.assessmentScope==='base_tax_only'?'Reported base tax (special assessments excluded)':'Obligation amount'}: ${snapshot.amountDue===null?'Not verified':'$'+snapshot.amountDue.toFixed(2)}`,
     `Last portal balance: ${snapshot.balanceDue===null?"Not verified":"$"+snapshot.balanceDue.toFixed(2)}`,`Observed: ${snapshot.observedAt}`, ...(snapshot.sourceUpdatedAt!==undefined?[`Provider last updated: ${snapshot.sourceUpdatedAt||'Not verified'}`]:[]),`Check date: ${result.asOfDate}`,
-    `Status: ${result.status}`,result.paymentConfirmed?(result.evidence==='county_account_and_bill'?'County account ledger and tax bill reconcile paid annual assessment and zero account balance.':result.evidence==='hoa_account_ledger'?'HOA account ledger shows posted payments allocated to this assessment. No HOA email receipt is required.':'Posted payment evidence allocated to this obligation confirms payment.'):'Payment is NOT confirmed by this notice.',
+    `Status: ${result.status}`,result.paymentConfirmed?(result.evidence==='county_account_and_bill'?'County account ledger and tax bill reconcile paid annual assessment and zero account balance.':result.evidence==='county_ledger_and_receipts'?'County tax ledger, tax breakdown and recorded receipt totals reconcile the annual assessment with zero account balance.':result.evidence==='hoa_account_ledger'?'HOA account ledger shows posted payments allocated to this assessment. No HOA email receipt is required.':'Posted payment evidence allocated to this obligation confirms payment.'):'Payment is NOT confirmed by this notice.',
     'Scheduled autopay and credit balances alone do not confirm payment. Review the source portal. No payment has been initiated.'
   ].join('\n')};
-  return {result,delivery:await deliver(env,key,message,now)};
+  const delivery=await deliver(env,key,message,now);
+  if(paymentState?.pending&&['sent','suppressed'].includes(delivery)){
+    const current=await env.HOA_MONITOR_KV.get(paymentStateKey,'json');
+    if(current?.pending?.id===paymentState.pending.id)await env.HOA_MONITOR_KV.put(paymentStateKey,JSON.stringify({...current,pending:null}));
+  }
+  return {result,delivery};
 }
 export async function runScheduled(env,now=new Date()) {
   if(!env.HOA_MONITOR_KV)throw Error('Monitoring storage missing');
@@ -138,7 +160,7 @@ export default {
       const previous=await env.HOA_MONITOR_KV.get(key,'json');
       if(previous && previous.observedAt>snapshot.observedAt)return reply({error:'Older observation rejected'},409);
       await env.HOA_MONITOR_KV.put(key,JSON.stringify(snapshot));
-      const outcome=await processSnapshot(env,snapshot);
+      const outcome=await processSnapshot(env,snapshot,new Date(),previous);
       return reply({ok:true,...outcome});
     }catch{return reply({ok:false,error:'Monitoring processing failed'},502);}
   },

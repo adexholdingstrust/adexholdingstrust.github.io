@@ -211,15 +211,14 @@ def main():
         subdomain_settings = api(token, f'/accounts/{ACCOUNT}/workers/scripts/{WORKER}/subdomain')['result']
         print(json.dumps({'workerSubdomainSettings': {k: subdomain_settings.get(k) for k in ['enabled', 'previews_enabled']}}), flush=True)
         smoke(origin, secret, config['vars']['NOTIFICATIONS_ENABLED'] == 'true')
-        child_env = dict(os.environ, ADEX_MONITOR_URL=origin, ADEX_MONITOR_INGEST_SECRET=secret)
-        subprocess.run([sys.executable, 'monitoring/collect-county-tax.py'], env=child_env, cwd=ROOT, check=True)
-        smoke(origin, secret, config['vars']['NOTIFICATIONS_ENABLED'] == 'true')
+        # Provider collection runs independently after successful deployment.
+        # A county outage must not suppress unrelated HOA checks or deployment verification.
         if brevo:
             verify_runtime_email(origin, secret)
         summary = '\n'.join(['## Isolated monitoring deployment', '- Worker: ' + WORKER,
                              '- Origin: ' + origin, '- Namespace: ' + namespace_id,
                              '- Health/authentication checks: passed',
-                             '- Both Elko county observations: delivered after account/bill reconciliation',
+                             '- Provider collection: independently scheduled in County tax monitoring',
                              '- Email notifications: ' + ('enabled' if config['vars']['NOTIFICATIONS_ENABLED'] == 'true' else 'disabled'),
                              '- Live finance view: protected by an isolated Access application', '- LCM assessment and Calabrese balance collectors are connected; TownSq and remaining counties are incomplete']) + '\n'
         if os.environ.get('GITHUB_STEP_SUMMARY'):

@@ -17,7 +17,7 @@ function keys(value, allowed) {
   if(!value || typeof value!=='object' || Array.isArray(value) || Object.keys(value).some(k=>!allowed.includes(k))) throw Error('Invalid fields');
 }
 export function validateSnapshot(value, taxProperties, now = new Date()) {
-  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','sourceUpdatedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement','installments','assessmentScope']);
+  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','sourceUpdatedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement','installments','assessmentScope','paymentOptions']);
   const hoa=HOA_PROPERTIES[value.propertyId];
   const tax=taxProperties.find(p=>p.propertyId===value.propertyId);
   if(!['hoa','tax'].includes(value.kind) || (value.kind==='hoa'?!hoa:!tax)) throw Error('Unknown property');
@@ -29,12 +29,17 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
   const url=new URL(value.sourceUrl);
   if(url.protocol!=='https:' || url.hostname!==host || url.username || url.password || url.hash) throw Error('Invalid source');
   if(value.kind==='hoa' && value.provider!==hoa.provider) throw Error('Provider mismatch');
-  if(!(validDate(value.dueDate) || value.dueDate===null) || !(money(value.amountDue) || value.kind==='hoa' && value.amountDue===null) || !(value.balanceDue===null || typeof value.balanceDue==='number' && Number.isFinite(value.balanceDue) && Math.abs(value.balanceDue)<=100000000) || !Array.isArray(value.payments) || value.payments.length>1000) throw Error('Invalid obligation');
+  if(!(validDate(value.dueDate) || value.dueDate===null) || !(money(value.amountDue) || value.amountDue===null && (value.kind==='hoa'||value.kind==='tax'&&Array.isArray(value.paymentOptions))) || !(value.balanceDue===null || typeof value.balanceDue==='number' && Number.isFinite(value.balanceDue) && Math.abs(value.balanceDue)<=100000000) || !Array.isArray(value.payments) || value.payments.length>1000) throw Error('Invalid obligation');
   if(value.monthlyAssessment!==undefined && !money(value.monthlyAssessment)) throw Error('Invalid assessment');
   if(value.annualAssessment!==undefined && !money(value.annualAssessment)) throw Error('Invalid assessment');
   if(value.assessmentScope!==undefined && (value.kind!=='tax'||!['full_assessment','base_tax_only'].includes(value.assessmentScope)))throw Error('Invalid assessment scope');
   if(value.kind==='tax' && !/^20\d{2}(\/20\d{2})?$/.test(value.taxYear||'')) throw Error('Invalid tax year');
   if(value.autopayScheduled!==undefined && typeof value.autopayScheduled!=='boolean') throw Error('Invalid autopay');
+  if(value.paymentOptions!==undefined) {
+    if(value.kind!=='tax'||value.propertyId!=='apache-az-464'||!Array.isArray(value.paymentOptions)||value.paymentOptions.length!==2||value.countySettlement!==undefined)throw Error('Invalid county alternatives');
+    const types=new Set();
+    for(const item of value.paymentOptions){keys(item,['type','dueDate','amount']);if(!['first_half_option','full_payment_option'].includes(item.type)||types.has(item.type)||!validDate(item.dueDate)||!money(item.amount))throw Error('Invalid payment option');types.add(item.type);}
+  }
   if(value.installments!==undefined) {
     if(value.kind!=='tax' || !Array.isArray(value.installments) || value.installments.length>12) throw Error('Invalid installments');
     let previous='';
@@ -46,8 +51,14 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
   }
   if(value.countySettlement!==undefined) {
     const proof=value.countySettlement;
-    keys(proof,['method','postedTotal','currentYearBalance','billPreviousPayments']);
-    if(value.kind!=='tax' || proof.method!=='county_account_and_bill' || !money(value.annualAssessment) || value.annualAssessment<=0 || !money(proof.postedTotal) || !money(proof.currentYearBalance) || !money(proof.billPreviousPayments) || proof.postedTotal!==proof.billPreviousPayments) throw Error('Invalid county settlement');
+    if(value.kind!=='tax'||!money(value.annualAssessment)||value.annualAssessment<=0)throw Error('Invalid county settlement');
+    if(proof.method==='county_account_and_bill'){
+      keys(proof,['method','postedTotal','currentYearBalance','billPreviousPayments']);
+      if(!money(proof.postedTotal)||!money(proof.currentYearBalance)||!money(proof.billPreviousPayments)||proof.postedTotal!==proof.billPreviousPayments)throw Error('Invalid county settlement');
+    }else if(proof.method==='county_ledger_and_receipts'){
+      keys(proof,['method','postedTotal','currentYearBalance','receiptTotal','taxDetailTotal','interestAndFees','latestReceiptOn']);
+      if(value.propertyId!=='navajo-az-10'||!money(proof.postedTotal)||!money(proof.currentYearBalance)||!money(proof.receiptTotal)||!money(proof.taxDetailTotal)||!money(proof.interestAndFees)||proof.postedTotal!==proof.receiptTotal||proof.taxDetailTotal!==value.annualAssessment||Math.round(proof.postedTotal*100)!==Math.round(value.annualAssessment*100)+Math.round(proof.interestAndFees*100)||!validDate(proof.latestReceiptOn)||proof.latestReceiptOn>localDate(new Date(observed),zone))throw Error('Invalid county receipt settlement');
+    }else throw Error('Invalid county settlement method');
   }
   const references=new Set();
   for(const p of value.payments) {
@@ -69,9 +80,10 @@ export function evaluateSnapshot(snapshot, now = new Date()) {
   }
   if(snapshot.kind==='hoa' && (snapshot.dueDate===null || snapshot.amountDue===null))return {status:'payment_unverified',paymentConfirmed:false,asOfDate,requiresHumanReview:true,alertType:'payment_verification_due',sourceStale:snapshot.sourceUpdatedAt?now-Date.parse(snapshot.sourceUpdatedAt)>48*3600000:null};
   if(snapshot.kind==='tax'&&snapshot.assessmentScope==='base_tax_only')return {status:'assessment_incomplete',paymentConfirmed:false,asOfDate,requiresHumanReview:true,alertType:'assessment_verification_due'};
+  if(snapshot.kind==='tax'&&snapshot.paymentOptions)return {status:'payment_options_unverified',paymentConfirmed:false,asOfDate,requiresHumanReview:true,alertType:'payment_options_review'};
   const proof=snapshot.countySettlement;
   if(snapshot.kind==='tax' && proof && proof.postedTotal>=snapshot.annualAssessment && proof.currentYearBalance===0 && snapshot.balanceDue===0)
-    return {status:'paid',paymentConfirmed:true,asOfDate,alertType:'payment_confirmed',evidence:'county_account_and_bill'};
+    return {status:'paid',paymentConfirmed:true,asOfDate,alertType:'payment_confirmed',evidence:proof.method};
   if(snapshot.kind==='tax' && snapshot.balanceDue===null) {
     const days=snapshot.dueDate===null ? null : Math.round((Date.parse(snapshot.dueDate+'T00:00:00Z')-Date.parse(asOfDate+'T00:00:00Z'))/86400000);
     const previousInstallment=snapshot.installments?.some(item=>item.dueDate<asOfDate) || false;

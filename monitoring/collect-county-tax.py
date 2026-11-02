@@ -68,6 +68,18 @@ def normalize_valencia(account, now=None):
     return {'kind':'tax','propertyId':account['propertyId'],'provider':'Valencia County Assessor','sourceUrl':account['sourceUrl'],'observedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'taxYear':account['taxYear'],'annualAssessment':account['annualAssessment'],'assessmentScope':'base_tax_only','amountDue':account['annualAssessment'],'dueDate':None,'balanceDue':None,'payments':[]}
 
 
+def normalize_navajo(account, now=None):
+    now=now or datetime.now(timezone.utc)
+    result={'kind':'tax','propertyId':account['propertyId'],'provider':'Navajo County','sourceUrl':account['sourceUrl'],'observedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'taxYear':account['taxYear'],'annualAssessment':account['annualAssessment'],'amountDue':account['annualAssessment'],'balanceDue':account['accountBalance'],'dueDate':account['dueDate'],'payments':[]}
+    if account.get('countySettlement'):result['countySettlement']=account['countySettlement']
+    return result
+
+
+def normalize_apache(account, now=None):
+    now=now or datetime.now(timezone.utc)
+    return {'kind':'tax','propertyId':account['propertyId'],'provider':'Apache County','sourceUrl':account['sourceUrl'],'observedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'taxYear':account['taxYear'],'annualAssessment':account['annualAssessment'],'amountDue':None,'balanceDue':None,'dueDate':None,'payments':[],'paymentOptions':account['paymentOptions']}
+
+
 def nye_year(now=None):
     now = now or datetime.now(timezone.utc)
     local = now.astimezone(ZoneInfo('America/Los_Angeles'))
@@ -99,6 +111,7 @@ def deliver(snapshot, endpoint, secret):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--county',choices=['all','elko','nye','valencia','navajo','apache'],default='all')
     args = parser.parse_args()
     endpoint = os.environ.get('ADEX_MONITOR_URL', '')
     secret = os.environ.get('ADEX_MONITOR_INGEST_SECRET', '')
@@ -119,7 +132,7 @@ def main():
     page = load('elko_page', 'elko-tax-extractor.py')
     bill = load('elko_bill', 'elko-tax-bill.py')
     failures = 0
-    for property_id in page.PARCELS:
+    for property_id in (page.PARCELS if args.county in ['all','elko'] else []):
         try:
             account = bill.reconcile(page.fetch(property_id), bill.fetch_bill(property_id))
             snapshot = normalize(account)
@@ -131,27 +144,28 @@ def main():
             # Never include response bodies, tokens, exception URLs, or headers.
             failures += 1
             print(json.dumps({'propertyId': property_id, 'status': 'collection_or_delivery_failed'}), file=sys.stderr)
-    nye = load('nye_bill', 'nye-tax-extractor.py')
-    stage = 'county_bill_fetch'
-    try:
-        tax_bill = nye.fetch_bill(nye_year())
-        stage = 'bill_normalization'
-        snapshot = normalize_nye(tax_bill)
-        stage = 'worker_delivery'
-        result = None if args.dry_run else deliver(snapshot, endpoint, secret)
-        print(json.dumps({'propertyId': snapshot['propertyId'], 'billValidated': True,
-                          'countyPaymentStatus': 'unverified', 'delivered': bool(result),
-                          'mode': 'dry_run' if args.dry_run else 'live'}))
-    except Exception as exc:
-        failures += 1
-        # Log the operation and non-sensitive HTTP status; never response bodies or URLs.
-        from urllib.error import HTTPError
-        details = {'propertyId': nye.PROPERTY_ID, 'status': 'collection_or_delivery_failed', 'stage': stage, 'errorType': type(exc).__name__}
-        if isinstance(exc, HTTPError):
-            details['httpStatus'] = exc.code
-        print(json.dumps(details), file=sys.stderr)
+    if args.county in ['all','nye']:
+        nye = load('nye_bill', 'nye-tax-extractor.py')
+        stage = 'county_bill_fetch'
+        try:
+            tax_bill = nye.fetch_bill(nye_year())
+            stage = 'bill_normalization'
+            snapshot = normalize_nye(tax_bill)
+            stage = 'worker_delivery'
+            result = None if args.dry_run else deliver(snapshot, endpoint, secret)
+            print(json.dumps({'propertyId': snapshot['propertyId'], 'billValidated': True,
+                              'countyPaymentStatus': 'unverified', 'delivered': bool(result),
+                              'mode': 'dry_run' if args.dry_run else 'live'}))
+        except Exception as exc:
+            failures += 1
+            # Log the operation and non-sensitive HTTP status; never response bodies or URLs.
+            from urllib.error import HTTPError
+            details = {'propertyId': nye.PROPERTY_ID, 'status': 'collection_or_delivery_failed', 'stage': stage, 'errorType': type(exc).__name__}
+            if isinstance(exc, HTTPError):
+                details['httpStatus'] = exc.code
+            print(json.dumps(details), file=sys.stderr)
     valencia=load('valencia_assessor','valencia-tax-extractor.py')
-    for property_id in valencia.ACCOUNTS:
+    for property_id in (valencia.ACCOUNTS if args.county in ['all','valencia'] else []):
         stage='assessor_guest_retrieval'
         try:
             account=valencia.extract(property_id,datetime.now(ZoneInfo('America/Denver')).year)
@@ -162,6 +176,21 @@ def main():
             failures+=1
             from urllib.error import HTTPError
             details={'propertyId':property_id,'status':'collection_or_delivery_failed','stage':getattr(exc,'county_stage',stage),'errorType':type(exc).__name__,'interactiveChallenge':getattr(exc,'challenge',False)}
+            if isinstance(exc,HTTPError):details['httpStatus']=exc.code
+            print(json.dumps(details),file=sys.stderr)
+    for county,module_path,normalizer in [('navajo','navajo-tax-extractor.py',normalize_navajo),('apache','apache-tax-extractor.py',normalize_apache)]:
+        if args.county not in ['all',county]:continue
+        module=load(county+'_county',module_path)
+        stage='public_account_retrieval'
+        try:
+            account=module.fetch(datetime.now(ZoneInfo('America/Phoenix')).year)
+            stage='account_normalization';snapshot=normalizer(account)
+            stage='worker_delivery';result=None if args.dry_run else deliver(snapshot,endpoint,secret)
+            print(json.dumps({'propertyId':module.PROPERTY_ID,'countyPaymentStatus':account['paymentStatus'],'delivered':bool(result),'mode':'dry_run' if args.dry_run else 'live'}))
+        except Exception as exc:
+            failures+=1
+            from urllib.error import HTTPError
+            details={'propertyId':module.PROPERTY_ID,'status':'collection_or_delivery_failed','stage':stage,'errorType':type(exc).__name__}
             if isinstance(exc,HTTPError):details['httpStatus']=exc.code
             print(json.dumps(details),file=sys.stderr)
     return 1 if failures else 0

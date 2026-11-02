@@ -59,3 +59,16 @@ test('assessor base taxes cannot confirm payment or imply a complete obligation'
  const result=evaluateSnapshot(snapshot,now);assert.equal(result.status,'assessment_incomplete');assert.equal(result.paymentConfirmed,false);assert.equal(result.alertType,'assessment_verification_due');assert.equal(result.requiresHumanReview,true);
  assert.throws(()=>validate({...base,assessmentScope:'base_tax_only'}));
 });
+
+test('Navajo confirmation requires reconciled recorded receipts, tax detail and zero balances',()=>{
+ const properties=[{propertyId:'navajo-az-10',state:'AZ',taxPortalUrl:'https://apps.navajocountyaz.gov/NavajoWebPayments/PropertyInformation'}];
+ const value={kind:'tax',propertyId:'navajo-az-10',provider:'Navajo County',sourceUrl:properties[0].taxPortalUrl,observedAt:now.toISOString(),dueDate:'2026-12-31',amountDue:100.05,annualAssessment:100.05,taxYear:'2026',balanceDue:0,payments:[],countySettlement:{method:'county_ledger_and_receipts',postedTotal:100.05,receiptTotal:100.05,taxDetailTotal:100.05,currentYearBalance:0,interestAndFees:0,latestReceiptOn:'2026-10-01'}};
+ const snapshot=validateSnapshot(value,properties,now);assert.equal(evaluateSnapshot(snapshot,now).paymentConfirmed,true);assert.equal(evaluateSnapshot({...snapshot,balanceDue:1},now).paymentConfirmed,false);
+ for(const patch of [{receiptTotal:1},{taxDetailTotal:1},{interestAndFees:2},{latestReceiptOn:'2027-01-01'}])assert.throws(()=>validateSnapshot({...value,countySettlement:{...value.countySettlement,...patch}},properties,now));
+});
+test('Apache alternatives retain an unknown obligation and never become additive installments',()=>{
+ const properties=[{propertyId:'apache-az-464',state:'AZ',taxPortalUrl:'https://eagletreasurer.co.apache.az.us:8443/treasurer/treasurerweb/account.jsp?account=R0042800'}];
+ const value={kind:'tax',propertyId:'apache-az-464',provider:'Apache County',sourceUrl:properties[0].taxPortalUrl,observedAt:now.toISOString(),dueDate:null,amountDue:null,annualAssessment:24.5,taxYear:'2026',balanceDue:null,payments:[],paymentOptions:[{type:'first_half_option',dueDate:'2026-11-02',amount:12.25},{type:'full_payment_option',dueDate:'2026-12-31',amount:24.5}]};
+ const snapshot=validateSnapshot(value,properties,now);assert.equal(evaluateSnapshot(snapshot,now).status,'payment_options_unverified');assert.equal(evaluateSnapshot(snapshot,now).paymentConfirmed,false);
+ assert.throws(()=>validateSnapshot({...value,paymentOptions:[value.paymentOptions[0],value.paymentOptions[0]]},properties,now));assert.throws(()=>validateSnapshot({...value,paymentOptions:undefined},properties,now));
+});

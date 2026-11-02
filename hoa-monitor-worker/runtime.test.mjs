@@ -41,3 +41,24 @@ test('Calabrese failed balance email retries the same event',async()=>{
  const observation={...snapshot,propertyId:'fallbrook-ca',provider:'FrontSteps',sourceUrl:'https://horsecreekridge.frontsteps.com/dashboard',amountDue:null,dueDate:null,balanceDue:-725,payments:[]};
  try{globalThis.fetch=async()=>new Response('',{status:503});await assert.rejects(()=>processSnapshot(env,observation,now));const first=await kv.get('monitor:balance-notice:fallbrook-ca','json');globalThis.fetch=async()=>new Response('{}',{status:201});assert.equal((await processSnapshot(env,observation,now)).delivery,'sent');assert.equal((await kv.get('monitor:balance-notice:fallbrook-ca','json')).eventId,first.eventId);}finally{globalThis.fetch=prior;}
 });
+
+test('payment verification changes and recovery notify once, with failed change email retried',async()=>{
+ const priorFetch=globalThis.fetch;const kv=store(),env={HOA_MONITOR_KV:kv,NOTIFICATIONS_ENABLED:'true',BREVO_API_KEY:'test',EMAIL_FROM:'sender@example.test'};const messages=[];
+ const paid={kind:'tax',propertyId:'navajo-az-10',provider:'Navajo County',sourceUrl:'https://apps.navajocountyaz.gov/NavajoWebPayments/PropertyInformation',observedAt:now.toISOString(),zone:'America/Phoenix',taxYear:'2026',amountDue:100.05,annualAssessment:100.05,balanceDue:0,dueDate:'2026-12-31',payments:[],countySettlement:{method:'county_ledger_and_receipts',postedTotal:100.05,receiptTotal:100.05,taxDetailTotal:100.05,currentYearBalance:0,interestAndFees:0,latestReceiptOn:'2026-10-01'}};
+ const unverified={...paid,balanceDue:100.05,countySettlement:undefined};
+ try{
+  globalThis.fetch=async(_u,o)=>{messages.push(JSON.parse(o.body));return new Response('{}',{status:201});};
+  assert.equal((await processSnapshot(env,paid,now)).delivery,'sent');
+  globalThis.fetch=async()=>new Response('',{status:503});await assert.rejects(()=>processSnapshot(env,unverified,now,paid));
+  globalThis.fetch=async(_u,o)=>{messages.push(JSON.parse(o.body));return new Response('{}',{status:201});};
+  const changed=await processSnapshot(env,unverified,now);assert.equal(changed.result.alertType,'payment_verification_changed');assert.equal(changed.delivery,'sent');assert.match(messages[1].subject,/verification changed/);
+  await processSnapshot(env,unverified,now);assert.equal(messages.length,2);
+  const recovered=await processSnapshot(env,paid,now);assert.equal(recovered.result.alertType,'payment_reconfirmed');assert.equal(recovered.delivery,'sent');assert.match(messages[2].subject,/payment reconfirmed/);
+  assert.equal((await processSnapshot(env,paid,now)).delivery,'suppressed');assert.equal(messages.length,3);
+ }finally{globalThis.fetch=priorFetch;}
+});
+test('a new tax year does not revoke the prior year confirmation',async()=>{
+ const kv=store();const previous={...snapshot,kind:'tax',taxYear:'2025',annualAssessment:100,balanceDue:0,countySettlement:{method:'county_account_and_bill',postedTotal:100,billPreviousPayments:100,currentYearBalance:0}};
+ const current={...snapshot,kind:'tax',taxYear:'2026',dueDate:'2026-12-31',amountDue:100,balanceDue:100};
+ const result=await processSnapshot({HOA_MONITOR_KV:kv},current,now,previous);assert.notEqual(result.result.alertType,'payment_verification_changed');
+});
