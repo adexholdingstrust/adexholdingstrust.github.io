@@ -1,0 +1,25 @@
+name: Verify deployed monitor schedule
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'monitoring/verify-schedule.mjs'
+      - '.github/workflows/verify-monitor-schedule.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    environment: github-pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify actual scheduled handler evidence
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          ADEX_MONITOR_INGEST_SECRET: ${{ secrets.ADEX_MONITOR_INGEST_SECRET }}
+        run: node monitoring/verify-schedule.mjs
