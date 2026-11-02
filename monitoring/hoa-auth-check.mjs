@@ -2,6 +2,7 @@
 import {chromium} from 'playwright';
 import {createHmac} from 'node:crypto';
 import {lcmSnapshot} from './hoa-ledger.js';
+import {checkTownSq} from './townsq-readonly.mjs';
 async function ingest(snapshot) {
  const token=process.env.CLOUDFLARE_API_TOKEN;
  const secret=process.env.ADEX_MONITOR_INGEST_SECRET||(token?createHmac('sha256',token).update('adex-hoa-monitor-ingestion-v2').digest('hex'):null);
@@ -25,6 +26,7 @@ try {for(const portal of portals){
  const username=process.env[`ADEX_MONITOR_${portal.prefix}_USERNAME`];
  const password=process.env[`ADEX_MONITOR_${portal.prefix}_PASSWORD`];
  if(!username||!password){console.log(JSON.stringify({propertyId:portal.id,status:'credentials_missing'}));failures++;continue;}
+ if(portal.name==='TownSq'){try{const report=await checkTownSq(username,password);console.log(JSON.stringify({propertyId:portal.id,...report}));if(report.status!=='authenticated')failures++;}catch(e){console.log(JSON.stringify({propertyId:portal.id,status:'api_check_failed',errorType:e.name,httpStatus:e.httpStatus||null}));failures++;}continue;}
  const context=await browser.newContext({acceptDownloads:false});
  const page=await context.newPage(); page.setDefaultTimeout(20000);
  let financialUrl=null; const networkErrors=[]; const errorTags=new Set(); const paymentHosts=new Set(); const authResponses=[]; const schemas=[];const denied=new Set(); const pageErrors=new Set(); let stage='open';
