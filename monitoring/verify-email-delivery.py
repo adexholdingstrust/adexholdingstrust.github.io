@@ -17,6 +17,7 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 def send_test(api_key, open_request=None):
+    api_key = api_key.strip()
     if not api_key:
         raise ValueError('Brevo API key is not configured')
     payload = {'sender': {'email': SENDER, 'name': 'Adex Property Monitoring'},
@@ -32,7 +33,18 @@ def send_test(api_key, open_request=None):
                 raise ValueError('Provider did not accept the test email')
             return response.status
     except HTTPError as exc:
-        raise ValueError(f'Provider rejected test email with HTTP {exc.code}') from None
+        # Classify the provider response without logging bodies, keys, or auth URLs.
+        reason = 'provider_rejected'
+        try:
+            data = json.loads(exc.read(4096))
+            message = str(data.get('message', '')).lower()
+            if 'ip' in message and any(word in message for word in ['unrecogn', 'unauthor', 'not author', 'whitelist', 'blocked']):
+                reason = 'source_ip_not_authorized'
+            elif any(word in message for word in ['key not found', 'invalid api key', 'api key is not enabled', 'invalid authentication']):
+                reason = 'api_key_not_recognized_or_enabled'
+        except (ValueError, TypeError, AttributeError):
+            pass
+        raise ValueError(f'Provider rejected test email with HTTP {exc.code}; reason={reason}') from None
 
 
 def main():

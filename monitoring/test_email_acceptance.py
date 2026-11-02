@@ -27,4 +27,25 @@ class EmailAcceptanceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             email.send_test('', lambda *args, **kwargs: self.fail('Must not send'))
 
+    def test_error_classification_does_not_disclose_provider_response(self):
+        from io import BytesIO
+        from urllib.error import HTTPError
+        for message, reason in [('Key not found: SECRET', 'api_key_not_recognized_or_enabled'), ('Unrecognised IP address SECRET', 'source_ip_not_authorized')]:
+            def opener(req, timeout):
+                raise HTTPError(req.full_url, 401, 'Unauthorized', {}, BytesIO(json.dumps({'message':message}).encode()))
+            with self.assertRaises(ValueError) as caught:
+                email.send_test('test-only', opener)
+            self.assertIn(reason, str(caught.exception))
+            self.assertNotIn('SECRET', str(caught.exception))
+
+    def test_copied_whitespace_is_removed_from_header(self):
+        class Response:
+            status = 201
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+        def opener(req, timeout):
+            self.assertEqual(req.get_header('Api-key'), 'test-only')
+            return Response()
+        self.assertEqual(email.send_test('  test-only\n', opener), 201)
+
 if __name__ == '__main__': unittest.main()
