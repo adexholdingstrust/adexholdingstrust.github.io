@@ -16,7 +16,7 @@ async function ingest(snapshot) {
 const portals=[
  {id:'aurora-oxford-co',name:'LCM',prefix:'LCM',url:'https://lcmpropertymanagement.com/AccountStatus/40583~10533163/?type=Account&active=0',hosts:['lcmpropertymanagement.com'],user:'#user_name',password:'#password',submit:'form#form1'},
  {id:'aurora-hoye-co',name:'TownSq',prefix:'TOWNSQ',url:'https://app.townsq.io/w/672048ef610bb549fcae2a41/user-accounts',hosts:['app.townsq.io','api.townsq.io'],user:'input[formcontrolname="username"], input[name="email"], input[type="email"]',password:'input[type="password"]'},
- {id:'fallbrook-ca',name:'FrontSteps',prefix:'FRONTSTEPS',url:'https://horsecreekridge.frontsteps.com/dashboard',hosts:['horsecreekridge.frontsteps.com'],user:'#login-email',password:'#login-password',submit:'#login-btn'}
+ {id:'fallbrook-ca',name:'FrontSteps',prefix:'FRONTSTEPS',url:'https://horsecreekridge.frontsteps.com/dashboard',hosts:['horsecreekridge.frontsteps.com','fspay.frontsteps.com'],user:'#login-email',password:'#login-password',submit:'#login-btn'}
 ];
 const safePath=url=>{const u=new URL(url);return u.hostname+u.pathname.split('/').map(p=>p.length>36||/\d{5}/.test(p)?':id':p).join('/');};
 const browser=await chromium.launch({headless:true});
@@ -27,8 +27,8 @@ try {for(const portal of portals){
  if(!username||!password){console.log(JSON.stringify({propertyId:portal.id,status:'credentials_missing'}));failures++;continue;}
  const context=await browser.newContext({acceptDownloads:false});
  const page=await context.newPage(); page.setDefaultTimeout(20000);
- const paymentHosts=new Set(); const authResponses=[]; const schemas=[];const denied=new Set(); const pageErrors=new Set(); let stage='open';
- page.on('pageerror',e=>pageErrors.add(/firebase/i.test(e.message)?'firebase_initialization':/chunk|loading/i.test(e.message)?'application_bundle_load':e.name));
+ let financialUrl=null; const networkErrors=[]; const errorTags=new Set(); const paymentHosts=new Set(); const authResponses=[]; const schemas=[];const denied=new Set(); const pageErrors=new Set(); let stage='open';
+ page.on('pageerror',e=>{for(const tag of (e.message.match(/NG\d+|(?:installations|remoteconfig|auth|messaging)\/[a-z-]+|FirebaseError|ChunkLoadError|SecurityError|ReferenceError|TypeError|CORS|CSP|ERR_[A-Z_]+/g)||[]))errorTags.add(tag);pageErrors.add(/firebase/i.test(e.message)?'firebase_initialization':/chunk|loading/i.test(e.message)?'application_bundle_load':e.name||'unclassified');});
  const shape=(v,depth=0)=>{if(v===null)return 'null';if(Array.isArray(v))return {type:'array',count:v.length,item:depth<5?shape(v[0],depth+1):typeof v[0]};if(typeof v==='object')return Object.fromEntries(Object.entries(v).filter(([k])=>/^[A-Za-z_][A-Za-z_0-9]{0,45}$/.test(k)).slice(0,40).map(([k,x])=>[k,depth<5?shape(x,depth+1):typeof x]));return typeof v;};
  // Do not permit application writes. Authentication is the only allowed mutation.
  await context.route('**/*',async route=>{const q=route.request(),u=new URL(q.url());
@@ -40,9 +40,11 @@ try {for(const portal of portals){
  });
  page.on('response',async response=>{try{
   const req=response.request();const u=new URL(response.url());
+  if(response.status()>=400 && networkErrors.length<20)networkErrors.push({endpoint:safePath(response.url()),status:response.status(),resource:req.resourceType()});
   if(portal.hosts.includes(u.hostname)&&req.method()==='POST'&&/(auth|login|session|sign_in)/i.test(u.pathname))authResponses.push({endpoint:safePath(response.url()),status:response.status()});
   if(!portal.hosts.includes(u.hostname)||req.method()!=='GET'||!response.ok()||!response.headers()['content-type']?.includes('application/json')||u.pathname.startsWith('/assets/'))return;
   const data=await response.json();
+  if(portal.name==='FrontSteps'&&Array.isArray(data.payments)){const units=data.payments.filter(p=>/464.*calabrese/i.test(p.unit_street_1));if(units.length===1){const accounts=units[0].accounts?.filter(a=>a.is_default);if(accounts?.length===1){try{const u=new URL(accounts[0].payment_url);if(u.protocol==='https:'&&u.hostname==='fspay.frontsteps.com')financialUrl=u.href;}catch{}}}}
   if(portal.name==='FrontSteps'&&Array.isArray(data.payments))for(const p of data.payments)for(const a of p.accounts||[])try{paymentHosts.add(new URL(a.payment_url).origin);}catch{}
   const sample=Array.isArray(data)?data[0]:data;
   if(sample && typeof sample==='object' && schemas.length<30)schemas.push({endpoint:safePath(response.url()),shape:shape(data)});
@@ -79,13 +81,19 @@ try {for(const portal of portals){
   const rowShapes=await page.locator('table').evaluateAll(tables=>tables.filter(t=>[...t.querySelectorAll('th')].some(h=>h.textContent.trim()==='Charge')).map(t=>({rows:t.rows.length,columns:[...t.rows].slice(0,3).map(r=>r.cells.length)})));
   let collection={status:'not_collected'};
   if(signedIn&&portal.name==='LCM'&&process.env.HOA_INGEST_ENABLED==='true') {
-   try{const rows=await page.locator('table').evaluateAll(tables=>{const table=tables.find(t=>{const hs=[...t.querySelectorAll('th')].map(h=>h.textContent.trim());return ['Date','Description','Charge','Credit'].every(h=>hs.includes(h));});return table?[...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())):[];});
+   try{const rows=await page.locator('table').evaluateAll(tables=>{const table=tables.find(t=>[...t.rows].some(r=>[...r.cells].map(c=>c.textContent.trim()).join('|')==='Date|Description|Charge|Credit'));return table?[...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())):[];});
     const snapshot=lcmSnapshot(rows);collection=await ingest(snapshot);
    }catch{collection={status:'collection_failed'};failures++;}
   }
-  console.log(JSON.stringify({propertyId:portal.id,status,collection,authResponses,paymentHosts:[...paymentHosts],financialControls:financialControls.map(x=>x.trim()).filter(x=>x.length<60&&/account|payment|ledger|history|statement|financial/i.test(x)).slice(0,25),rowShapes,readLinks:readLinks.map(l=>({label:l.label,path:safePath(l.url)})),destination:safePath(page.url()),ledgerColumns:labels,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));
+  let financialPortal=null;
+  if(signedIn&&portal.name==='FrontSteps'&&financialUrl){
+   await page.goto(financialUrl,{waitUntil:'domcontentloaded',timeout:45000});await page.waitForTimeout(10000);
+   const body=await page.locator('body').innerText();
+   financialPortal={destination:safePath(page.url()),hasPassword:await page.locator('input[type="password"]').filter({visible:true}).count()>0,hasLedger:/transaction history|account history|payment history|ledger/i.test(body),hasChallenge:/verification code|captcha|verify your identity/i.test(body),tableColumns:(await page.locator('th').allTextContents()).map(x=>x.trim()).filter(x=>/^(date|description|charge|charges|credit|credits|balance|amount|payment|payments|status|reference|transaction|transaction date|due date|type)$/i.test(x))};
+  }
+  console.log(JSON.stringify({propertyId:portal.id,status,collection,financialPortal,authResponses,paymentHosts:[...paymentHosts],financialControls:financialControls.map(x=>x.trim()).filter(x=>x.length<60&&/account|payment|ledger|history|statement|financial/i.test(x)).slice(0,25),rowShapes,readLinks:readLinks.map(l=>({label:l.label,path:safePath(l.url)})),destination:safePath(page.url()),ledgerColumns:labels,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));
   if(!signedIn)failures++;
- }catch(error){const controls=await page.locator('input').evaluateAll(xs=>xs.map(x=>({id:x.id,name:x.name,type:x.type,visible:!!(x.offsetWidth||x.offsetHeight||x.getClientRects().length)}))).catch(()=>[]);console.log(JSON.stringify({propertyId:portal.id,status:'check_failed',stage,destination:safePath(page.url()),controls,authResponses,pageErrors:[...pageErrors],errorType:error.name,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));failures++;}
+ }catch(error){const controls=await page.locator('input').evaluateAll(xs=>xs.map(x=>({id:x.id,name:x.name,type:x.type,visible:!!(x.offsetWidth||x.offsetHeight||x.getClientRects().length)}))).catch(()=>[]);console.log(JSON.stringify({propertyId:portal.id,status:'check_failed',stage,destination:safePath(page.url()),controls,authResponses,networkErrors,errorTags:[...errorTags],pageErrors:[...pageErrors],errorType:error.name,apiSchemas:schemas,blockedWriteEndpoints:[...denied].slice(0,15)}));failures++;}
  finally{await context.close();}
 }}finally{await browser.close();}
 if(failures)process.exitCode=1;
