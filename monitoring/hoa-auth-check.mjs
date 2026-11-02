@@ -79,24 +79,29 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
   else if(portal.submit)await page.locator(portal.submit).click();
   else await page.getByRole('button',{name:/^(log in|login|sign in|continue)$/i}).first().click();
   await page.waitForTimeout(10000);
+  let ledgerView=page;
+  if(portal.name==='LCM'&&new URL(page.url()).pathname===new URL(portal.url).pathname){
+   try{await page.waitForFunction(()=>[...document.querySelectorAll('table')].some(t=>[...t.rows].some(r=>[...r.cells].map(c=>c.textContent.trim()).join('|')==='Date|Description|Charge|Credit'))||document.querySelector('iframe'),null,{timeout:30000});}catch{}
+   for(const frame of page.frames()){try{if(new URL(frame.url()).hostname===new URL(portal.url).hostname && await frame.locator('th').filter({hasText:/^Charge$/}).count()){ledgerView=frame;break;}}catch{}}
+  }
   // Validate destination and signed-in controls. Absence of an error alone is not success.
   const host=new URL(page.url()).hostname;
   const text=await page.locator('body').innerText();
   const loginVisible=await page.locator('input[type="password"]').filter({visible:true}).count();
-  const ledgerHeaders=await page.locator('th').allTextContents();
+  const ledgerHeaders=await ledgerView.locator('th').allTextContents();
   const lcmLedger=portal.name==='LCM' && new URL(page.url()).pathname===new URL(portal.url).pathname && ['Date','Description','Charge','Credit'].every(x=>ledgerHeaders.some(h=>h.trim()===x));
   const signedIn=portal.hosts.includes(host)&&!loginVisible&&(/sign out|log out|logout|account status|account balance|my account|user accounts|dashboard/i.test(text)||lcmLedger);
   const challenge=/verification code|one.time code|two.factor|multi.factor|verify your identity|captcha/i.test(text);
   const rejected=/incorrect password|invalid password|invalid credentials|invalid username|unable to log|login failed|incorrect email/i.test(text);
   const status=signedIn?'authenticated':challenge?'interactive_verification_required':rejected?'credentials_rejected':'authentication_unverified';
-  const headings=await page.locator('th').allTextContents();
+  const headings=await ledgerView.locator('th').allTextContents();
   const labels=headings.map(x=>x.trim()).filter(x=>/^(date|description|charge|charges|credit|credits|balance|amount|payment|payments|status|reference|transaction|transaction date|due date|type)$/i.test(x));
   const readLinks=await page.locator('a[href]').evaluateAll(links=>links.filter(a=>/^(account status|account history|account ledger|my account|payments|payment history|financials|accounting|balance|transaction history)$/i.test(a.textContent.trim())).map(a=>({label:a.textContent.trim(),url:a.href})));
   const financialControls=await page.locator('a,button').allTextContents();
   const rowShapes=await page.locator('table').evaluateAll(tables=>tables.filter(t=>[...t.querySelectorAll('th')].some(h=>h.textContent.trim()==='Charge')).map(t=>({rows:t.rows.length,columns:[...t.rows].slice(0,3).map(r=>r.cells.length)})));
   let collection={status:'not_collected'};
   if(signedIn&&portal.name==='LCM'&&process.env.HOA_INGEST_ENABLED==='true') {
-   try{const rows=await page.locator('table').evaluateAll(tables=>{const table=tables.find(t=>[...t.rows].some(r=>[...r.cells].map(c=>c.textContent.trim()).join('|')==='Date|Description|Charge|Credit'));return table?[...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())):[];});
+   try{const rows=await ledgerView.locator('table').evaluateAll(tables=>{const table=tables.find(t=>[...t.rows].some(r=>[...r.cells].map(c=>c.textContent.trim()).join('|')==='Date|Description|Charge|Credit'));return table?[...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())):[];});
     const snapshot=lcmSnapshot(rows);collection=await ingest(snapshot);
    }catch{collection={status:'collection_failed'};failures++;}
   }
