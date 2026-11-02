@@ -3,6 +3,8 @@ Run only on the protected GitHub environment. The Brevo key is read from the
 runner environment and is never printed, passed on a command line, or stored.
 """
 import json
+import importlib.util
+from pathlib import Path
 import os
 import sys
 from urllib.error import HTTPError
@@ -53,11 +55,22 @@ def main():
         print('Monitoring email test blocked: ADEX_MONITOR_BREVO_API_KEY is not configured.', file=sys.stderr)
         return 1
     try:
-        status = send_test(key)
-        print(f'Test message accepted by Brevo (HTTP {status}); inbox delivery still requires verification.')
+        token = os.environ.get('CLOUDFLARE_API_TOKEN', '')
+        if not token:
+            raise ValueError('Cloudflare deployment token is needed for runtime email acceptance')
+        spec = importlib.util.spec_from_file_location('monitor_deployment', Path(__file__).with_name('deploy-monitor.py'))
+        deployment = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(deployment)
+        secret = deployment.signing_secret(token)
+        print('::add-mask::' + secret, flush=True)
+        subdomain = deployment.api(token, f'/accounts/{deployment.ACCOUNT}/workers/subdomain')['result']['subdomain']
+        import re
+        if not re.fullmatch(r'[a-z0-9-]+', subdomain):
+            raise ValueError('Unexpected Worker subdomain')
+        deployment.verify_runtime_email(f'https://{deployment.WORKER}.{subdomain}.workers.dev', secret)
         return 0
     except Exception as exc:
-        print('Monitoring email test failed: ' + (str(exc) if isinstance(exc, ValueError) else type(exc).__name__), file=sys.stderr)
+        print('Monitoring email test failed: ' + (str(exc) if isinstance(exc, (ValueError, RuntimeError)) else type(exc).__name__), file=sys.stderr)
         return 1
 
 if __name__ == '__main__':
