@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {checkTownSq} from './townsq-readonly.mjs';
 const community='672048ef610bb549fcae2a41';
 const login={success:true,jwt:'private-token',logon_token:'private-logon',user:{id:'own-user'},condos:[{id:community}]};
-const accounts={content:[{account:{accountNumber:'706729',accountUuid:'private-account',allowInquiry:true,currentBalance:125.25}}]};
+const accounts={content:[{condo:{id:community},account:{accountNumber:'706729',accountUuid:'private-account',allowInquiry:true,currentBalance:125.25}}]};
 test('TownSq follows official community selection and resident account reads',async()=>{
  const previous=globalThis.fetch;let calls=0;
  globalThis.fetch=async(url,options)=>{calls++;const u=new URL(url);assert.equal(u.origin,'https://api.townsq.io');

@@ -42,7 +42,7 @@ jobs:
       - name: Verify portal authentication without payment actions
         env:
           HOA_PROVIDER: ${{ matrix.provider }}
-          HOA_TOWNSQ_ATTEMPT: ${{ github.event_name == 'workflow_dispatch' }}
+          HOA_TOWNSQ_ATTEMPT: 'true'
           HOA_DISCOVER_FINANCE: 'false'
           HOA_INGEST_ENABLED: 'true'
           CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
@@ -54,3 +54,9 @@ jobs:
           ADEX_MONITOR_FRONTSTEPS_USERNAME: ${{ matrix.provider == 'FRONTSTEPS' && secrets.ADEX_MONITOR_FRONTSTEPS_USERNAME || '' }}
           ADEX_MONITOR_FRONTSTEPS_PASSWORD: ${{ matrix.provider == 'FRONTSTEPS' && secrets.ADEX_MONITOR_FRONTSTEPS_PASSWORD || '' }}
         run: node monitoring/hoa-auth-check.mjs
+      - name: Verify fresh TownSq observation in private finance feed
+        if: matrix.provider == 'TOWNSQ'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          ADEX_MONITOR_INGEST_SECRET: ${{ secrets.ADEX_MONITOR_INGEST_SECRET }}
+        run: node monitoring/verify-townsq-observation.mjs
