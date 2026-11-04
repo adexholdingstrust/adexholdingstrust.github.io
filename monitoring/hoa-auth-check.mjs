@@ -103,7 +103,7 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
   if(signedIn&&portal.name==='LCM'&&process.env.HOA_INGEST_ENABLED==='true') {
    try{const rows=await ledgerView.locator('table').evaluateAll(tables=>{const table=tables.find(t=>[...t.rows].some(r=>[...r.cells].map(c=>c.textContent.trim()).join('|')==='Date|Description|Charge|Credit'));return table?[...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())):[];});
     const pairs=await ledgerView.locator('tr').evaluateAll(rs=>rs.flatMap(r=>{const cells=[...r.cells].map(c=>c.textContent.trim());return cells.flatMap((label,i)=>/^(?:(?:current|account|total)\s+)?balance(?:\s+due)?\s*:?$/i.test(label)&&cells[i+1]?[ [label,cells[i+1]] ]:[]);}));
-    const snapshot=lcmSnapshot(rows,new Date(),lcmDashboardBalance([...pairs,...lcmBalancePairsFromText(await ledgerView.locator('body').innerText())]));collection={...await ingest(snapshot),balanceObserved:snapshot.balanceDue!==null};
+    const snapshot=lcmSnapshot(rows,new Date(),lcmDashboardBalance([...pairs,...lcmBalancePairsFromText(await ledgerView.locator('body').innerText())]));collection={...await ingest(snapshot),balanceObserved:snapshot.balanceDue!==null,assessmentObserved:snapshot.monthlyAssessment!==undefined};
    }catch{collection={status:'collection_failed'};failures++;}
   }
   if(signedIn&&portal.name==='FrontSteps'&&process.env.HOA_INGEST_ENABLED==='true'){try{collection=await ingest(frontStepsSnapshot(frontStepsData));}catch{collection={status:'collection_failed'};failures++;}}
