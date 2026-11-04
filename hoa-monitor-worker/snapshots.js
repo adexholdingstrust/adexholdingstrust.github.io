@@ -1,5 +1,5 @@
 // Collector contract. Never accept credentials or infer payment from an account balance.
-import {classifyHOAPayment} from '../monitoring/hoa-rules.js';
+import {classifyHOAPayment,HOA_POLICY} from '../monitoring/hoa-rules.js';
 export const HOA_PROPERTIES = Object.freeze({
   'aurora-oxford-co': {provider:'LCM', host:'lcmpropertymanagement.com', zone:'America/Denver'},
   'aurora-hoye-co': {provider:'TownSq', host:'app.townsq.io', zone:'America/Denver'},
@@ -69,7 +69,7 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
   }
   return {...value,zone};
 }
-export function evaluateSnapshot(snapshot, now = new Date()) {
+function evaluateBaseSnapshot(snapshot, now = new Date()) {
   const asOfDate=localDate(now,snapshot.zone);
   const balanceOnly=snapshot.kind==='hoa'&&snapshot.propertyId==='fallbrook-ca';
   if(now-Date.parse(snapshot.observedAt)>48*3600000) return {status:'stale',paymentConfirmed:false,asOfDate,alertType:'monitor_stale',...(balanceOnly?{monitoringMode:'balance_only'}:{})};
@@ -94,11 +94,29 @@ export function evaluateSnapshot(snapshot, now = new Date()) {
   const payments=snapshot.kind==='hoa'?snapshot.payments.filter(p=>p.evidence==='hoa_account_ledger'):snapshot.payments;
   const result=classifyHOAPayment({...snapshot,payments,asOfDate});
   if(snapshot.kind==='hoa' && result.status==='overdue') {
-    return {...result,status:'payment_unverified',asOfDate,paymentConfirmed:false,requiresHumanReview:true,alertType:asOfDate>=snapshot.dueDate.slice(0,7)+'-07'?'unconfirmed_by_seventh':'payment_verification_due'};
+    return {...result,status:'payment_unverified',asOfDate,paymentConfirmed:false,requiresHumanReview:true,alertType:'payment_verification_due'};
   }
   const daysUntilDue=Math.round((Date.parse(snapshot.dueDate+'T00:00:00Z')-Date.parse(asOfDate+'T00:00:00Z'))/86400000);
   const paymentConfirmed=result.status==='paid';
   const alertType=paymentConfirmed?'payment_confirmed':result.status==='payment_failed'?'payment_problem':
     result.status==='overdue' && snapshot.kind==='hoa' && asOfDate>=snapshot.dueDate.slice(0,7)+'-07'?'unconfirmed_by_seventh':result.status==='overdue'?'overdue':daysUntilDue>=0&&daysUntilDue<=(snapshot.kind==='tax'?30:5)&&snapshot.amountDue>0?'upcoming_assessment':null;
   return {...result,asOfDate,paymentConfirmed,daysUntilDue,alertType,...(paymentConfirmed && snapshot.kind==='hoa'?{evidence:'hoa_account_ledger'}:{})};
+}
+
+// Owner-set monitoring dates do not rewrite portal assessment/payment allocation dates.
+export function evaluateSnapshot(snapshot,now=new Date()) {
+ const result=evaluateBaseSnapshot(snapshot,now);
+ if(snapshot.kind!=='hoa')return result;
+ const month=result.asOfDate.slice(0,7),day=Number(result.asOfDate.slice(8));
+ const monitoringDueDate=month+'-'+String(HOA_POLICY.dueDay).padStart(2,'0');
+ const currentAssessment=snapshot.dueDate?.slice(0,7)===month;
+ if(result.paymentConfirmed&&!currentAssessment){result.paymentConfirmed=false;result.status='payment_unverified';result.alertType='payment_verification_due';delete result.evidence;}
+ const coveredBalance=result.monitoringMode==='balance_only'&&result.status!=='stale'&&snapshot.balanceDue!==null&&snapshot.balanceDue<=0;
+ const unresolved=!result.paymentConfirmed&&!coveredBalance;
+ const priority=unresolved&&day>=HOA_POLICY.verifyByDay?'important':'routine';
+ if(result.monitoringMode!=='balance_only'&&result.status!=='stale'&&!result.paymentConfirmed){
+  result.status=result.status==='payment_failed'?'payment_failed':'payment_unverified';
+  result.alertType=result.status==='payment_failed'?'payment_problem':priority==='important'?'payment_review_important':'payment_verification_due';
+ }
+ return {...result,monitoringDueDate,monitoringAmountDue:currentAssessment?snapshot.amountDue:null,dueDateBasis:'owner_monitoring_policy',priority,requiresHumanReview:unresolved,reviewByDate:month+'-'+String(HOA_POLICY.verifyByDay).padStart(2,'0'),pastMonitoringDueDate:day>HOA_POLICY.dueDay};
 }

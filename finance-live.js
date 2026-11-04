@@ -20,6 +20,8 @@
    if(r.status==='payment_options_unverified'&&!r.paymentOptions)throw Error('County alternatives unavailable');
    if(r.paymentOptions!==undefined){if(!Array.isArray(r.paymentOptions)||r.paymentOptions.length!==2||r.propertyId!=='apache-az-464')throw Error('Invalid county options');const types=new Set();out.paymentOptions=r.paymentOptions.map(o=>{if(!['first_half_option','full_payment_option'].includes(o.type)||types.has(o.type)||!/^\d{4}-\d{2}-\d{2}$/.test(o.dueDate)||new Date(o.dueDate+'T00:00:00Z').toISOString().slice(0,10)!==o.dueDate||!money(o.amount))throw Error('Invalid county option');types.add(o.type);return {type:o.type,dueDate:o.dueDate,amount:o.amount};});}
    if(r.assessmentScope!==undefined){if(!['full_assessment','base_tax_only'].includes(r.assessmentScope))throw Error('Invalid assessment scope');out.assessmentScope=r.assessmentScope;}
+   for(const field of ['monitoringDueDate','reviewByDate'])if(r[field]!==undefined){if(r.kind!=='hoa'||typeof r[field]!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(r[field])||new Date(r[field]+'T00:00:00Z').toISOString().slice(0,10)!==r[field])throw Error('Invalid HOA policy date');out[field]=r[field];}
+   if(r.priority!==undefined){if(!['routine','important'].includes(r.priority))throw Error('Invalid priority');out.priority=r.priority;}
    if(r.taxYear!==undefined){if(!/^20\d{2}(\/20\d{2})?$/.test(r.taxYear))throw Error('Invalid tax year');out.taxYear=r.taxYear;}
    return out;
   });return {schemaVersion:1,generatedAt:summary.generatedAt,records};
@@ -33,7 +35,7 @@
    const state=r.status==='missing'?'Not connected':!r.fresh?'Stale observation':r.status==='payment_options_unverified'?'Alternative payment options: '+r.paymentOptions.map(o=>o.type.replaceAll('_',' ')+' '+o.dueDate+' '+usd(o.amount)).join('; '):r.status==='balance_unavailable'?'Balance unavailable':r.assessmentScope==='base_tax_only'?'Special assessments unverified':r.status==='credit_balance'?'Credit balance':r.status==='no_balance_due'?'No balance due':r.paymentConfirmed?'Payment confirmed':r.status==='balance_due'?'Balance to review':'Payment unverified';
    const balance=r.status==='missing'||r.balanceDue===null?'Not verified':r.balanceDue<0?'Credit '+usd(-r.balanceDue):usd(r.balanceDue);
    const assessment=r.monthlyAssessment!==undefined?usd(r.monthlyAssessment)+' / month':r.annualAssessment!==undefined?usd(r.annualAssessment)+(r.assessmentScope==='base_tax_only'?' base tax; excludes special assessments':' / tax year'):'Published value retained';
-   for(const text of [title,state,balance,assessment,r.observedAt?new Date(r.observedAt).toLocaleString():'—']){const cell=root.document.createElement('td');cell.textContent=text;row.appendChild(cell);}body.appendChild(row);
+   for(const text of [title,state+(r.monitoringDueDate?' | Due by '+r.monitoringDueDate+' (owner policy)'+(r.priority==='important'?' | IMPORTANT':''):''),balance,assessment,r.observedAt?new Date(r.observedAt).toLocaleString():'—']){const cell=root.document.createElement('td');cell.textContent=text;row.appendChild(cell);}body.appendChild(row);
   }
  }
  function receive(event){

@@ -33,7 +33,7 @@ test('partial and prior-month HOA payments cannot confirm current assessment',()
 
 test('HOA missing allocation is unverified and never asserts unpaid debt',()=>{
  const s=validate({...base,balanceDue:null});
- const result=evaluateSnapshot(s,now);assert.equal(result.status,'payment_unverified');assert.equal(result.alertType,'unconfirmed_by_seventh');
+ const result=evaluateSnapshot(s,now);assert.equal(result.status,'payment_unverified');assert.equal(result.alertType,'payment_verification_due');
  assert.equal(result.paymentConfirmed,false);assert.equal(result.requiresHumanReview,true);
 });
 
@@ -71,4 +71,27 @@ test('Apache alternatives retain an unknown obligation and never become additive
  const value={kind:'tax',propertyId:'apache-az-464',provider:'Apache County',sourceUrl:properties[0].taxPortalUrl,observedAt:now.toISOString(),dueDate:null,amountDue:null,annualAssessment:24.5,taxYear:'2026',balanceDue:null,payments:[],paymentOptions:[{type:'first_half_option',dueDate:'2026-11-02',amount:12.25},{type:'full_payment_option',dueDate:'2026-12-31',amount:24.5}]};
  const snapshot=validateSnapshot(value,properties,now);assert.equal(evaluateSnapshot(snapshot,now).status,'payment_options_unverified');assert.equal(evaluateSnapshot(snapshot,now).paymentConfirmed,false);
  assert.throws(()=>validateSnapshot({...value,paymentOptions:[value.paymentOptions[0],value.paymentOptions[0]]},properties,now));assert.throws(()=>validateSnapshot({...value,paymentOptions:undefined},properties,now));
+});
+test('owner HOA policy uses the tenth and escalates from the local eighth',()=>{
+ for(const day of ['07','08','10','11']){
+  const date=new Date(`2026-11-${day}T16:00:00.000Z`);
+  const s={...base,propertyId:'aurora-hoye-co',zone:'America/Denver',observedAt:date.toISOString(),dueDate:null,amountDue:null,balanceDue:125.25,payments:[]};
+  const r=evaluateSnapshot(s,date);assert.equal(r.monitoringDueDate,'2026-11-10');assert.equal(r.reviewByDate,'2026-11-08');assert.equal(r.priority,day==='07'?'routine':'important');assert.equal(r.paymentConfirmed,false);assert.equal(r.pastMonitoringDueDate,day==='11');
+ }
+ const boundary=new Date('2026-11-08T06:30:00.000Z');
+ assert.equal(evaluateSnapshot({...base,zone:'America/Denver',observedAt:boundary.toISOString()},boundary).priority,'routine');
+});
+test('monthly policy preserves payment allocation and resets confirmations at month rollover',()=>{
+ const now=new Date('2026-11-08T16:00:00.000Z');
+ const paid={...base,zone:'America/Denver',observedAt:now.toISOString(),payments:[{reference:'allocation',status:'posted',amount:205,dueDate:'2026-11-01',postedOn:'2026-11-02',evidence:'hoa_account_ledger'}]};
+ const result=evaluateSnapshot(paid,now);assert.equal(result.paymentConfirmed,true);assert.equal(result.priority,'routine');assert.equal(result.monitoringDueDate,'2026-11-10');assert.equal(paid.payments[0].dueDate,'2026-11-01');
+ const december=new Date('2026-12-08T16:00:00.000Z');
+ const next=evaluateSnapshot({...paid,observedAt:december.toISOString()},december);assert.equal(next.paymentConfirmed,false);assert.equal(next.priority,'important');assert.equal(next.monitoringDueDate,'2026-12-10');assert.equal(next.monitoringAmountDue,null);
+});
+test('Calabrese credit coverage remains routine but debt or stale coverage becomes important on eighth',()=>{
+ const date=new Date('2026-11-08T16:00:00.000Z');
+ const s={...base,propertyId:'fallbrook-ca',zone:'America/Los_Angeles',observedAt:date.toISOString(),dueDate:null,amountDue:null,payments:[]};
+ assert.equal(evaluateSnapshot({...s,balanceDue:-25},date).priority,'routine');assert.equal(evaluateSnapshot({...s,balanceDue:0},date).priority,'routine');
+ assert.equal(evaluateSnapshot({...s,balanceDue:25},date).priority,'important');assert.equal(evaluateSnapshot({...s,balanceDue:null},date).priority,'important');
+ const stale=evaluateSnapshot({...s,balanceDue:-25,observedAt:'2026-11-01T16:00:00.000Z'},date);assert.equal(stale.priority,'important');assert.equal(stale.alertType,'monitor_stale');
 });

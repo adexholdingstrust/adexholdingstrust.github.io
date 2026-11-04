@@ -1,7 +1,7 @@
 /* Isolated monitoring service. No finance KV binding and no payment initiation. */
 import registry from '../monitoring/county-tax-registry.json' with {type:'json'};
 import {HOA_ALERT_RECIPIENTS} from '../monitoring/hoa-rules.js';
-import {HOA_PROPERTIES,validateSnapshot,evaluateSnapshot} from './snapshots.js';
+import {HOA_PROPERTIES,validateSnapshot,evaluateSnapshot,localDate} from './snapshots.js';
 import {financeSummary,financeAccess,financeBridge} from './finance-feed.js';
 const MAX_BYTES=100000;
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'}});
@@ -48,12 +48,21 @@ async function deliver(env,key,message,now,acceptance=false) {
 }
 export async function processSnapshot(env,snapshot,now=new Date(),previous=null) {
   const result=evaluateSnapshot(snapshot,now);
+  let progressText=null;
+  if(snapshot.kind==='hoa'&&result.status!=='stale'&&localDate(new Date(snapshot.observedAt),snapshot.zone).slice(0,7)===result.asOfDate.slice(0,7)){
+    const progressKey='monitor:hoa-progress:'+snapshot.propertyId+':'+result.asOfDate.slice(0,7);
+    let progress=await env.HOA_MONITOR_KV.get(progressKey,'json');
+    if(!progress)progress={firstObservedAt:snapshot.observedAt,lastObservedAt:snapshot.observedAt,firstBalance:snapshot.balanceDue,observations:1,balanceChanged:false};
+    else if(snapshot.observedAt>progress.lastObservedAt){progress={...progress,lastObservedAt:snapshot.observedAt,observations:progress.observations+1,balanceChanged:progress.balanceChanged||(typeof progress.firstBalance==='number'&&typeof snapshot.balanceDue==='number'&&progress.firstBalance!==snapshot.balanceDue)};}
+    await env.HOA_MONITOR_KV.put(progressKey,JSON.stringify(progress));
+    progressText=progress.balanceChanged?'Portal balance has changed this month; this alone does not confirm payment.':progress.observations>1&&typeof progress.firstBalance==='number'&&typeof snapshot.balanceDue==='number'?'Portal balance has not changed since '+progress.firstObservedAt+'.':'Balance change comparison is not yet available from distinct fresh observations.';
+  }
   let paymentState=null,paymentStateKey=null;
   if(result.monitoringMode!=='balance_only'&&result.status!=='stale'){
-    const period=snapshot.kind==='tax'?snapshot.taxYear:snapshot.dueDate;
+    const period=snapshot.kind==='tax'?snapshot.taxYear:result.monitoringDueDate||snapshot.dueDate;
     paymentStateKey=['monitor:payment-state',snapshot.kind,snapshot.propertyId,period].join(':');
     const stored=await env.HOA_MONITOR_KV.get(paymentStateKey,'json');
-    const same=previous&&previous.kind===snapshot.kind&&previous.propertyId===snapshot.propertyId&&(snapshot.kind==='tax'?previous.taxYear===snapshot.taxYear:previous.dueDate===snapshot.dueDate);
+    const same=previous&&previous.kind===snapshot.kind&&previous.propertyId===snapshot.propertyId&&(snapshot.kind==='tax'?previous.taxYear===snapshot.taxYear:evaluateSnapshot(previous,new Date(previous.observedAt)).monitoringDueDate===period);
     const before=stored?.confirmed??(same?evaluateSnapshot(previous,new Date(previous.observedAt)).paymentConfirmed:false);
     const ever=stored?.everConfirmed||before;
     paymentState={confirmed:result.paymentConfirmed,everConfirmed:ever||result.paymentConfirmed,pending:stored?.pending||null};
@@ -63,13 +72,13 @@ export async function processSnapshot(env,snapshot,now=new Date(),previous=null)
   }
   if(!result.alertType)return {result,delivery:'none'};
   if(result.monitoringMode==='balance_only') {
-    const signature=JSON.stringify([result.status,snapshot.balanceDue]);
+    const signature=JSON.stringify([result.status,snapshot.balanceDue,result.priority,result.priority==='important'?result.asOfDate:'']);
     const stateKey='monitor:balance-notice:'+snapshot.propertyId;
     let state=await env.HOA_MONITOR_KV.get(stateKey,'json');
     if(!state||state.signature!==signature){state={signature,eventId:crypto.randomUUID()};await env.HOA_MONITOR_KV.put(stateKey,JSON.stringify(state));}
     const balance=snapshot.balanceDue===null?'Not available':snapshot.balanceDue<0?'Credit $'+Math.abs(snapshot.balanceDue).toFixed(2):snapshot.balanceDue===0?'$0.00 — no balance due':'Amount owed $'+snapshot.balanceDue.toFixed(2);
-    const message={subject:`Adex HOA | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
-      `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,`Dashboard balance: ${balance}`,
+    const message={subject:`${result.priority==='important'?'IMPORTANT | ':''}Adex HOA | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
+      `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,`Dashboard balance: ${balance}`,`Monthly HOA due date: ${result.monitoringDueDate} (owner-set monitoring policy)`,`Review starts: ${result.reviewByDate}`,`Priority: ${result.priority}`,...(progressText?[progressText]:[]),
       `Observed: ${snapshot.observedAt}`,`Provider last updated: ${snapshot.sourceUpdatedAt||'Not provided'}`,`Status: ${result.status}`,
       'Monitoring basis: HOA dashboard balance. Owner-reported bank schedule: $120 every 14 days.',
       result.status==='stale'?'Dashboard retrieval is stale; a fresh check is required.':result.status==='balance_unavailable'?'Dashboard balance could not be verified; review is required.':snapshot.balanceDue>0?'The dashboard reports an amount owed; review the bank payment and HOA account.':'The dashboard reports no current amount owed.',
@@ -78,14 +87,15 @@ export async function processSnapshot(env,snapshot,now=new Date(),previous=null)
     return {result,delivery:await deliver(env,'balance:'+snapshot.propertyId+':'+state.eventId,message,now)};
   }
 
-  let key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||(snapshot.kind==='hoa'&&snapshot.dueDate===null?result.asOfDate.slice(0,7):''),snapshot.dueDate,result.alertType,result.status==='stale'?result.asOfDate:''].join(':');
+  let key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||(snapshot.kind==='hoa'&&snapshot.dueDate===null?result.asOfDate.slice(0,7):''),snapshot.kind==='hoa'?result.monitoringDueDate:snapshot.dueDate,result.alertType,result.status==='stale'||result.priority==='important'?result.asOfDate:''].join(':');
   if(paymentState?.pending)key+=':event:'+paymentState.pending.id;
-  const message={subject:`Adex ${snapshot.kind==='hoa'?'HOA':'Property Tax'} | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
+  const message={subject:`${result.priority==='important'?'IMPORTANT | ':''}Adex ${snapshot.kind==='hoa'?'HOA':'Property Tax'} | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
     `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,
     ...(snapshot.kind==='tax'?[`Tax year: ${snapshot.taxYear}`]:[]),
     ...(snapshot.paymentOptions?[`Payment options (alternatives, not additive installments): ${snapshot.paymentOptions.map(o=>o.type.replaceAll('_',' ')+' '+o.dueDate+' $'+o.amount.toFixed(2)).join('; ')}`]:[]),
     ...(snapshot.countySettlement?.latestReceiptOn?[`Latest county recorded payment: ${snapshot.countySettlement.latestReceiptOn}`]:[]),
-    `Obligation due: ${snapshot.dueDate||"Deadline not verified"}`,`${snapshot.assessmentScope==='base_tax_only'?'Reported base tax (special assessments excluded)':'Obligation amount'}: ${snapshot.amountDue===null?'Not verified':'$'+snapshot.amountDue.toFixed(2)}`,
+    `Obligation due: ${result.monitoringDueDate?result.monitoringDueDate+" (owner-set monitoring policy)":snapshot.dueDate||"Deadline not verified"}`,`${snapshot.assessmentScope==='base_tax_only'?'Reported base tax (special assessments excluded)':'Obligation amount'}: ${(snapshot.kind==='hoa'?result.monitoringAmountDue:snapshot.amountDue)===null?'Not verified':'$'+(snapshot.kind==='hoa'?result.monitoringAmountDue:snapshot.amountDue).toFixed(2)}`,
+    ...(snapshot.kind==='hoa'?[`Priority: ${result.priority}`,`Important review starts: ${result.reviewByDate}`,...(progressText?[progressText]:[]),...(result.priority==='important'?['IMPORTANT: Payment or account coverage requires review. A missing confirmation or unchanged balance does not establish that payment failed.']:[])]:[]),
     `Last portal balance: ${snapshot.balanceDue===null?"Not verified":"$"+snapshot.balanceDue.toFixed(2)}`,`Observed: ${snapshot.observedAt}`, ...(snapshot.sourceUpdatedAt!==undefined?[`Provider last updated: ${snapshot.sourceUpdatedAt||'Not verified'}`]:[]),`Check date: ${result.asOfDate}`,
     `Status: ${result.status}`,result.paymentConfirmed?(result.evidence==='county_account_and_bill'?'County account ledger and tax bill reconcile paid annual assessment and zero account balance.':result.evidence==='county_ledger_and_receipts'?'County tax ledger, tax breakdown and recorded receipt totals reconcile the annual assessment with zero account balance.':result.evidence==='hoa_account_ledger'?'HOA account ledger shows posted payments allocated to this assessment. No HOA email receipt is required.':'Posted payment evidence allocated to this obligation confirms payment.'):'Payment is NOT confirmed by this notice.',
     'Scheduled autopay and credit balances alone do not confirm payment. Review the source portal. No payment has been initiated.'

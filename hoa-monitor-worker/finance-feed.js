@@ -12,6 +12,7 @@ export async function financeSummary(env,now=new Date()) {
   const observed=Date.parse(s.observedAt),fresh=Number.isFinite(observed)&&now-observed<=48*3600000&&observed<=now.getTime()+60000;
   const result=evaluateSnapshot(s,now);
   const record={kind,propertyId,financeId:ids[propertyId]||propertyId,status:result.status,fresh,paymentConfirmed:fresh&&result.paymentConfirmed===true,observedAt:s.observedAt,sourceOrigin:new URL(s.sourceUrl).origin,balanceDue:s.balanceDue,dueDate:s.dueDate};
+  if(kind==='hoa'){record.monitoringDueDate=result.monitoringDueDate;record.reviewByDate=result.reviewByDate;record.priority=result.priority;}
   if(s.sourceUpdatedAt!==undefined)record.sourceUpdatedAt=s.sourceUpdatedAt;
   if(s.monthlyAssessment!==undefined)record.monthlyAssessment=s.monthlyAssessment;
   if(s.annualAssessment!==undefined)record.annualAssessment=s.annualAssessment;

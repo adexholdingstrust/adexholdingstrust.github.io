@@ -62,3 +62,15 @@ test('a new tax year does not revoke the prior year confirmation',async()=>{
  const current={...snapshot,kind:'tax',taxYear:'2026',dueDate:'2026-12-31',amountDue:100,balanceDue:100};
  const result=await processSnapshot({HOA_MONITOR_KV:kv},current,now,previous);assert.notEqual(result.result.alertType,'payment_verification_changed');
 });
+test('HOA important reminders start on eighth, repeat daily, and describe unchanged balance without claiming nonpayment',async()=>{
+ const prior=globalThis.fetch,messages=[];const env={HOA_MONITOR_KV:store(),NOTIFICATIONS_ENABLED:'true',BREVO_API_KEY:'test',EMAIL_FROM:'sender@example.test'};
+ globalThis.fetch=async(_url,options)=>{messages.push(JSON.parse(options.body));return new Response('{}',{status:201});};
+ const at=day=>new Date(`2026-11-${day}T16:00:00.000Z`);
+ const observation=day=>({kind:'hoa',propertyId:'aurora-hoye-co',provider:'TownSq',sourceUrl:'https://app.townsq.io',zone:'America/Denver',observedAt:at(day).toISOString(),dueDate:null,amountDue:null,balanceDue:125.25,payments:[]});
+ try{
+  await processSnapshot(env,observation('07'),at('07'));assert.doesNotMatch(messages[0].subject,/IMPORTANT/);assert.match(messages[0].textContent,/Obligation due: 2026-11-10 \(owner-set monitoring policy\)/);
+  assert.equal((await processSnapshot(env,observation('08'),at('08'))).delivery,'sent');assert.match(messages[1].subject,/^IMPORTANT/);assert.match(messages[1].textContent,/balance has not changed since/i);assert.match(messages[1].textContent,/does not establish that payment failed/);
+  assert.equal((await processSnapshot(env,observation('08'),at('08'))).delivery,'suppressed');
+  assert.equal((await processSnapshot(env,observation('09'),at('09'))).delivery,'sent');assert.equal(messages.length,3);
+ }finally{globalThis.fetch=prior;}
+});

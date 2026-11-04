@@ -4,9 +4,9 @@ export const HOA_ALERT_RECIPIENTS = Object.freeze([
   "ahmedadeyemi@gmail.com"
 ]);
 export const HOA_POLICY = Object.freeze({
-  dueDay: 1,
-  verifyByDay: 7,
-  warningDays: [1, 3, 5, 7]
+  dueDay: 10,
+  verifyByDay: 8,
+  warningDays: [8, 9, 10]
 });
 const dayNumber = (iso) => {
   if (typeof iso !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
