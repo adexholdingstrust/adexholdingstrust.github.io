@@ -120,12 +120,17 @@ def deliver(snapshot, endpoint, secret):
 
 
 def collect_valencia_in_worker(property_id,endpoint,secret):
+    url=urlparse(endpoint)
+    if url.scheme!='https' or url.username or url.password or url.query or url.fragment or url.path not in ['', '/']:raise ValueError('Use the HTTPS Worker origin')
     body=json.dumps({'propertyId':property_id},separators=(',',':')).encode()
     timestamp=str(int(time.time()))
     signature=hmac.new(secret.encode(),timestamp.encode()+b'.'+body,hashlib.sha256).hexdigest()
-    request=Request(endpoint.rstrip('/')+'/internal/collect-valencia',data=body,headers={'Content-Type':'application/json','X-Adex-Timestamp':timestamp,'X-Adex-Signature':'sha256='+signature},method='POST')
+    request=Request(endpoint.rstrip('/')+'/internal/collect-valencia',data=body,headers={'Content-Type':'application/json','User-Agent':'AdexPropertyMonitor/2.0 (+https://adexholdings.com)','X-Adex-Timestamp':timestamp,'X-Adex-Signature':'sha256='+signature},method='POST')
+    from urllib.request import HTTPRedirectHandler,build_opener
+    class NoRedirect(HTTPRedirectHandler):
+        def redirect_request(self,req,fp,code,msg,headers,newurl):raise ValueError('Worker redirect rejected')
     try:
-        with urlopen(request,timeout=150) as response:result=json.loads(response.read(10000))
+        with build_opener(NoRedirect()).open(request,timeout=150) as response:result=json.loads(response.read(10000))
     except Exception as exc:
         from urllib.error import HTTPError
         if isinstance(exc,HTTPError):

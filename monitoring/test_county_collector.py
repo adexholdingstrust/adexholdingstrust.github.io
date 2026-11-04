@@ -43,3 +43,22 @@ class NyeCollectorTests(unittest.TestCase):
         from datetime import datetime, timezone
         self.assertEqual(collector.nye_year(datetime(2027,7,1,5,tzinfo=timezone.utc)),2026)
         self.assertEqual(collector.nye_year(datetime(2027,7,1,8,tzinfo=timezone.utc)),2027)
+
+class WorkerCountyTransportTests(unittest.TestCase):
+    def test_pinned_collection_uses_identified_signed_transport_and_rejects_redirects(self):
+        from unittest.mock import patch,MagicMock
+        import hashlib,hmac,json
+        response=MagicMock();response.__enter__.return_value=response;response.read.return_value=b'{"ok":true}'
+        opener=MagicMock();opener.open.return_value=response
+        with patch('urllib.request.build_opener',return_value=opener) as factory:
+            collector.collect_valencia_in_worker('valencia-nm-rge-1','https://monitor.example.test','test-secret')
+            req=opener.open.call_args.args[0]
+            self.assertEqual(req.full_url,'https://monitor.example.test/internal/collect-valencia')
+            self.assertEqual(req.get_header('User-agent'),'AdexPropertyMonitor/2.0 (+https://adexholdings.com)')
+            stamp=req.get_header('X-adex-timestamp');expected=hmac.new(b'test-secret',stamp.encode()+b'.'+req.data,hashlib.sha256).hexdigest()
+            self.assertEqual(req.get_header('X-adex-signature'),'sha256='+expected)
+            self.assertEqual(json.loads(req.data),{'propertyId':'valencia-nm-rge-1'})
+            with self.assertRaises(ValueError):factory.call_args.args[0].redirect_request(None,None,302,'',{},'https://other.example.test')
+    def test_county_collection_rejects_unsafe_transport_origins(self):
+        for url in ['http://monitor.example.test','https://user:password@monitor.example.test','https://monitor.example.test/?secret=test']:
+            with self.assertRaises(ValueError):collector.collect_valencia_in_worker('valencia-nm-rge-1',url,'test-secret')
