@@ -86,6 +86,12 @@ def nye_year(now=None):
     return local.year if local.month >= 7 else local.year - 1
 
 
+def normalize_valencia_treasurer(account,now=None):
+    snapshot=normalize_iron(account,now)
+    snapshot.update(provider='Valencia County Treasurer',assessmentScope='full_assessment')
+    return snapshot
+
+
 def normalize_iron(account,now=None):
     now=now or datetime.now(timezone.utc)
     return {'kind':'tax','propertyId':account['propertyId'],'provider':'Iron County Treasurer','sourceUrl':account['sourceUrl'],'observedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'taxYear':account['taxYear'],'annualAssessment':account['annualAssessment'],'amountDue':account['annualAssessment'],'balanceDue':account['accountBalance'],'dueDate':None,'payments':[]}
@@ -169,14 +175,14 @@ def main():
             if isinstance(exc, HTTPError):
                 details['httpStatus'] = exc.code
             print(json.dumps(details), file=sys.stderr)
-    valencia=load('valencia_assessor','valencia-tax-extractor.py')
+    valencia=load('valencia_treasurer','valencia-treasurer-extractor.py')
     for property_id in (valencia.ACCOUNTS if args.county in ['all','valencia'] else []):
-        stage='assessor_guest_retrieval'
+        stage='treasurer_guest_retrieval'
         try:
             account=valencia.extract(property_id,datetime.now(ZoneInfo('America/Denver')).year)
-            stage='assessor_normalization';snapshot=normalize_valencia(account)
+            stage='treasurer_normalization';snapshot=normalize_valencia_treasurer(account)
             stage='worker_delivery';result=None if args.dry_run else deliver(snapshot,endpoint,secret)
-            print(json.dumps({'propertyId':property_id,'assessmentScope':'base_tax_only','countyPaymentStatus':'unverified','delivered':bool(result),'mode':'dry_run' if args.dry_run else 'live'}))
+            print(json.dumps({'propertyId':property_id,'assessmentScope':'full_assessment','balanceObserved':True,'countyPaymentStatus':'unverified','delivered':bool(result),'mode':'dry_run' if args.dry_run else 'live'}))
         except Exception as exc:
             failures+=1
             from urllib.error import HTTPError

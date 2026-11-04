@@ -95,3 +95,9 @@ test('Calabrese credit coverage remains routine but debt or stale coverage becom
  assert.equal(evaluateSnapshot({...s,balanceDue:25},date).priority,'important');assert.equal(evaluateSnapshot({...s,balanceDue:null},date).priority,'important');
  const stale=evaluateSnapshot({...s,balanceDue:-25,observedAt:'2026-11-01T16:00:00.000Z'},date);assert.equal(stale.priority,'important');assert.equal(stale.alertType,'monitor_stale');
 });
+test('complete county ledger balance with no deadline prompts review without fabricating payment or a due date',()=>{
+ const value={kind:'tax',propertyId:'valencia-nm-rge-1',provider:'Valencia County Treasurer',sourceUrl:'https://valenciacountynm-treasurerweb.tylerhost.net/treasurer/treasurerweb/account.jsp?account=R023098&action=tx',observedAt:now.toISOString(),dueDate:null,amountDue:10.75,balanceDue:10.75,payments:[],annualAssessment:10.75,taxYear:'2026',assessmentScope:'full_assessment'};
+ const props=[{propertyId:value.propertyId,state:'NM',taxPortalUrl:value.sourceUrl}];
+ const r=evaluateSnapshot(validateSnapshot(value,props,now),now);assert.equal(r.status,'deadline_unverified');assert.equal(r.alertType,'deadline_verification_due');assert.equal(r.paymentConfirmed,false);assert.equal(r.requiresHumanReview,true);
+ assert.equal(evaluateSnapshot({...validateSnapshot(value,props,now),balanceDue:0},now).paymentConfirmed,false);
+});

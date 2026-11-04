@@ -89,7 +89,7 @@ function evaluateBaseSnapshot(snapshot, now = new Date()) {
     const previousInstallment=snapshot.installments?.some(item=>item.dueDate<asOfDate) || false;
     return {status:'payment_unverified',paymentConfirmed:false,asOfDate,daysUntilDue:days,requiresHumanReview:previousInstallment,alertType:previousInstallment || days!==null && days<=30?'payment_verification_due':null};
   }
-  if(snapshot.dueDate===null)return {status:'deadline_unverified',paymentConfirmed:false,asOfDate,alertType:null};
+  if(snapshot.dueDate===null)return {status:'deadline_unverified',paymentConfirmed:false,asOfDate,requiresHumanReview:snapshot.balanceDue>0,alertType:snapshot.balanceDue>0?'deadline_verification_due':null};
   // Stored observations must also satisfy the current evidence requirement.
   const payments=snapshot.kind==='hoa'?snapshot.payments.filter(p=>p.evidence==='hoa_account_ledger'):snapshot.payments;
   const result=classifyHOAPayment({...snapshot,payments,asOfDate});
