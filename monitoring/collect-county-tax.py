@@ -119,6 +119,26 @@ def deliver(snapshot, endpoint, secret):
     return result
 
 
+def collect_valencia_in_worker(property_id,endpoint,secret):
+    body=json.dumps({'propertyId':property_id},separators=(',',':')).encode()
+    timestamp=str(int(time.time()))
+    signature=hmac.new(secret.encode(),timestamp.encode()+b'.'+body,hashlib.sha256).hexdigest()
+    request=Request(endpoint.rstrip('/')+'/internal/collect-valencia',data=body,headers={'Content-Type':'application/json','X-Adex-Timestamp':timestamp,'X-Adex-Signature':'sha256='+signature},method='POST')
+    try:
+        with urlopen(request,timeout=150) as response:result=json.loads(response.read(10000))
+    except Exception as exc:
+        from urllib.error import HTTPError
+        if isinstance(exc,HTTPError):
+            try:
+                details=json.loads(exc.read(10000))
+                if isinstance(details.get('countyHttpStatus'),int):exc.county_http_status=details['countyHttpStatus']
+                if details.get('stage') in ['public_guest_login','public_county_retrieval','county_reconciliation_or_delivery']:exc.county_stage=details['stage']
+            except (ValueError,TypeError):pass
+        raise
+    if not result.get('ok'):raise ValueError('Worker county collection failed')
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry-run', action='store_true')
@@ -179,14 +199,17 @@ def main():
     for property_id in (valencia.ACCOUNTS if args.county in ['all','valencia'] else []):
         stage='treasurer_guest_retrieval'
         try:
-            account=valencia.extract(property_id,datetime.now(ZoneInfo('America/Denver')).year)
-            stage='treasurer_normalization';snapshot=normalize_valencia_treasurer(account)
-            stage='worker_delivery';result=None if args.dry_run else deliver(snapshot,endpoint,secret)
+            if args.dry_run:
+                account=valencia.extract(property_id,datetime.now(ZoneInfo('America/Denver')).year)
+                stage='treasurer_normalization';snapshot=normalize_valencia_treasurer(account);result=None
+            else:
+                stage='isolated_worker_county_collection';result=collect_valencia_in_worker(property_id,endpoint,secret)
             print(json.dumps({'propertyId':property_id,'assessmentScope':'full_assessment','balanceObserved':True,'countyPaymentStatus':'unverified','delivered':bool(result),'mode':'dry_run' if args.dry_run else 'live'}))
         except Exception as exc:
             failures+=1
             from urllib.error import HTTPError
             details={'propertyId':property_id,'status':'collection_or_delivery_failed','stage':getattr(exc,'county_stage',stage),'errorType':type(exc).__name__,'interactiveChallenge':getattr(exc,'challenge',False)}
+            if hasattr(exc,'county_http_status'):details['countyHttpStatus']=exc.county_http_status
             if isinstance(exc,HTTPError):details['httpStatus']=exc.code
             print(json.dumps(details),file=sys.stderr)
     for county,module_path,normalizer in [('navajo','navajo-tax-extractor.py',normalize_navajo),('apache','apache-tax-extractor.py',normalize_apache)]:

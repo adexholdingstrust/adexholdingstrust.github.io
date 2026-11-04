@@ -14,7 +14,7 @@ class ValenciaTreasurerTests(unittest.TestCase):
   r=v.parse('valencia-nm-rge-1',summary,ledger,2026);self.assertEqual(r['annualAssessment'],10.75);self.assertEqual(r['accountBalance'],10.75);self.assertEqual(r['assessmentScope'],'full_assessment');self.assertEqual(r['paymentStatus'],'unverified')
   s=collector.normalize_valencia_treasurer(r);self.assertIsNone(s['dueDate']);self.assertEqual(s['balanceDue'],10.75);self.assertEqual(s['payments'],[]);self.assertNotIn('countySettlement',s)
  def test_wrong_account_parcel_annual_components_and_ledger_totals_fail_closed(self):
-  cases=[(summary.replace('1016026124054100690','1015029264264141100'),ledger),(summary,ledger.replace('R023098','R016363')),(summary.replace('$0.25','$0.50'),ledger),(summary,ledger.replace('$10.75','$11.00')),(summary,ledger.replace('2026','2025'))]
+  cases=[(summary.replace('1016026124054100690','1015029264264141100'),ledger),(summary,ledger.replace('R023098','R016363')),(summary.replace('$0.25','$0.50'),ledger),(summary,ledger.replace('$10.75','$11.00')),(summary,ledger.replace('2026','2024'))]
   for first,second in cases:
    with self.assertRaises(ValueError):v.parse('valencia-nm-rge-1',first,second,2026)
  def test_prior_payment_and_zero_balance_never_create_settlement_evidence(self):

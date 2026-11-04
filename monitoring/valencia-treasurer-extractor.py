@@ -45,14 +45,16 @@ def parse(property_id,summary_html,ledger_html,year):
         parts=[money(x) for x in row[1:]]
         if sum(parts[:-1],Decimal(0))!=parts[-1]:raise ValueError('Treasurer balance components disagree')
         account_balance+=parts[-1];years.append(int(row[0]))
-    if len(years)!=len(set(years)) or year not in years:raise ValueError('Current Treasurer tax year unavailable')
+    candidates=[y for y in years if year-1<=y<=year]
+    if len(years)!=len(set(years)) or not candidates:raise ValueError('Recent Treasurer tax year unavailable')
+    selected=max(candidates)
     charges=[]
     for row in transactions[0][1:]:
         if len(row)!=5 or not re.fullmatch(r'20\d{2}',row[0]):raise ValueError('Invalid Treasurer transaction row')
         datetime.strptime(row[2],'%m/%d/%y');amount=money(row[3],True);money(row[4],True)
-        if int(row[0])==year and row[1] in ['Tax','Tax Adjustment','Special Assessment','Miscellaneous']:charges.append(amount)
+        if int(row[0])==selected and row[1] in ['Tax','Tax Adjustment','Special Assessment','Miscellaneous']:charges.append(amount)
     if not charges or sum(charges,Decimal(0))!=totals[0]:raise ValueError('Treasurer assessment and ledger disagree')
-    return {'propertyId':property_id,'sourceUrl':ORIGIN+'/treasurer/treasurerweb/account.jsp?account='+account+'&action=tx','taxYear':str(year),'annualAssessment':float(totals[0]),'accountBalance':float(account_balance),'assessmentScope':'full_assessment','paymentStatus':'unverified'}
+    return {'propertyId':property_id,'sourceUrl':ORIGIN+'/treasurer/treasurerweb/account.jsp?account='+account+'&action=tx','taxYear':str(selected),'annualAssessment':float(totals[0]),'accountBalance':float(account_balance),'assessmentScope':'full_assessment','paymentStatus':'unverified'}
 
 class SafeRedirect(HTTPRedirectHandler):
     def redirect_request(self,req,fp,code,msg,headers,url):

@@ -2,6 +2,7 @@
 import registry from '../monitoring/county-tax-registry.json' with {type:'json'};
 import {HOA_ALERT_RECIPIENTS} from '../monitoring/hoa-rules.js';
 import {HOA_PROPERTIES,validateSnapshot,evaluateSnapshot,localDate} from './snapshots.js';
+import {fetchValencia} from './valencia.js';
 import {financeSummary,financeAccess,financeBridge} from './finance-feed.js';
 const MAX_BYTES=100000;
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'}});
@@ -145,6 +146,21 @@ export default {
         if(path==='/finance/bridge')return financeBridge(await financeSummary(env),new URL(request.url).searchParams.get('nonce'));
       }catch{return reply({error:'Monitoring data unavailable'},503);}
       return reply({error:'Not found'},404);
+    }
+    if(path==='/internal/collect-valencia'){
+      if(request.method!=='POST')return reply({error:'Method not allowed'},405);
+      if(!env.HOA_MONITOR_KV||!env.HOA_INGEST_SECRET)return reply({error:'Not configured'},503);
+      let body;try{body=await readBody(request);}catch{return reply({error:'Invalid body'},400);}
+      if(!await authorized(request,body,env.HOA_INGEST_SECRET))return reply({error:'Unauthorized'},401);
+      let input;try{input=JSON.parse(body);}catch{return reply({error:'Invalid JSON'},400);}
+      if(!input||Object.keys(input).length!==1||!['valencia-nm-rge-1','valencia-nm-rancho-215'].includes(input.propertyId))return reply({error:'Invalid county property'},400);
+      try{
+        const snapshot=validateSnapshot(await fetchValencia(input.propertyId),registry.properties);
+        const key=snapshotKey('tax',snapshot.propertyId),previous=await env.HOA_MONITOR_KV.get(key,'json');
+        if(previous&&previous.observedAt>snapshot.observedAt)return reply({error:'Older observation rejected'},409);
+        await env.HOA_MONITOR_KV.put(key,JSON.stringify(snapshot));
+        return reply({ok:true,...await processSnapshot(env,snapshot)});
+      }catch(error){return reply({ok:false,error:'County collection failed',stage:error.stage||'county_reconciliation_or_delivery',countyHttpStatus:error.httpStatus||null},502);}
     }
     if(path==='/health' && request.method==='GET')return reply({service:'adex-hoa-monitor',version:2,storageConfigured:!!env.HOA_MONITOR_KV,signingConfigured:!!env.HOA_INGEST_SECRET,notificationsEnabled:env.NOTIFICATIONS_ENABLED==='true'});
     if(path==='/status' && request.method==='GET') {

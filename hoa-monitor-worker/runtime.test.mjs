@@ -74,3 +74,9 @@ test('HOA important reminders start on eighth, repeat daily, and describe unchan
   assert.equal((await processSnapshot(env,observation('09'),at('09'))).delivery,'sent');assert.equal(messages.length,3);
  }finally{globalThis.fetch=prior;}
 });
+test('private Valencia collection endpoint requires HMAC and never accepts arbitrary URLs',async()=>{
+ const env={HOA_MONITOR_KV:store(),HOA_INGEST_SECRET:'test-only',NOTIFICATIONS_ENABLED:'false'};
+ assert.equal((await worker.fetch(new Request('https://example.test/internal/collect-valencia',{method:'POST',body:'{}'}),env)).status,401);
+ const body=JSON.stringify({propertyId:'other'}),signedRequest=await signed(body);
+ assert.equal((await worker.fetch(new Request('https://example.test/internal/collect-valencia',{method:'POST',body,headers:signedRequest.headers}),env)).status,400);
+});
