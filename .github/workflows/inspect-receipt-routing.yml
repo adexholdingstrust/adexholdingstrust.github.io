@@ -1,0 +1,22 @@
+name: Inspect isolated receipt routing prerequisites
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['monitoring/inspect-receipt-routing.py', '.github/workflows/inspect-receipt-routing.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    environment: github-pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read routing prerequisites without changing mail delivery
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.ADEX_MONITOR_CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+        run: python monitoring/inspect-receipt-routing.py

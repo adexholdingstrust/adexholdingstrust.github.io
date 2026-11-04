@@ -75,15 +75,19 @@ def normalize_navajo(account, now=None):
     return result
 
 
-def normalize_apache(account, now=None):
+def normalize_apache(account,now=None):
     now=now or datetime.now(timezone.utc)
+    if 'paymentOptions' not in account:
+        result=normalize_iron(account,now);result['provider']='Apache County'
+        if account.get('countySettlement'):result['countySettlement']=account['countySettlement']
+        return result
     return {'kind':'tax','propertyId':account['propertyId'],'provider':'Apache County','sourceUrl':account['sourceUrl'],'observedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'taxYear':account['taxYear'],'annualAssessment':account['annualAssessment'],'amountDue':None,'balanceDue':None,'dueDate':None,'payments':[],'paymentOptions':account['paymentOptions']}
 
 
 def nye_year(now=None):
-    now = now or datetime.now(timezone.utc)
-    local = now.astimezone(ZoneInfo('America/Los_Angeles'))
-    return local.year if local.month >= 7 else local.year - 1
+    now=now or datetime.now(timezone.utc)
+    local=now.astimezone(ZoneInfo('America/Los_Angeles'))
+    return local.year if local.month>=7 else local.year-1
 
 
 def normalize_valencia_treasurer(account,now=None):

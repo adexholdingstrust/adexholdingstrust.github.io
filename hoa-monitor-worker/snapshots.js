@@ -57,7 +57,7 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
       if(!money(proof.postedTotal)||!money(proof.currentYearBalance)||!money(proof.billPreviousPayments)||proof.postedTotal!==proof.billPreviousPayments)throw Error('Invalid county settlement');
     }else if(proof.method==='county_ledger_and_receipts'){
       keys(proof,['method','postedTotal','currentYearBalance','receiptTotal','taxDetailTotal','interestAndFees','latestReceiptOn']);
-      if(value.propertyId!=='navajo-az-10'||!money(proof.postedTotal)||!money(proof.currentYearBalance)||!money(proof.receiptTotal)||!money(proof.taxDetailTotal)||!money(proof.interestAndFees)||proof.postedTotal!==proof.receiptTotal||proof.taxDetailTotal!==value.annualAssessment||Math.round(proof.postedTotal*100)!==Math.round(value.annualAssessment*100)+Math.round(proof.interestAndFees*100)||!validDate(proof.latestReceiptOn)||proof.latestReceiptOn>localDate(new Date(observed),zone))throw Error('Invalid county receipt settlement');
+      if(!['navajo-az-10','apache-az-464'].includes(value.propertyId)||!money(proof.postedTotal)||!money(proof.currentYearBalance)||!money(proof.receiptTotal)||!money(proof.taxDetailTotal)||!money(proof.interestAndFees)||proof.postedTotal!==proof.receiptTotal||proof.taxDetailTotal!==value.annualAssessment||Math.round(proof.postedTotal*100)!==Math.round(value.annualAssessment*100)+Math.round(proof.interestAndFees*100)||!validDate(proof.latestReceiptOn)||proof.latestReceiptOn>localDate(new Date(observed),zone))throw Error('Invalid county receipt settlement');
     }else throw Error('Invalid county settlement method');
   }
   const references=new Set();

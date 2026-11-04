@@ -101,3 +101,10 @@ test('complete county ledger balance with no deadline prompts review without fab
  const r=evaluateSnapshot(validateSnapshot(value,props,now),now);assert.equal(r.status,'deadline_unverified');assert.equal(r.alertType,'deadline_verification_due');assert.equal(r.paymentConfirmed,false);assert.equal(r.requiresHumanReview,true);
  assert.equal(evaluateSnapshot({...validateSnapshot(value,props,now),balanceDue:0},now).paymentConfirmed,false);
 });
+test('Apache paid confirmation requires reconciled receipt evidence and zero account balance',()=>{
+ const source='https://eagletreasurer.co.apache.az.us:8443/treasurer/treasurerweb/account.jsp?account=R0042800&action=tx';
+ const s={kind:'tax',propertyId:'apache-az-464',provider:'Apache County',sourceUrl:source,observedAt:now.toISOString(),dueDate:null,amountDue:24.5,balanceDue:0,payments:[],annualAssessment:24.5,taxYear:'2026',countySettlement:{method:'county_ledger_and_receipts',postedTotal:24.5,receiptTotal:24.5,taxDetailTotal:24.5,interestAndFees:0,currentYearBalance:0,latestReceiptOn:'2026-10-01'}};
+ const properties=[{propertyId:s.propertyId,state:'AZ',taxPortalUrl:source}];
+ assert.equal(evaluateSnapshot(validateSnapshot(s,properties,now),now).paymentConfirmed,true);assert.equal(evaluateSnapshot({...validateSnapshot(s,properties,now),balanceDue:1},now).paymentConfirmed,false);
+ assert.throws(()=>validateSnapshot({...s,countySettlement:{...s.countySettlement,receiptTotal:1}},properties,now));
+});

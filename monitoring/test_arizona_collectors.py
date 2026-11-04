@@ -34,3 +34,30 @@ class ArizonaTests(unittest.TestCase):
         for html in [self.apache_page().replace('206-30-098','999-99-999'),self.apache_page().replace('$2.50','$9.50'),self.apache_page().replace('Full PaymentDue','Unknown PaymentDue')]:
             with self.assertRaises(ValueError):apache.parse(html,2026)
 if __name__=='__main__':unittest.main()
+
+class ApacheSettlementTests(unittest.TestCase):
+    def fixtures(self):
+        identity='<a href="account.jsp?account=R0042800">Summary</a>'
+        summary='<p>R0042800 Parcel 206-30-098</p>'+identity+table([['Taxes (LPV)','','$24.50'],['Total Billed','','$24.50']])
+        ledger=identity+table([['Tax Year','Tax Due','Interest Due','Penalty Due','Misc Due','Lien Due','Lien Interest Due','Total Due'],['2026','$0.00','$0.00','$0.00','$0.00','$0.00','$0.00','$0.00']])+table([['Tax Year','Type','Effective Date','Amount','Balance'],['2026','Tax Payment','10/01/26','$24.50','$0.00'],['2026','Tax Charge','8/27/26','$24.50','$0.00']])
+        receipt='''Account Parcel Number Receipt Date Effective Date Receipt Number
+R0042800  20630098  Nov 2, 2026  Oct 1, 2026  synthetic-reference
+Payments Applied
+Year Charges Billed Prior Payments New Payments Balance
+2026 Tax Charge $24.50 $0.00 $24.50 $0.00
+Account Balance $0.00
+'''
+        return summary,ledger,receipt
+    def test_paid_account_reconciles_ledger_and_receipt_after_options_disappear(self):
+        from datetime import date
+        summary,ledger,receipt=self.fixtures();account=apache.parse_ledger(summary,ledger,2026)
+        result=apache.reconcile_receipt(account,receipt,date(2026,11,4));self.assertEqual(result['paymentStatus'],'paid_confirmed');self.assertEqual(result['countySettlement']['latestReceiptOn'],'2026-10-01')
+        snapshot=collector.normalize_apache(result,datetime(2026,11,4,tzinfo=timezone.utc));self.assertEqual(snapshot['balanceDue'],0);self.assertNotIn('paymentOptions',snapshot);self.assertEqual(snapshot['countySettlement']['receiptTotal'],24.5)
+    def test_zero_balance_without_receipt_does_not_confirm_payment(self):
+        summary,ledger,_=self.fixtures();account=apache.parse_ledger(summary,ledger,2026);self.assertEqual(account['paymentStatus'],'unverified');self.assertNotIn('countySettlement',account)
+    def test_receipt_identity_amount_and_dates_must_match(self):
+        from datetime import date
+        summary,ledger,receipt=self.fixtures();account=apache.parse_ledger(summary,ledger,2026)
+        for text in [receipt.replace('R0042800','R9999999'),receipt.replace('$24.50','$25.00'),receipt.replace('Oct 1, 2026','Oct 2, 2026'),receipt.replace('Nov 2, 2026','Dec 2, 2026')]:
+            with self.assertRaises(ValueError):apache.reconcile_receipt(account,text,date(2026,11,4))
+        with self.assertRaises(ValueError):apache.parse_ledger(summary,ledger.replace('Tax Payment','Tax Payment Reversal'),2026)

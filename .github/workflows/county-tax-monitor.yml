@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install PDF text extraction
-        if: matrix.county == 'elko' || matrix.county == 'nye'
+        if: matrix.county == 'elko' || matrix.county == 'nye' || matrix.county == 'apache'
         timeout-minutes: 3
         run: |
           if ! command -v pdftotext >/dev/null 2>&1; then
