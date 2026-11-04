@@ -1,4 +1,4 @@
-/* Contract observed in TownSq's public web client: rest/login and own-user account GETs.
+/* Contract observed in TownSq's public web client: rest/login and resident account GETs.
  * Password SHA1 matches the client's authentication protocol; never log it or any tokens.
  */
 import {createHash} from 'node:crypto';
@@ -9,24 +9,30 @@ export async function checkTownSq(username,password,{onSnapshot,inspectLedger=tr
  const headers={'content-type':'application/json',accept:'application/json','accept-language':'en-US','xx-sc-l':'en','X-Townsq-Application':'communities/1.0.0 webapp/1 chrome',origin:'https://app.townsq.io','user-agent':'AdexPropertyMonitor/2.0 (+https://adexholdings.com)'};
  const request=async(path,options={})=>{
   const url=new URL(path,'https://api.townsq.io');
-  if(url.origin!=='https://api.townsq.io'||!(url.pathname==='/rest/login'||/^\/api\/v1\/users\/[^/]+\/accounts(?:\/[^/]+\/transactions)?$/.test(url.pathname)))throw Error('Read endpoint rejected');
+  const method=options.method||'GET';
+  if(url.origin!=='https://api.townsq.io'||!(url.pathname==='/rest/login'&&method==='POST'||url.pathname===`/rest/login/gotoCondo/${community}`&&method==='PUT'||(url.pathname==='/api/v1/accounts'||/^\/api\/v1\/accounts\/[^/]+\/transactions$/.test(url.pathname))&&method==='GET'))throw Error('Read endpoint rejected');
   const response=await fetch(url,{...options,headers,redirect:'error',signal:AbortSignal.timeout(25000)});
-  if(!response.ok){const body=await response.text();const e=Error('TownSq request rejected');e.httpStatus=response.status;e.stage=url.pathname==='/rest/login'?'sign_in':url.pathname.endsWith('/transactions')?'ledger':'own_accounts';e.responseFormat=response.headers.get('content-type')?.includes('json')?'json':response.headers.get('content-type')?.includes('html')?'html':'other';e.reason=/captcha|challenge-platform|verify you are human/i.test(body)?'interactive_challenge':/cloudfront|request could not be satisfied|request blocked/i.test(body)?'edge_request_rejected':response.status===403?'access_denied':'provider_rejected';throw e;}
+  if(!response.ok){const body=await response.text();const e=Error('TownSq request rejected');e.httpStatus=response.status;e.stage=url.pathname==='/rest/login'?'sign_in':url.pathname.includes('/gotoCondo/')?'community_selection':url.pathname.endsWith('/transactions')?'ledger':'own_accounts';e.responseFormat=response.headers.get('content-type')?.includes('json')?'json':response.headers.get('content-type')?.includes('html')?'html':'other';e.reason=/captcha|challenge-platform|verify you are human/i.test(body)?'interactive_challenge':/cloudfront|request could not be satisfied|request blocked/i.test(body)?'edge_request_rejected':response.status===403?'access_denied':'provider_rejected';throw e;}
   return response.json();
  };
  const login=await request('/rest/login',{method:'POST',body:JSON.stringify({fb_user:null,last_name:'',linkedToAssociaAccount:false,properties:[],userProperties:[],roles:[],vehicles:[],phones:[],canEditPassword:true,email:username.trim(),password:createHash('sha1').update(password).digest('hex'),login_type:'CMN',platform:'webapp'})});
  if(login.success!==true||typeof login.jwt!=='string'||!login.user?.id)return {status:'authentication_unverified',responseShape:shape(login),reason:/^[A-Z_0-9]{1,60}$/.test(login.errorType)?login.errorType:'provider_response'};
  headers.Authorization='Bearer '+login.jwt;
+ if(!Array.isArray(login.condos)||!login.condos.some(c=>c?.id===community))return {status:'community_unverified',reason:'configured_community_not_in_login'};
+ if(typeof login.logon_token==='string'&&login.logon_token)headers['xx-sc-r']=login.logon_token;
+ // Official sign-in context selection, pinned to this existing community only.
+ await request(`/rest/login/gotoCondo/${community}`,{method:'PUT',body:'{}'});
  headers['X-Scope-Type']='COMMUNITY';headers['X-Scope-Id']=community;
- if(login.user.logonToken)headers['xx-sc-r']=login.user.logonToken;
- const userId=encodeURIComponent(login.user.id);
- const accounts=await request(`/api/v1/users/${userId}/accounts?condoId=${community}&page=0&size=20`);
+ const accounts=await request(`/api/v1/accounts?condoId=${community}&page=0&size=20`);
  const report={status:'authenticated',loginShape:shape(login),accountsShape:shape(accounts)};
- if(onSnapshot)report.collection=await onSnapshot(townSqSnapshot(accounts));
+ if(onSnapshot){
+  let snapshot;try{snapshot=townSqSnapshot(accounts);}catch{return {...report,status:'account_unverified',reason:'hoye_account_not_verified'};}
+  report.collection=await onSnapshot(snapshot);
+ }
  if(inspectLedger&&Array.isArray(accounts.content)&&accounts.content.length===1&&accounts.content[0]?.account?.accountUuid){
   const accountId=encodeURIComponent(accounts.content[0].account.accountUuid);
   const now=new Date(),from=Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-3,1);
-  const ledger=await request(`/api/v1/users/${userId}/accounts/${accountId}/transactions?from=${from}&to=${now.getTime()}`);
+  const ledger=await request(`/api/v1/accounts/${accountId}/transactions?from=${from}&to=${now.getTime()}`);
   report.ledgerShape=shape(ledger);
  }
  return report;
