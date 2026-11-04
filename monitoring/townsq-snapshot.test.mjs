@@ -15,3 +15,12 @@ test('TownSq binds observation to Hoye and does not claim settlement from balanc
 test('TownSq refuses wrong, ambiguous, inaccessible and invalid account balances',()=>{
  for(const content of [[{...account(),condo:{id:'another-community'}}],[],[account({accountNumber:'other'})],[account(),account()],[account({allowInquiry:false})],[account({currentBalance:'125.25'})],[account({currentBalance:NaN})],[account({currentBalance:1.001})]])assert.throws(()=>townSqSnapshot({content}));
 });
+test('TownSq accepts a unique current portal assessment without allocating ledger credits',()=>{
+ const now=new Date('2026-11-04T19:00:00.000Z'),accounts={content:[account()]};
+ const assessment={type:'Assessment',comment:'Assessment',amount:100,postDate:Date.parse('2026-11-01T05:00:00.000Z')};
+ const ledger={account:accounts.content[0],transactions:[assessment,{type:'Payment',amount:-100,postDate:Date.parse('2026-11-03T05:00:00.000Z')}]};
+ const snapshot=townSqSnapshot(accounts,now,ledger);assert.equal(snapshot.monthlyAssessment,100);assert.equal(snapshot.amountDue,100);assert.equal(snapshot.dueDate,'2026-11-01');assert.deepEqual(snapshot.payments,[]);
+ assert.equal(townSqSnapshot(accounts,now,{...ledger,transactions:[assessment,assessment]}).monthlyAssessment,undefined);
+ assert.throws(()=>townSqSnapshot(accounts,now,{...ledger,account:{...ledger.account,condo:{id:'other'}}}));
+ assert.throws(()=>townSqSnapshot(accounts,now,{...ledger,account:{...ledger.account,account:{...ledger.account.account,currentBalance:999}}}));
+});
