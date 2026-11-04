@@ -118,5 +118,5 @@ export function evaluateSnapshot(snapshot,now=new Date()) {
   result.status=result.status==='payment_failed'?'payment_failed':'payment_unverified';
   result.alertType=result.status==='payment_failed'?'payment_problem':priority==='important'?'payment_review_important':'payment_verification_due';
  }
- return {...result,monitoringDueDate,monitoringAmountDue:currentAssessment?snapshot.amountDue:null,dueDateBasis:'owner_monitoring_policy',priority,requiresHumanReview:unresolved,reviewByDate:month+'-'+String(HOA_POLICY.verifyByDay).padStart(2,'0'),pastMonitoringDueDate:day>HOA_POLICY.dueDay};
+ return {...result,daysUntilDue:HOA_POLICY.dueDay-day,daysPastDue:day-HOA_POLICY.dueDay,monitoringDueDate,monitoringAmountDue:currentAssessment?snapshot.amountDue:null,dueDateBasis:'owner_monitoring_policy',priority,requiresHumanReview:unresolved,reviewByDate:month+'-'+String(HOA_POLICY.verifyByDay).padStart(2,'0'),pastMonitoringDueDate:day>HOA_POLICY.dueDay};
 }

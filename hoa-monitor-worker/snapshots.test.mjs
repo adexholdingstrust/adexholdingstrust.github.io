@@ -76,7 +76,7 @@ test('owner HOA policy uses the tenth and escalates from the local eighth',()=>{
  for(const day of ['07','08','10','11']){
   const date=new Date(`2026-11-${day}T16:00:00.000Z`);
   const s={...base,propertyId:'aurora-hoye-co',zone:'America/Denver',observedAt:date.toISOString(),dueDate:null,amountDue:null,balanceDue:125.25,payments:[]};
-  const r=evaluateSnapshot(s,date);assert.equal(r.monitoringDueDate,'2026-11-10');assert.equal(r.reviewByDate,'2026-11-08');assert.equal(r.priority,day==='07'?'routine':'important');assert.equal(r.paymentConfirmed,false);assert.equal(r.pastMonitoringDueDate,day==='11');
+  const r=evaluateSnapshot(s,date);assert.equal(r.daysUntilDue,10-Number(day));assert.equal(r.monitoringDueDate,'2026-11-10');assert.equal(r.reviewByDate,'2026-11-08');assert.equal(r.priority,day==='07'?'routine':'important');assert.equal(r.paymentConfirmed,false);assert.equal(r.pastMonitoringDueDate,day==='11');
  }
  const boundary=new Date('2026-11-08T06:30:00.000Z');
  assert.equal(evaluateSnapshot({...base,zone:'America/Denver',observedAt:boundary.toISOString()},boundary).priority,'routine');
