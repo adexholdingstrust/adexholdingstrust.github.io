@@ -30,7 +30,7 @@ jobs:
           if(!username||!password)throw Error('TownSq credentials missing');
           try {
             const report=await checkTownSq(username,password,{inspectLedger:true});
-            console.log(JSON.stringify({status:report.status,accountsShape:report.accountsShape,ledgerShape:report.ledgerShape}));
+            console.log(JSON.stringify({status:report.status,accountsShape:report.accountsShape,ledgerShape:report.ledgerShape,ledgerSignals:report.ledgerSignals}));
             if(report.status!=='authenticated')process.exitCode=1;
           } catch(e) {
             console.log(JSON.stringify({status:'collection_failed',stage:e.stage||'request',httpStatus:e.httpStatus||null,reason:e.reason||'request_failed'}));

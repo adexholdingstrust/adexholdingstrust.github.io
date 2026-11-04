@@ -34,6 +34,7 @@ export async function checkTownSq(username,password,{onSnapshot,inspectLedger=tr
   const now=new Date(),from=Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-3,1);
   const ledger=await request(`/api/v1/accounts/${accountId}/transactions?from=${from}&to=${now.getTime()}`);
   report.ledgerShape=shape(ledger);
+  report.ledgerSignals=Array.isArray(ledger.transactions)?ledger.transactions.map(t=>({type:/^[A-Za-z_ ]{1,30}$/.test(t.type||'')?t.type:'other',assessmentLabel:/^assessment(?:[- ]monthly)?$/i.test(t.comment||''),hasReference:typeof t.reference==='string'&&!!t.reference.trim(),numericDate:typeof t.postDate==='number'&&Number.isFinite(t.postDate),positiveAmount:typeof t.amount==='number'&&t.amount>0})):[];
  }
  return report;
 }
