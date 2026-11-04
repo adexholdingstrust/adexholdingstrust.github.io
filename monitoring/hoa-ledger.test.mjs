@@ -32,3 +32,16 @@ test('LCM only accepts explicit, unambiguous account balance labels',async()=>{
  assert.equal(lcmDashboardBalance([['Balance Due','unknown']]),null);
  const result=lcmSnapshot([['11/01/2026','Monthly assessment','635.03','']],new Date('2026-11-02T12:00:00Z'),684.28);assert.equal(result.balanceDue,684.28);assert.deepEqual(result.payments,[]);
 });
+test('LCM reads the explicit Balance Due label when label and value share a cell',async()=>{
+ const {lcmDashboardBalance,lcmBalancePairsFromText}=await import('./hoa-ledger.js');
+ const read=text=>lcmDashboardBalance(lcmBalancePairsFromText(text));
+ assert.equal(read('Financials and Payments\nBalance Due: $45.23\nPay Online!\nTransaction History\n11/01/2026 Assessment-Monthly $600.00'),45.23);
+ assert.equal(read('Balance Due:\n$45.23\nPay Online!'),45.23);
+ assert.equal(read('Balance Due: ($25.00)'),-25);
+ assert.equal(read('Balance Due: $0.00'),0);
+ assert.equal(read('Balance Due: unavailable\nTransaction History\nAssessment $600.00'),null);
+ assert.equal(read('Previous Balance Due: $600.00\nCharge $600.00'),null);
+ assert.equal(read('Balance Due: $45.23\nBalance Due: $46.23'),null);
+ assert.equal(read('Balance Due: $45.231'),null);
+ assert.equal(lcmDashboardBalance([['Balance Due','$5.00'],...lcmBalancePairsFromText('Balance Due: $45.23')]),null);
+});

@@ -43,3 +43,12 @@ export function lcmDashboardBalance(pairs) {
  }
  return values.length&&values.every(x=>x===values[0])?values[0]:null;
 }
+
+// The portal renders Balance Due in a shared cell with nested label/value spans.
+// Require its explicit line label; ledger charges/credits must never become the balance.
+export function lcmBalancePairsFromText(text) {
+ if(typeof text!=='string')return [];
+ const amount='(?:-?\\$-?(?:\\d{1,3}(?:,\\d{3})*|\\d+)(?:\\.\\d{2})?|\\(\\$(?:\\d{1,3}(?:,\\d{3})*|\\d+)(?:\\.\\d{2})?\\))';
+ const pattern=new RegExp('(?:^|\\n)[ \\t]*(Balance Due)[ \\t]*:[ \\t\\r\\n]*('+amount+')(?=\\s|$)','gi');
+ return [...text.matchAll(pattern)].map(match=>[match[1],match[2]]);
+}

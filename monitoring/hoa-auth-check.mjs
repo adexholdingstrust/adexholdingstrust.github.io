@@ -1,7 +1,7 @@
 /* Read-only portal sign-in verification. No browser state or page contents are persisted. */
 import {chromium} from 'playwright';
 import {createHmac} from 'node:crypto';
-import {lcmSnapshot,frontStepsSnapshot,lcmDashboardBalance} from './hoa-ledger.js';
+import {lcmSnapshot,frontStepsSnapshot,lcmDashboardBalance,lcmBalancePairsFromText} from './hoa-ledger.js';
 import {checkTownSq} from './townsq-readonly.mjs';
 import {allowPortalWrite} from './hoa-request-policy.js';
 async function ingest(snapshot) {
@@ -103,7 +103,7 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
   if(signedIn&&portal.name==='LCM'&&process.env.HOA_INGEST_ENABLED==='true') {
    try{const rows=await ledgerView.locator('table').evaluateAll(tables=>{const table=tables.find(t=>[...t.rows].some(r=>[...r.cells].map(c=>c.textContent.trim()).join('|')==='Date|Description|Charge|Credit'));return table?[...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())):[];});
     const pairs=await ledgerView.locator('tr').evaluateAll(rs=>rs.flatMap(r=>{const cells=[...r.cells].map(c=>c.textContent.trim());return cells.flatMap((label,i)=>/^(?:(?:current|account|total)\s+)?balance(?:\s+due)?\s*:?$/i.test(label)&&cells[i+1]?[ [label,cells[i+1]] ]:[]);}));
-    const snapshot=lcmSnapshot(rows,new Date(),lcmDashboardBalance(pairs));collection={...await ingest(snapshot),balanceObserved:snapshot.balanceDue!==null};
+    const snapshot=lcmSnapshot(rows,new Date(),lcmDashboardBalance([...pairs,...lcmBalancePairsFromText(await ledgerView.locator('body').innerText())]));collection={...await ingest(snapshot),balanceObserved:snapshot.balanceDue!==null};
    }catch{collection={status:'collection_failed'};failures++;}
   }
   if(signedIn&&portal.name==='FrontSteps'&&process.env.HOA_INGEST_ENABLED==='true'){try{collection=await ingest(frontStepsSnapshot(frontStepsData));}catch{collection={status:'collection_failed'};failures++;}}
