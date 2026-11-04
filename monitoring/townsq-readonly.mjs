@@ -2,9 +2,10 @@
  * Password SHA1 matches the client's authentication protocol; never log it or any tokens.
  */
 import {createHash} from 'node:crypto';
+import {townSqSnapshot} from './townsq-snapshot.mjs';
 const community='672048ef610bb549fcae2a41';
 const shape=(v,d=0)=>v===null?'null':Array.isArray(v)?{type:'array',count:v.length,item:d<5?shape(v[0],d+1):typeof v[0]}:typeof v==='object'?Object.fromEntries(Object.entries(v).filter(([k])=>/^[A-Za-z_][A-Za-z_0-9]{0,45}$/.test(k)).slice(0,45).map(([k,x])=>[k,d<5?shape(x,d+1):typeof x])):typeof v;
-export async function checkTownSq(username,password) {
+export async function checkTownSq(username,password,{onSnapshot,inspectLedger=true}={}) {
  const headers={'content-type':'application/json',accept:'application/json','accept-language':'en-US','xx-sc-l':'en','X-Townsq-Application':'communities/1.0.0 webapp/1 chrome',origin:'https://app.townsq.io','user-agent':'AdexPropertyMonitor/2.0 (+https://adexholdings.com)'};
  const request=async(path,options={})=>{
   const url=new URL(path,'https://api.townsq.io');
@@ -21,7 +22,8 @@ export async function checkTownSq(username,password) {
  const userId=encodeURIComponent(login.user.id);
  const accounts=await request(`/api/v1/users/${userId}/accounts?condoId=${community}&page=0&size=20`);
  const report={status:'authenticated',loginShape:shape(login),accountsShape:shape(accounts)};
- if(Array.isArray(accounts.content)&&accounts.content.length===1&&accounts.content[0]?.account?.accountUuid){
+ if(onSnapshot)report.collection=await onSnapshot(townSqSnapshot(accounts));
+ if(inspectLedger&&Array.isArray(accounts.content)&&accounts.content.length===1&&accounts.content[0]?.account?.accountUuid){
   const accountId=encodeURIComponent(accounts.content[0].account.accountUuid);
   const now=new Date(),from=Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-3,1);
   const ledger=await request(`/api/v1/users/${userId}/accounts/${accountId}/transactions?from=${from}&to=${now.getTime()}`);
