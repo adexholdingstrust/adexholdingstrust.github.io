@@ -1,0 +1,39 @@
+name: TownSq controlled read-only check
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/townsq-controlled-check.yml']
+permissions:
+  contents: read
+concurrency:
+  group: adex-hoa-authentication
+  cancel-in-progress: false
+jobs:
+  verify:
+    environment: github-pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: One sign-in and own-account read attempt
+        env:
+          ADEX_MONITOR_TOWNSQ_USERNAME: ${{ secrets.ADEX_MONITOR_TOWNSQ_USERNAME }}
+          ADEX_MONITOR_TOWNSQ_PASSWORD: ${{ secrets.ADEX_MONITOR_TOWNSQ_PASSWORD }}
+        run: |
+          node --input-type=module <<'JS'
+          import {checkTownSq} from './monitoring/townsq-readonly.mjs';
+          const username=process.env.ADEX_MONITOR_TOWNSQ_USERNAME,password=process.env.ADEX_MONITOR_TOWNSQ_PASSWORD;
+          if(!username||!password)throw Error('TownSq credentials missing');
+          try {
+            const report=await checkTownSq(username,password);
+            console.log(JSON.stringify(report));
+            if(report.status!=='authenticated')process.exitCode=1;
+          } catch(e) {
+            console.log(JSON.stringify({status:'collection_failed',stage:e.stage||'request',httpStatus:e.httpStatus||null,responseFormat:e.responseFormat||null,reason:e.reason||'request_failed'}));
+            process.exitCode=1;
+          }
+          JS
