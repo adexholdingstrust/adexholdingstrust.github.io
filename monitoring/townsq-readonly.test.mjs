@@ -28,3 +28,22 @@ test('TownSq passes only normalized Hoye data to ingestion',async()=>{
  const previous=globalThis.fetch;let calls=0,ingestions=0;globalThis.fetch=async()=>Response.json(++calls===1?login:calls===2?{}:calls===3?accounts:{account:accounts.content[0],transactions:[]});
  try{const report=await checkTownSq('owner@example.test','test-password',{inspectLedger:false,onSnapshot:async snapshot=>{ingestions++;assert.equal(snapshot.propertyId,'aurora-hoye-co');assert.equal(snapshot.balanceDue,125.25);assert.deepEqual(snapshot.payments,[]);assert.doesNotMatch(JSON.stringify(snapshot),/private-account|private-token/);return {status:'payment_unverified',paymentConfirmed:false,delivery:'sent'};}});assert.equal(calls,4);assert.equal(ingestions,1);assert.equal(report.collection.paymentConfirmed,false);assert.doesNotMatch(JSON.stringify(report),/private-token|private-account|125\.25/);}finally{globalThis.fetch=previous;}
 });
+
+test('TownSq history rejection retains only the independently verified Hoye balance',async()=>{
+ for(const failure of ['403','timeout']){
+  const previous=globalThis.fetch;let calls=0,ingestions=0;
+  globalThis.fetch=async()=>{calls++;if(calls<4)return Response.json(calls===1?login:calls===2?{}:accounts);if(failure==='timeout')throw Error('private-provider-error');return new Response('private-owner-value',{status:403});};
+  try{
+   const report=await checkTownSq('test','test',{onSnapshot:async snapshot=>{
+    ingestions++;assert.equal(snapshot.balanceDue,125.25);assert.equal(snapshot.amountDue,null);assert.equal(snapshot.dueDate,null);assert.deepEqual(snapshot.payments,[]);assert.equal(snapshot.monthlyAssessment,undefined);return {status:'payment_unverified',paymentConfirmed:false};
+   }});
+   assert.equal(report.status,'authenticated');assert.equal(report.ledgerStatus,'unavailable');assert.equal(report.assessmentObserved,false);assert.equal(ingestions,1);assert.equal(calls,4);
+   assert.doesNotMatch(JSON.stringify(report),/private-provider-error|private-owner-value|private-account|private-token|125\.25/);
+  }finally{globalThis.fetch=previous;}
+ }
+});
+test('TownSq never downgrades a mismatched retrieved ledger into accepted balance-only data',async()=>{
+ const previous=globalThis.fetch;let calls=0,ingestions=0;
+ globalThis.fetch=async()=>Response.json(++calls===1?login:calls===2?{}:calls===3?accounts:{account:{...accounts.content[0],condo:{id:'wrong-community'}},transactions:[]});
+ try{const report=await checkTownSq('test','test',{onSnapshot:async()=>{ingestions++;}});assert.equal(report.status,'account_unverified');assert.equal(ingestions,0);}finally{globalThis.fetch=previous;}
+});

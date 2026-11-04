@@ -45,3 +45,15 @@ test('LCM reads the explicit Balance Due label when label and value share a cell
  assert.equal(read('Balance Due: $45.231'),null);
  assert.equal(lcmDashboardBalance([['Balance Due','$5.00'],...lcmBalancePairsFromText('Balance Due: $45.23')]),null);
 });
+
+test('LCM preserves a verified balance when the current assessment is not unique',async()=>{
+ const {validateSnapshot,evaluateSnapshot}=await import('../hoa-monitor-worker/snapshots.js');
+ for(const rows of [[],[['12/01/2026','Assessment','635.03','']],[['11/01/2026','Assessment','635.03',''],['11/02/2026','Assessment','25.00','']]]){
+  const snapshot=lcmSnapshot(rows,now,49.23);
+  assert.equal(snapshot.balanceDue,49.23);assert.equal(snapshot.amountDue,null);assert.equal(snapshot.dueDate,null);assert.equal(snapshot.monthlyAssessment,undefined);assert.deepEqual(snapshot.payments,[]);
+  const result=evaluateSnapshot(validateSnapshot(snapshot,[],now),new Date('2026-11-08T19:00:00.000Z'));
+  assert.equal(result.paymentConfirmed,false);assert.equal(result.priority,'important');
+ }
+ for(const balance of [49.231,NaN,Infinity,'49.23'])assert.throws(()=>lcmSnapshot([],now,balance));
+ assert.throws(()=>lcmSnapshot([['11/01/2026','Assessment','invalid','']],now,49.23));
+});

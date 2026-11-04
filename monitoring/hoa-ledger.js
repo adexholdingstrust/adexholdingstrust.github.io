@@ -13,11 +13,15 @@ export function ledgerMoney(value) {
  return Number(value.replace(/[$,\s]/g,''));
 }
 export function lcmSnapshot(rows,now=new Date(),balanceDue=null) {
- if(balanceDue!==null&&(typeof balanceDue!=='number'||!Number.isFinite(balanceDue)||Math.abs(balanceDue)>100000000))throw Error('Invalid account balance');
+ if(balanceDue!==null&&(typeof balanceDue!=='number'||!Number.isFinite(balanceDue)||Math.abs(balanceDue)>100000000||Math.abs(balanceDue*100-Math.round(balanceDue*100))>0.00001))throw Error('Invalid account balance');
  const today=localDate(now,'America/Denver');
  const entries=rows.filter(row=>row.length===4&&/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(row[0])).map(row=>({date:ledgerDate(row[0]),description:row[1],charge:ledgerMoney(row[2]),credit:ledgerMoney(row[3])}));
  const assessments=entries.filter(e=>/assessment/i.test(e.description)&&e.date.slice(0,7)===today.slice(0,7)&&e.date<=today&&e.charge>0);
- if(assessments.length!==1)throw Error('Current assessment cannot be identified uniquely');
+ if(assessments.length!==1){
+  if(balanceDue===null)throw Error('Current assessment cannot be identified uniquely');
+  // The explicit account balance is independent of an absent/ambiguous monthly charge.
+  return {kind:'hoa',propertyId:'aurora-oxford-co',provider:'LCM',sourceUrl:'https://lcmpropertymanagement.com/AccountStatus/40583~10533163/?type=Account&active=0',observedAt:now.toISOString(),dueDate:null,amountDue:null,balanceDue,payments:[]};
+ }
  const assessment=assessments[0];
  // Credits in this four-column view lack an allocation reference. Never invent one.
  return {kind:'hoa',propertyId:'aurora-oxford-co',provider:'LCM',sourceUrl:'https://lcmpropertymanagement.com/AccountStatus/40583~10533163/?type=Account&active=0',observedAt:now.toISOString(),dueDate:assessment.date,amountDue:assessment.charge,monthlyAssessment:assessment.charge,balanceDue,payments:[]};

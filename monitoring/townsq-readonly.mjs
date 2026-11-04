@@ -32,9 +32,17 @@ export async function checkTownSq(username,password,{onSnapshot,inspectLedger=tr
  if(selected?.account?.accountUuid){
   const accountId=encodeURIComponent(selected.account.accountUuid);
   const now=new Date(),from=Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-3,1);
-  ledger=await request(`/api/v1/accounts/${accountId}/transactions?from=${from}&to=${now.getTime()}`);
-  report.ledgerShape=shape(ledger);
-  if(inspectLedger)report.ledgerSignals=Array.isArray(ledger.transactions)?ledger.transactions.map(t=>({type:/^[A-Za-z_ ]{1,30}$/.test(t.type||'')?t.type:'other',assessmentLabel:/^assessment(?:[- ]monthly)?$/i.test(t.comment||''),hasReference:typeof t.reference==='string'&&!!t.reference.trim(),numericDate:typeof t.postDate==='number'&&Number.isFinite(t.postDate),positiveAmount:typeof t.amount==='number'&&t.amount>0})):[];
+  try{ledger=await request(`/api/v1/accounts/${accountId}/transactions?from=${from}&to=${now.getTime()}`);report.ledgerStatus='retrieved';}
+  catch(error){
+   // Preserve a separately verified Hoye balance when only history is unavailable.
+   // Account/authentication failures still stop collection above; invalid ledger
+   // identity still fails snapshot validation below.
+   if(!onSnapshot)throw error;
+   report.ledgerStatus='unavailable';report.ledgerHttpStatus=error.httpStatus||null;
+   report.ledgerReason=error.reason||'request_failed';
+  }
+  if(ledger!==null){report.ledgerShape=shape(ledger);
+  if(inspectLedger)report.ledgerSignals=Array.isArray(ledger.transactions)?ledger.transactions.map(t=>({type:/^[A-Za-z_ ]{1,30}$/.test(t.type||'')?t.type:'other',assessmentLabel:/^assessment(?:[- ]monthly)?$/i.test(t.comment||''),hasReference:typeof t.reference==='string'&&!!t.reference.trim(),numericDate:typeof t.postDate==='number'&&Number.isFinite(t.postDate),positiveAmount:typeof t.amount==='number'&&t.amount>0})):[];}
  }
  if(onSnapshot){
   let snapshot;try{snapshot=townSqSnapshot(accounts,new Date(),ledger);}catch{return {...report,status:'account_unverified',reason:'hoye_ledger_not_verified'};}
