@@ -26,7 +26,7 @@ jobs:
         county: [elko, nye, valencia, navajo, apache, iron, lancaster]
     name: ${{ matrix.county }} tax monitoring
     environment: github-pages
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.county == 'lancaster' && 'ubuntu-24.04' || 'ubuntu-latest' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
