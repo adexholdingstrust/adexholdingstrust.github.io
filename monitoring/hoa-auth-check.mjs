@@ -142,6 +142,7 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
     const snapshot = lcmSnapshot(rows, new Date(), lcmDashboardBalance(balancePairs));
     collection = {
      ...await ingest(snapshot),
+     postedPayleaseCreditCount: snapshot.payleaseCredits?.length || 0,
      balanceObserved: snapshot.balanceDue !== null,
      balanceCandidates: balancePairs.length,
      balanceViewsChecked: balanceViews.length,
