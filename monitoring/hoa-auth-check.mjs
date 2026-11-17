@@ -102,8 +102,25 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
   let collection={status:'not_collected'};
   if(signedIn&&portal.name==='LCM'&&process.env.HOA_INGEST_ENABLED==='true') {
    try{const rows=await ledgerView.locator('table').evaluateAll(tables=>{const table=tables.find(t=>[...t.rows].some(r=>[...r.cells].map(c=>c.textContent.trim()).join('|')==='Date|Description|Charge|Credit'));return table?[...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())):[];});
-    const pairs=await ledgerView.locator('tr').evaluateAll(rs=>rs.flatMap(r=>{const cells=[...r.cells].map(c=>c.textContent.trim());return cells.flatMap((label,i)=>/^(?:(?:current|account|total)\s+)?balance(?:\s+due)?\s*:?$/i.test(label)&&cells[i+1]?[ [label,cells[i+1]] ]:[]);}));
-    const snapshot=lcmSnapshot(rows,new Date(),lcmDashboardBalance([...pairs,...lcmBalancePairsFromText(await ledgerView.locator('body').innerText())]));collection={...await ingest(snapshot),balanceObserved:snapshot.balanceDue!==null};
+    const balancePairs = [];
+    const balanceViews = ledgerView === page ? [page] : [page, ledgerView];
+    for (const view of balanceViews) {
+     const pairs = await view.locator('tr').evaluateAll(rows => rows.flatMap(row => {
+      const cells = [...row.cells].map(cell => cell.textContent.trim());
+      return cells.flatMap((label, index) =>
+       /^(?:(?:current|account|total)\s+)?balance(?:\s+due)?\s*:?$/i.test(label) && cells[index + 1]
+        ? [[label, cells[index + 1]]] : []
+      );
+     }));
+     balancePairs.push(...pairs, ...lcmBalancePairsFromText(await view.locator('body').innerText()));
+    }
+    const snapshot = lcmSnapshot(rows, new Date(), lcmDashboardBalance(balancePairs));
+    collection = {
+     ...await ingest(snapshot),
+     balanceObserved: snapshot.balanceDue !== null,
+     balanceCandidates: balancePairs.length,
+     balanceViewsChecked: balanceViews.length,
+    };
    }catch{collection={status:'collection_failed'};failures++;}
   }
   if(signedIn&&portal.name==='FrontSteps'&&process.env.HOA_INGEST_ENABLED==='true'){try{collection=await ingest(frontStepsSnapshot(frontStepsData));}catch{collection={status:'collection_failed'};failures++;}}
