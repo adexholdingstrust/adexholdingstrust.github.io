@@ -63,3 +63,10 @@ test('LCM balance labels support nested-cell text, line breaks and currency spac
  assert.equal(lcmDashboardBalance(lcmBalancePairsFromText('Previous Balance Due: $49.23')), null);
  assert.equal(lcmDashboardBalance(lcmBalancePairsFromText('Balance Due: 49.231')), null);
 });
+
+test('LCM accepts a plain inline balance label inside a shared cell', async () => {
+ const {lcmDashboardBalance, lcmBalancePairsFromText} = await import('./hoa-ledger.js');
+ for (const text of ['Balance Due $49.23', 'Balance Due$49.23', 'Balance Due 49.23', 'Balance Due\n:\n$49.23']) {
+  assert.equal(lcmDashboardBalance(lcmBalancePairsFromText(text)), 49.23);
+ }
+});
