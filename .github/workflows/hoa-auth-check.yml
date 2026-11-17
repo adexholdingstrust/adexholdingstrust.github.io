@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'monitoring/hoa-auth-check.mjs'
+      - 'monitoring/hoa-ledger.js'
       - '.github/workflows/hoa-auth-check.yml'
 permissions:
   contents: read
