@@ -81,8 +81,28 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
   await page.waitForTimeout(10000);
   let ledgerView=page;
   if(portal.name==='LCM'&&new URL(page.url()).pathname===new URL(portal.url).pathname){
-   try{await page.waitForFunction(()=>[...document.querySelectorAll('table')].some(t=>[...t.rows].some(r=>[...r.cells].map(c=>c.textContent.trim()).join('|')==='Date|Description|Charge|Credit'))||document.querySelector('iframe'),null,{timeout:30000});}catch{}
-   for(const frame of page.frames()){try{if(new URL(frame.url()).hostname===new URL(portal.url).hostname && await frame.locator('th').filter({hasText:/^Charge$/}).count()){ledgerView=frame;break;}}catch{}}
+   const deadline = Date.now() + 30000;
+   const origin = new URL(portal.url).origin;
+   while (Date.now() < deadline) {
+    let ready = false;
+    for (const frame of page.frames()) {
+     if (new URL(frame.url(), origin).origin !== origin) continue;
+     try {
+      ready = await frame.evaluate(() => [...document.querySelectorAll('table')].some(table =>
+       [...table.rows].some(row => [...row.cells].map(cell => cell.textContent.trim()).join('|') === 'Date|Description|Charge|Credit') &&
+       [...table.rows].some(row => row.cells.length >= 4 && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(row.cells[0].textContent.trim()))
+      ));
+     } catch (error) {
+      if (!frame.isDetached() && !/execution context was destroyed/i.test(error.message)) throw error;
+     }
+     if (ready) {
+      ledgerView = frame === page.mainFrame() ? page : frame;
+      break;
+     }
+    }
+    if (ready) break;
+    await page.waitForTimeout(500);
+   }
   }
   // Validate destination and signed-in controls. Absence of an error alone is not success.
   const host=new URL(page.url()).hostname;
