@@ -54,3 +54,12 @@ test('LCM combines account-page and ledger balance evidence without substituting
  assert.equal(lcmDashboardBalance(pairs), 49.23);
  assert.equal(lcmDashboardBalance([...pairs, ...lcmBalancePairsFromText('Balance Due: $50.00')]), null);
 });
+
+test('LCM balance labels support nested-cell text, line breaks and currency spacing', async () => {
+ const {lcmDashboardBalance, lcmBalancePairsFromText} = await import('./hoa-ledger.js');
+ for (const text of ['Balance Due:\n49.23', 'Balance Due\n$49.23', 'Current Balance: $ 49.23', 'Balance Due: $\u00a049.23']) {
+  assert.equal(lcmDashboardBalance(lcmBalancePairsFromText(text)), 49.23);
+ }
+ assert.equal(lcmDashboardBalance(lcmBalancePairsFromText('Previous Balance Due: $49.23')), null);
+ assert.equal(lcmDashboardBalance(lcmBalancePairsFromText('Balance Due: 49.231')), null);
+});

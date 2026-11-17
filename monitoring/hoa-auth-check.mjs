@@ -112,7 +112,12 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
         ? [[label, cells[index + 1]]] : []
       );
      }));
-     balancePairs.push(...pairs, ...lcmBalancePairsFromText(await view.locator('body').innerText()));
+     const cells = await view.locator('td, th').allTextContents();
+     balancePairs.push(
+      ...pairs,
+      ...lcmBalancePairsFromText(await view.locator('body').innerText()),
+      ...cells.flatMap(lcmBalancePairsFromText),
+     );
     }
     const snapshot = lcmSnapshot(rows, new Date(), lcmDashboardBalance(balancePairs));
     collection = {

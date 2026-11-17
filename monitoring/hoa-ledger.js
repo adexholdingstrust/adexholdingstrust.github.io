@@ -48,7 +48,7 @@ export function lcmDashboardBalance(pairs) {
 // Require its explicit line label; ledger charges/credits must never become the balance.
 export function lcmBalancePairsFromText(text) {
  if(typeof text!=='string')return [];
- const amount='(?:-?\\$-?(?:\\d{1,3}(?:,\\d{3})*|\\d+)(?:\\.\\d{2})?|\\(\\$(?:\\d{1,3}(?:,\\d{3})*|\\d+)(?:\\.\\d{2})?\\))';
- const pattern=new RegExp('(?:^|\\n)[ \\t]*(Balance Due)[ \\t]*:[ \\t\\r\\n]*('+amount+')(?=\\s|$)','gi');
- return [...text.replace(/\u00a0/g, ' ').matchAll(pattern)].map(match=>[match[1],match[2]]);
+ const pattern = /(?:^|\n)[ \t]*((?:(?:Current|Account|Total)[ \t]+)?Balance(?:[ \t]+Due)?)[ \t]*(?::[ \t\r\n]*|[ \t]*\n[ \t]*)((?:-?\$?[ \t]*-?(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?|\(\$?[ \t]*(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?\)))(?=\s|$)/gi;
+ return [...text.replace(/\u00a0/g, ' ').matchAll(pattern)]
+  .map(match => [match[1], match[2].replace(/[ \t]/g, '')]);
 }
