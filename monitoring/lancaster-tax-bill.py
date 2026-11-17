@@ -58,6 +58,9 @@ def fetch_bill(property_id, year):
         page.on('response', lambda response: print(
             'Lancaster county verification HTTP', response.status, flush=True
         ) if urlsplit(response.url).path.endswith('/verification.php') else None)
+        # Keep the county's button and verification flow, but display the response
+        # in this tab so an asynchronous submit does not depend on a popup.
+        page.locator('#ainform').evaluate("form => form.target = '_self'")
         page.locator('#submit-btn').click()
         print('Lancaster submit clicked', flush=True)
         from time import monotonic
@@ -74,7 +77,7 @@ def fetch_bill(property_id, year):
                 continue
             break
         else:
-            print('Lancaster bill table unavailable; open pages:', len(context.pages), flush=True)
+            print('Lancaster bill table unavailable; open pages:', len(context.pages), 'verified button:', page.locator('#submit-btn[data-recaptcha-verified="true"]').count(), 'results page:', 'secured-property-tax-results' in urlsplit(page.url).path, flush=True)
             raise TimeoutError('County bill list unavailable')
         result.wait_for_load_state('domcontentloaded', timeout=60_000)
         print('Lancaster results opened; tables:', result.locator('table').count(),
