@@ -19,8 +19,11 @@ export function lcmSnapshot(rows,now=new Date(),balanceDue=null) {
  const assessments=entries.filter(e=>/assessment/i.test(e.description)&&e.date.slice(0,7)===today.slice(0,7)&&e.date<=today&&e.charge>0);
  if(assessments.length!==1)throw Error('Current assessment cannot be identified uniquely');
  const assessment=assessments[0];
- // Credits in this four-column view lack an allocation reference. Never invent one.
- return {kind:'hoa',propertyId:'aurora-oxford-co',provider:'LCM',sourceUrl:'https://lcmpropertymanagement.com/AccountStatus/40583~10533163/?type=Account&active=0',observedAt:now.toISOString(),dueDate:assessment.date,amountDue:assessment.charge,monthlyAssessment:assessment.charge,balanceDue,payments:[]};
+ // Paylease credits show posted transactions, but do not identify the assessment paid.
+ const payleaseCredits=entries.filter(e=>/^Paylease\s+\d+$/i.test(e.description.trim()) &&
+  e.credit>0 && e.charge===0 && e.date>=assessment.date && e.date<=today)
+  .map(e=>({postedOn:e.date,amount:e.credit}));
+ return {kind:'hoa',propertyId:'aurora-oxford-co',provider:'LCM',sourceUrl:'https://lcmpropertymanagement.com/AccountStatus/40583~10533163/?type=Account&active=0',observedAt:now.toISOString(),dueDate:assessment.date,amountDue:assessment.charge,monthlyAssessment:assessment.charge,balanceDue,...(payleaseCredits.length?{payleaseCredits}:{}),payments:[]};
 }
 
 export function frontStepsSnapshot(data,now=new Date()) {

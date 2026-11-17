@@ -83,3 +83,16 @@ test('LCM accepts its live fractional-only balance currency format', async () =>
  }
  assert.equal(lcmDashboardBalance([['Balance', '$.00'], ['Balance', '$.23']]), null);
 });
+
+test('reports Paylease credits since the assessment without assigning them to it',()=>{
+ const snapshot=lcmSnapshot([
+  ['11/01/2026','Assessment-Monthly','500',''],
+  ['10/31/2026','Paylease 100','','500'],
+  ['11/02/2026','Paylease 101','','25.55'],
+  ['11/02/2026','Paylease 102','10',''],
+  ['11/02/2026','Returned Paylease 103','','10'],
+  ['11/09/2026','Paylease 104','','100']
+ ],now,0);
+ assert.deepEqual(snapshot.payleaseCredits,[{postedOn:'2026-11-02',amount:25.55}]);
+ assert.deepEqual(snapshot.payments,[]);
+});

@@ -17,7 +17,7 @@ function keys(value, allowed) {
   if(!value || typeof value!=='object' || Array.isArray(value) || Object.keys(value).some(k=>!allowed.includes(k))) throw Error('Invalid fields');
 }
 export function validateSnapshot(value, taxProperties, now = new Date()) {
-  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','sourceUpdatedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement','installments','assessmentScope','paymentOptions']);
+  keys(value,['kind','propertyId','provider','sourceUrl','observedAt','sourceUpdatedAt','dueDate','amountDue','balanceDue','payments','monthlyAssessment','annualAssessment','taxYear','autopayScheduled','countySettlement','installments','assessmentScope','paymentOptions','payleaseCredits']);
   const hoa=HOA_PROPERTIES[value.propertyId];
   const tax=taxProperties.find(p=>p.propertyId===value.propertyId);
   if(!['hoa','tax'].includes(value.kind) || (value.kind==='hoa'?!hoa:!tax)) throw Error('Unknown property');
@@ -59,6 +59,14 @@ export function validateSnapshot(value, taxProperties, now = new Date()) {
       keys(proof,['method','postedTotal','currentYearBalance','receiptTotal','taxDetailTotal','interestAndFees','latestReceiptOn']);
       if(!['navajo-az-10','apache-az-464'].includes(value.propertyId)||!money(proof.postedTotal)||!money(proof.currentYearBalance)||!money(proof.receiptTotal)||!money(proof.taxDetailTotal)||!money(proof.interestAndFees)||proof.postedTotal!==proof.receiptTotal||proof.taxDetailTotal!==value.annualAssessment||Math.round(proof.postedTotal*100)!==Math.round(value.annualAssessment*100)+Math.round(proof.interestAndFees*100)||!validDate(proof.latestReceiptOn)||proof.latestReceiptOn>localDate(new Date(observed),zone))throw Error('Invalid county receipt settlement');
     }else throw Error('Invalid county settlement method');
+  }
+  if(value.payleaseCredits!==undefined){
+    if(value.kind!=='hoa'||hoa.provider!=='LCM'||!Array.isArray(value.payleaseCredits)||value.payleaseCredits.length>1000||!validDate(value.dueDate))throw Error('Invalid Paylease credits');
+    const today=localDate(new Date(observed),zone);
+    for(const credit of value.payleaseCredits){
+      keys(credit,['postedOn','amount']);
+      if(!money(credit.amount)||credit.amount<=0||!validDate(credit.postedOn)||credit.postedOn<value.dueDate||credit.postedOn>today)throw Error('Invalid Paylease credit');
+    }
   }
   const references=new Set();
   for(const p of value.payments) {
