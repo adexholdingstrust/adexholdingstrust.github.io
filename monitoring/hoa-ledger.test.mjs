@@ -45,3 +45,12 @@ test('LCM reads the explicit Balance Due label when label and value share a cell
  assert.equal(read('Balance Due: $45.231'),null);
  assert.equal(lcmDashboardBalance([['Balance Due','$5.00'],...lcmBalancePairsFromText('Balance Due: $45.23')]),null);
 });
+
+test('LCM combines account-page and ledger balance evidence without substituting assessment charges', async () => {
+ const {lcmDashboardBalance, lcmBalancePairsFromText} = await import('./hoa-ledger.js');
+ const accountText = 'Account Status\nBalance Due:\u00a0$49.23\nPay Online';
+ const ledgerText = 'Date Description Charge Credit\n11/01/2026 Assessment $635.03';
+ const pairs = [...lcmBalancePairsFromText(accountText), ...lcmBalancePairsFromText(ledgerText)];
+ assert.equal(lcmDashboardBalance(pairs), 49.23);
+ assert.equal(lcmDashboardBalance([...pairs, ...lcmBalancePairsFromText('Balance Due: $50.00')]), null);
+});

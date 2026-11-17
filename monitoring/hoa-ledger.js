@@ -50,5 +50,5 @@ export function lcmBalancePairsFromText(text) {
  if(typeof text!=='string')return [];
  const amount='(?:-?\\$-?(?:\\d{1,3}(?:,\\d{3})*|\\d+)(?:\\.\\d{2})?|\\(\\$(?:\\d{1,3}(?:,\\d{3})*|\\d+)(?:\\.\\d{2})?\\))';
  const pattern=new RegExp('(?:^|\\n)[ \\t]*(Balance Due)[ \\t]*:[ \\t\\r\\n]*('+amount+')(?=\\s|$)','gi');
- return [...text.matchAll(pattern)].map(match=>[match[1],match[2]]);
+ return [...text.replace(/\u00a0/g, ' ').matchAll(pattern)].map(match=>[match[1],match[2]]);
 }
