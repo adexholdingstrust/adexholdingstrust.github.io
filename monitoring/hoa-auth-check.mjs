@@ -103,7 +103,6 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
   if(signedIn&&portal.name==='LCM'&&process.env.HOA_INGEST_ENABLED==='true') {
    try{const rows=await ledgerView.locator('table').evaluateAll(tables=>{const table=tables.find(t=>[...t.rows].some(r=>[...r.cells].map(c=>c.textContent.trim()).join('|')==='Date|Description|Charge|Credit'));return table?[...table.rows].map(r=>[...r.cells].map(c=>c.textContent.trim())):[];});
     const balancePairs = [];
-    const balanceLayout = [];
     const balanceViews = ledgerView === page ? [page] : [page, ledgerView];
     for (const view of balanceViews) {
      const pairs = await view.locator('tr').evaluateAll(rows => rows.flatMap(row => {
@@ -114,15 +113,6 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
       );
      }));
      const cells = await view.locator('td, th').allTextContents();
-     const bodyText = await view.locator('body').innerText();
-     const shapes = [...bodyText.matchAll(/balance[^\n]{0,100}(?:\n[^\n]{0,60})?/gi)]
-      .slice(0, 8).map(match => match[0]
-       .replace(/[A-Za-z]+/g, word => /^(balance|due|current|account|total|credit)$/i.test(word) ? word.toLowerCase() : 'x')
-       .replace(/[0-9]/g, '#'));
-     const controls = await view.locator('input, output').evaluateAll(elements => elements
-      .filter(element => /balance/i.test(element.id + ' ' + element.name))
-      .map(element => ({tag: element.tagName, type: element.type || '', hasValue: !!element.value})));
-     balanceLayout.push({shapes, controls});
      balancePairs.push(
       ...pairs,
       ...lcmBalancePairsFromText(await view.locator('body').innerText()),
@@ -135,7 +125,6 @@ try {for(const portal of portals.filter(p=>!process.env.HOA_PROVIDER||p.prefix==
      balanceObserved: snapshot.balanceDue !== null,
      balanceCandidates: balancePairs.length,
      balanceViewsChecked: balanceViews.length,
-     balanceLayout,
     };
    }catch{collection={status:'collection_failed'};failures++;}
   }

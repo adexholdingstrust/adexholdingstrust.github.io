@@ -37,7 +37,7 @@ export function lcmDashboardBalance(pairs) {
  for(const [label,value] of pairs){
   if(!/^(?:(?:current|account|total)\s+)?balance(?:\s+due)?\s*:?$/i.test(String(label).trim()))continue;
   const text=String(value).trim();
-  if(!/^(?:-?\$?-?(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?|\(\$?(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?\))$/.test(text))continue;
+  if(!/^(?:-?\$?-?(?:(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?|\.\d{2})|\(\$?(?:(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?|\.\d{2})\))$/.test(text))continue;
   const number=Number(text.replace(/[$,()]/g,''))*(text.startsWith('(')?-1:1);
   if(Number.isFinite(number)&&Math.abs(number)<=100000000)values.push(number);
  }
@@ -48,7 +48,7 @@ export function lcmDashboardBalance(pairs) {
 // Require its explicit line label; ledger charges/credits must never become the balance.
 export function lcmBalancePairsFromText(text) {
  if(typeof text!=='string')return [];
- const pattern = /(?:^|\n)[ \t]*((?:(?:Current|Account|Total)[ \t]+)?Balance(?:[ \t]+Due)?)(?:\s*:\s*|\s+|(?=\$|\())((?:-?\$?[ \t]*-?(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?|\(\$?[ \t]*(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?\)))(?=\s|$)/gi;
+ const pattern = /(?:^|\n)[ \t]*((?:(?:Current|Account|Total)[ \t]+)?Balance(?:[ \t]+Due)?)(?:\s*:\s*|\s+|(?=\$|\())((?:-?\$?[ \t]*-?(?:(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?|\.\d{2})|\(\$?[ \t]*(?:(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d{2})?|\.\d{2})\)))(?=\s|$)/gi;
  return [...text.replace(/\u00a0/g, ' ').matchAll(pattern)]
   .map(match => [match[1], match[2].replace(/[ \t]/g, '')]);
 }
