@@ -55,9 +55,27 @@ def fetch_bill(property_id, year):
         print('Lancaster form HTTP', response.status if response else None, flush=True)
         page.locator('#ainform input[name="ain"]').fill(ain)
         print('Lancaster form ready', flush=True)
-        with page.expect_popup() as popup:
-            page.locator('#submit-btn').click()
-        result = popup.value
+        page.on('response', lambda response: print(
+            'Lancaster county verification HTTP', response.status, flush=True
+        ) if urlsplit(response.url).path.endswith('/verification.php') else None)
+        page.locator('#submit-btn').click()
+        print('Lancaster submit clicked', flush=True)
+        from time import monotonic
+        deadline = monotonic() + 45
+        while monotonic() < deadline:
+            for result in context.pages:
+                if '/recaptchav3ttc/alert.php' in urlsplit(result.url).path:
+                    print('County directed collector to verification warning', flush=True)
+                    raise ValueError('County verification declined')
+                if result.locator('#TaxBillsTable').count():
+                    break
+            else:
+                page.wait_for_timeout(500)
+                continue
+            break
+        else:
+            print('Lancaster bill table unavailable; open pages:', len(context.pages), flush=True)
+            raise TimeoutError('County bill list unavailable')
         result.wait_for_load_state('domcontentloaded', timeout=60_000)
         print('Lancaster results opened; tables:', result.locator('table').count(),
               'county verification page:', '/alert.php' in urlsplit(result.url).path, flush=True)
