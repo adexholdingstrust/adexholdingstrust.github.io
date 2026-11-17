@@ -51,16 +51,22 @@ def fetch_bill(property_id, year):
         context = browser.new_context()
         page = context.new_page()
         page.set_default_timeout(25_000)
-        page.goto(SOURCE, wait_until='domcontentloaded')
-        page.get_by_label('AIN', exact=True).fill(ain)
+        response = page.goto(SOURCE, wait_until='domcontentloaded', timeout=60_000)
+        print('Lancaster form HTTP', response.status if response else None, flush=True)
+        page.locator('#ainform input[name="ain"]').fill(ain)
+        print('Lancaster form ready', flush=True)
         with page.expect_popup() as popup:
             page.locator('#submit-btn').click()
         result = popup.value
+        result.wait_for_load_state('domcontentloaded', timeout=60_000)
+        print('Lancaster results opened; tables:', result.locator('table').count(),
+              'county verification page:', '/alert.php' in urlsplit(result.url).path, flush=True)
         row = result.locator('#TaxBillsTable tr').filter(
             has=result.get_by_text(label, exact=True)
         ).filter(has=result.get_by_text('Annual', exact=True))
         link = row.get_by_role('link', name='Click here to view bill', exact=True)
         url = link.get_attribute('href') or ''
+        print('Lancaster annual bill link located', flush=True)
         target = urlsplit(url)
         if (target.scheme, target.netloc) != ('https', 'latapi.estreamone.com') or not re.fullmatch(
             r'/repos/LAT2-Main/docs/\d+\.\d+', target.path
