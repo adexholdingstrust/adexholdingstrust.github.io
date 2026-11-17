@@ -70,3 +70,16 @@ test('LCM accepts a plain inline balance label inside a shared cell', async () =
   assert.equal(lcmDashboardBalance(lcmBalancePairsFromText(text)), 49.23);
  }
 });
+
+test('LCM accepts its live fractional-only balance currency format', async () => {
+ const {lcmDashboardBalance, lcmBalancePairsFromText} = await import('./hoa-ledger.js');
+ for (const [display, expected] of [['$.00', 0], ['$.23', 0.23], ['-$.23', -0.23], ['($.23)', -0.23]]) {
+  assert.equal(lcmDashboardBalance([['Balance', display]]), expected);
+  assert.equal(lcmDashboardBalance(lcmBalancePairsFromText('Balance:\n' + display)), expected);
+ }
+ for (const display of ['$.', '$.2', '$.234', '$.00unknown']) {
+  assert.equal(lcmDashboardBalance([['Balance', display]]), null);
+  assert.equal(lcmDashboardBalance(lcmBalancePairsFromText('Balance:\n' + display)), null);
+ }
+ assert.equal(lcmDashboardBalance([['Balance', '$.00'], ['Balance', '$.23']]), null);
+});
