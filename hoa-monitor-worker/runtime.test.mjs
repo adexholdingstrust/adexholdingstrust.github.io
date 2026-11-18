@@ -19,7 +19,7 @@ test('email acceptance reports provider IP restriction without leaking its respo
 test('balance-only HOA notice states unknown amount and provider freshness, without paid claim',async()=>{
  const previous=globalThis.fetch;let mail;
  globalThis.fetch=async(_u,options)=>{mail=JSON.parse(options.body);return new Response('{}',{status:201});};
- try{const observation={...snapshot,dueDate:null,amountDue:null,balanceDue:-605,sourceUpdatedAt:null};const result=await processSnapshot({HOA_MONITOR_KV:store(),NOTIFICATIONS_ENABLED:'true',BREVO_API_KEY:'test',EMAIL_FROM:'sender@example.test'},observation,now);assert.equal(result.delivery,'sent');assert.match(mail.textContent,/Obligation amount: Not verified/);assert.match(mail.textContent,/Provider last updated: Not verified/);assert.match(mail.textContent,/Payment is NOT confirmed/);}finally{globalThis.fetch=previous;}
+ try{const observation={...snapshot,dueDate:null,amountDue:null,balanceDue:-605,sourceUpdatedAt:null};const result=await processSnapshot({HOA_MONITOR_KV:store(),NOTIFICATIONS_ENABLED:'true',BREVO_API_KEY:'test',EMAIL_FROM:'sender@example.test'},observation,now);assert.equal(result.delivery,'sent');assert.match(mail.subject,/^Oxford Place \| \$605.00 account credit/);assert.match(mail.htmlContent,/adexholdings.com\/assets\/logo.png/);assert.match(mail.textContent,/could not match a payment/);}finally{globalThis.fetch=previous;}
 });
 
 test('Calabrese sends balance changes, suppresses repeats, and alerts when the same debt recurs',async()=>{
@@ -29,10 +29,10 @@ test('Calabrese sends balance changes, suppresses repeats, and alerts when the s
  try{
   const run=balanceDue=>processSnapshot(env,{...observation,balanceDue},now);
   assert.equal((await run(-725)).delivery,'sent');assert.equal((await run(-725)).delivery,'suppressed');
-  assert.match(messages[0].textContent,/Dashboard balance: Credit \$725.00/);
+  assert.match(messages[0].textContent,/^Calabrese \| \$725.00 account credit/);
   assert.doesNotMatch(messages[0].textContent,/Payment is NOT confirmed|payment verification|Obligation amount/);
   assert.equal((await run(120)).delivery,'sent');assert.match(messages[1].subject,/balance due/);
-  assert.equal((await run(0)).delivery,'sent');assert.match(messages[2].textContent,/no balance due/);
+  assert.equal((await run(0)).delivery,'sent');assert.match(messages[2].textContent,/\$0.00 due/);
   assert.equal((await run(120)).delivery,'sent');assert.equal(messages.length,4);
  }finally{globalThis.fetch=prior;}
 });
@@ -68,8 +68,8 @@ test('HOA important reminders start on eighth, repeat daily, and describe unchan
  const at=day=>new Date(`2026-11-${day}T16:00:00.000Z`);
  const observation=day=>({kind:'hoa',propertyId:'aurora-hoye-co',provider:'TownSq',sourceUrl:'https://app.townsq.io',zone:'America/Denver',observedAt:at(day).toISOString(),dueDate:null,amountDue:null,balanceDue:125.25,payments:[]});
  try{
-  await processSnapshot(env,observation('07'),at('07'));assert.doesNotMatch(messages[0].subject,/IMPORTANT/);assert.match(messages[0].textContent,/Obligation due: 2026-11-10 \(owner-set monitoring policy\)/);
-  assert.equal((await processSnapshot(env,observation('08'),at('08'))).delivery,'sent');assert.match(messages[1].subject,/^IMPORTANT/);assert.match(messages[1].textContent,/balance has not changed since/i);assert.match(messages[1].textContent,/does not establish that payment failed/);
+  await processSnapshot(env,observation('07'),at('07'));assert.doesNotMatch(messages[0].subject,/IMPORTANT/);assert.match(messages[0].subject,/^Hoye Drive \| \$125.25 balance due/);
+  assert.equal((await processSnapshot(env,observation('08'),at('08'))).delivery,'sent');assert.match(messages[1].subject,/Review requested/);assert.match(messages[1].textContent,/balance has not changed since/i);assert.match(messages[1].textContent,/could not match a payment/);
   assert.equal((await processSnapshot(env,observation('08'),at('08'))).delivery,'suppressed');
   assert.equal((await processSnapshot(env,observation('09'),at('09'))).delivery,'sent');assert.equal(messages.length,3);
  }finally{globalThis.fetch=prior;}
