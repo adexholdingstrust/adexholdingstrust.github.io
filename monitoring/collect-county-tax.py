@@ -151,7 +151,7 @@ def collect_valencia_in_worker(property_id,endpoint,secret):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry-run', action='store_true')
-    parser.add_argument('--county',choices=['all','elko','nye','valencia','navajo','apache','iron'],default='all')
+    parser.add_argument('--county',choices=['all','elko','nye','valencia','navajo','apache','iron','lancaster'],default='all')
     args = parser.parse_args()
     endpoint = os.environ.get('ADEX_MONITOR_URL', '')
     secret = os.environ.get('ADEX_MONITOR_INGEST_SECRET', '')
@@ -251,6 +251,21 @@ def main():
                 details={'propertyId':property_id,'status':'collection_or_delivery_failed','stage':stage,'errorType':type(exc).__name__}
                 if isinstance(exc,HTTPError):details['httpStatus']=exc.code
                 print(json.dumps(details),file=sys.stderr)
+    if args.county == 'lancaster':
+        lancaster = load('lancaster_bill', 'lancaster-tax-bill.py')
+        today = datetime.now(ZoneInfo('America/Los_Angeles')).date()
+        year = today.year if today.month >= 11 else today.year - 1
+        for property_id in lancaster.PARCELS:
+            try:
+                snapshot = normalize_nye(lancaster.fetch_bill(property_id, year))
+                snapshot['provider'] = 'Los Angeles County'
+                result = None if args.dry_run else deliver(snapshot, endpoint, secret)
+                print(json.dumps({'propertyId': property_id, 'billValidated': True,
+                                  'countyPaymentStatus': 'unverified', 'delivered': bool(result)}))
+            except Exception as exc:
+                failures += 1
+                print(json.dumps({'propertyId': property_id, 'status': 'collection_or_delivery_failed',
+                                  'errorType': type(exc).__name__}), file=sys.stderr)
     return 1 if failures else 0
 
 if __name__ == '__main__':
