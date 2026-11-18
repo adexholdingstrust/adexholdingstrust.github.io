@@ -4,6 +4,7 @@ import {HOA_ALERT_RECIPIENTS} from '../monitoring/hoa-rules.js';
 import {HOA_PROPERTIES,validateSnapshot,evaluateSnapshot,localDate} from './snapshots.js';
 import {fetchValencia} from './valencia.js';
 import {financeSummary,financeAccess,financeBridge} from './finance-feed.js';
+import {hoaEmail} from './hoa-email.js';
 const MAX_BYTES=100000;
 const reply=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json','cache-control':'no-store','x-content-type-options':'nosniff'}});
 export async function readBody(request) {
@@ -34,7 +35,7 @@ async function deliver(env,key,message,now,acceptance=false) {
   // KV deduplication is best effort; overlapping invocations can still race.
   await env.HOA_MONITOR_KV.put(storageKey,record('pending'));
   try {
-    const res=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',signal:AbortSignal.timeout(15000),headers:{'api-key':env.BREVO_API_KEY,'content-type':'application/json'},body:JSON.stringify({sender:{email:env.HOA_SENDER_EMAIL||env.EMAIL_FROM,name:'Adex Property Monitoring'},to:HOA_ALERT_RECIPIENTS.map(email=>({email})),subject:message.subject,textContent:message.text})});
+    const res=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',signal:AbortSignal.timeout(15000),headers:{'api-key':env.BREVO_API_KEY,'content-type':'application/json'},body:JSON.stringify({sender:{email:env.HOA_SENDER_EMAIL||env.EMAIL_FROM,name:'Adex Property Monitoring'},to:HOA_ALERT_RECIPIENTS.map(email=>({email})),subject:message.subject,textContent:message.text,htmlContent:message.html})});
     if(!res.ok) {
       let reason='provider_rejected';
       try {
@@ -73,14 +74,7 @@ export async function processSnapshot(env,snapshot,now=new Date(),previous=null)
   }
   if(!result.alertType)return {result,delivery:'none'};
   if(result.alertType==='no_balance_due' && snapshot.propertyId==='aurora-oxford-co'){
-    const message={subject:'Adex HOA | Oxford Place | No balance due',text:[
-      'Oxford Place — LCM account summary',
-      'Portal balance: $0.00',
-      `Monthly assessment posted ${snapshot.dueDate}: $${snapshot.amountDue.toFixed(2)}`,
-      ...snapshot.payleaseCredits.map(c=>`Posted Paylease credit on ${c.postedOn}: $${c.amount.toFixed(2)}`),
-      'LCM does not show which assessment each credit was applied to.',
-      `Portal observed: ${snapshot.observedAt}`,`Source: ${new URL(snapshot.sourceUrl).origin}`
-    ].join('\n')};
+    const message=hoaEmail(snapshot,result,progressText);
     return {result,delivery:await deliver(env,'oxford-covered:'+result.monitoringDueDate,message,now)};
   }
   if(result.monitoringMode==='balance_only') {
@@ -88,20 +82,13 @@ export async function processSnapshot(env,snapshot,now=new Date(),previous=null)
     const stateKey='monitor:balance-notice:'+snapshot.propertyId;
     let state=await env.HOA_MONITOR_KV.get(stateKey,'json');
     if(!state||state.signature!==signature){state={signature,eventId:crypto.randomUUID()};await env.HOA_MONITOR_KV.put(stateKey,JSON.stringify(state));}
-    const balance=snapshot.balanceDue===null?'Not available':snapshot.balanceDue<0?'Credit $'+Math.abs(snapshot.balanceDue).toFixed(2):snapshot.balanceDue===0?'$0.00 — no balance due':'Amount owed $'+snapshot.balanceDue.toFixed(2);
-    const message={subject:`${result.priority==='important'?'IMPORTANT | ':''}Adex HOA | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
-      `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,`Dashboard balance: ${balance}`,`Monthly HOA due date: ${result.monitoringDueDate} (owner-set monitoring policy)`,`Review starts: ${result.reviewByDate}`,`Priority: ${result.priority}`,...(progressText?[progressText]:[]),
-      `Observed: ${snapshot.observedAt}`,`Provider last updated: ${snapshot.sourceUpdatedAt||'Not provided'}`,`Status: ${result.status}`,
-      'Monitoring basis: HOA dashboard balance. Owner-reported bank schedule: $120 every 14 days.',
-      result.status==='stale'?'Dashboard retrieval is stale; a fresh check is required.':result.status==='balance_unavailable'?'Dashboard balance could not be verified; review is required.':snapshot.balanceDue>0?'The dashboard reports an amount owed; review the bank payment and HOA account.':'The dashboard reports no current amount owed.',
-      'Individual bank payments are not reconciled by this balance monitor.'
-    ].join('\n')};
+    const message=hoaEmail(snapshot,result,progressText);
     return {result,delivery:await deliver(env,'balance:'+snapshot.propertyId+':'+state.eventId,message,now)};
   }
 
   let key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||(snapshot.kind==='hoa'&&snapshot.dueDate===null?result.asOfDate.slice(0,7):''),snapshot.kind==='hoa'?result.monitoringDueDate:snapshot.dueDate,result.alertType,result.status==='stale'||result.priority==='important'?result.asOfDate:''].join(':');
   if(paymentState?.pending)key+=':event:'+paymentState.pending.id;
-  const message={subject:`${result.priority==='important'?'IMPORTANT | ':''}Adex ${snapshot.kind==='hoa'?'HOA':'Property Tax'} | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
+  const message=snapshot.kind==='hoa'?hoaEmail(snapshot,result,progressText):{subject:`${result.priority==='important'?'IMPORTANT | ':''}Adex ${snapshot.kind==='hoa'?'HOA':'Property Tax'} | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
     `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,
     ...(snapshot.kind==='tax'?[`Tax year: ${snapshot.taxYear}`]:[]),
     ...(snapshot.paymentOptions?[`Payment options (alternatives, not additive installments): ${snapshot.paymentOptions.map(o=>o.type.replaceAll('_',' ')+' '+o.dueDate+' $'+o.amount.toFixed(2)).join('; ')}`]:[]),
