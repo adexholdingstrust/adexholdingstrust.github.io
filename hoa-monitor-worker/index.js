@@ -72,6 +72,17 @@ export async function processSnapshot(env,snapshot,now=new Date(),previous=null)
     if(paymentState.pending){result.alertType=paymentState.pending.type;result.requiresHumanReview=!result.paymentConfirmed;}
   }
   if(!result.alertType)return {result,delivery:'none'};
+  if(result.alertType==='no_balance_due' && snapshot.propertyId==='aurora-oxford-co'){
+    const message={subject:'Adex HOA | Oxford Place | No balance due',text:[
+      'Oxford Place — LCM account summary',
+      'Portal balance: $0.00',
+      `Monthly assessment posted ${snapshot.dueDate}: $${snapshot.amountDue.toFixed(2)}`,
+      ...snapshot.payleaseCredits.map(c=>`Posted Paylease credit on ${c.postedOn}: $${c.amount.toFixed(2)}`),
+      'LCM does not show which assessment each credit was applied to.',
+      `Portal observed: ${snapshot.observedAt}`,`Source: ${new URL(snapshot.sourceUrl).origin}`
+    ].join('\n')};
+    return {result,delivery:await deliver(env,'oxford-covered:'+result.monitoringDueDate,message,now)};
+  }
   if(result.monitoringMode==='balance_only') {
     const signature=JSON.stringify([result.status,snapshot.balanceDue,result.priority,result.priority==='important'?result.asOfDate:'']);
     const stateKey='monitor:balance-notice:'+snapshot.propertyId;
