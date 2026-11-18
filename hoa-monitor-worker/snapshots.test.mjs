@@ -108,3 +108,18 @@ test('Apache paid confirmation requires reconciled receipt evidence and zero acc
  assert.equal(evaluateSnapshot(validateSnapshot(s,properties,now),now).paymentConfirmed,true);assert.equal(evaluateSnapshot({...validateSnapshot(s,properties,now),balanceDue:1},now).paymentConfirmed,false);
  assert.throws(()=>validateSnapshot({...s,countySettlement:{...s.countySettlement,receiptTotal:1}},properties,now));
 });
+
+test('Oxford current posted credit and zero balance resolve the balance alert',()=>{
+ const checked=new Date('2026-11-18T14:15:00Z');
+ const s=validateSnapshot({...base,observedAt:'2026-11-17T22:36:17.592Z',balanceDue:0,
+  payleaseCredits:[{amount:10,postedOn:'2026-11-13'}]},[],checked);
+ const result=evaluateSnapshot(s,checked);
+ assert.equal(result.status,'no_balance_due');
+ assert.equal(result.priority,'routine');
+ assert.equal(result.paymentConfirmed,false);
+ for(const change of [{balanceDue:null},{balanceDue:10},{payleaseCredits:[]},
+  {payments:[{dueDate:s.dueDate,status:'returned',amount:10,evidence:'hoa_account_ledger'}]}]){
+  assert.equal(evaluateSnapshot({...s,...change},checked).requiresHumanReview,true);
+ }
+ assert.equal(evaluateSnapshot(s,new Date('2026-11-21T08:00:00Z')).status,'stale');
+});
