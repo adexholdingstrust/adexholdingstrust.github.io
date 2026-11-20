@@ -13,6 +13,7 @@ export function hoaEmail(snapshot, result, progressText) {
   let balance = 'Current balance unavailable';
   if (!stale && Number.isFinite(amount)) {
     if (amount < 0) balance = money.format(-amount) + ' account credit';
+    else if (result.status==='upcoming_assessment') balance = money.format(amount) + ' account balance';
     else if (amount === 0) balance = '$0.00 due';
     else balance = money.format(amount) + ' balance due';
   }
@@ -24,8 +25,13 @@ export function hoaEmail(snapshot, result, progressText) {
   else if (result.paymentConfirmed) details.push('The ledger confirms payment of the monthly assessment.');
   else if (result.requiresHumanReview && result.monitoringMode !== 'balance_only' && !stale)
     details.push('The monitor could not match a payment to this month’s assessment.');
-  if (result.requiresHumanReview && !stale) details.push('Owner-set monitoring due date: '+result.monitoringDueDate);
-  if (result.monitoringAmountDue != null) details.push('Monthly assessment: '+money.format(result.monitoringAmountDue));
+  if (!stale && snapshot.dueDate && snapshot.provider==='LCM')
+    details.push('Monthly assessment due: '+snapshot.dueDate);
+  else {
+    if (!stale && snapshot.dueDate && snapshot.provider==='TownSq') details.push('Assessment posted: '+snapshot.dueDate);
+    details.push('Payment due date: unverified from portal.');
+  }
+  if (!stale && snapshot.amountDue != null) details.push('Monthly assessment: '+money.format(snapshot.amountDue));
   for (const credit of snapshot.payleaseCredits || []) details.push('Paylease payment posted '+credit.postedOn+': '+money.format(credit.amount));
   if (result.monitoringMode === 'balance_only') details.push('Bank payment schedule on file: $120 every 14 days.');
   if (progressText && amount > 0 && !stale) details.push(progressText.split(';')[0].replace(/\.?$/,'.'));

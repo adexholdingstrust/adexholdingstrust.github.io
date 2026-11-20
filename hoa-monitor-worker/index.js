@@ -75,7 +75,7 @@ export async function processSnapshot(env,snapshot,now=new Date(),previous=null)
   if(!result.alertType)return {result,delivery:'none'};
   let key;
   if(snapshot.kind==='hoa') {
-    const signature=JSON.stringify([result.asOfDate,result.status,snapshot.balanceDue,result.priority,result.paymentConfirmed]);
+    const signature=JSON.stringify([result.asOfDate,result.status,snapshot.balanceDue,result.priority,result.paymentConfirmed,snapshot.dueDate,snapshot.amountDue]);
     const stateKey='monitor:balance-notice:'+snapshot.propertyId;
     let state=await env.HOA_MONITOR_KV.get(stateKey,'json');
     if(!state||state.signature!==signature){

@@ -123,9 +123,15 @@ export function evaluateSnapshot(snapshot,now=new Date()) {
  const ledgerCovered=result.monitoringMode!=='balance_only' && Number.isFinite(snapshot.balanceDue) &&
   snapshot.balanceDue<=0 && result.status!=='stale' && !result.sourceStale && result.status!=='payment_failed' &&
   !snapshot.payments.some(p=>p.dueDate===snapshot.dueDate && ['failed','returned','reversed','nsf'].includes(p.status));
- const unresolved=!result.paymentConfirmed&&!coveredBalance&&!ledgerCovered;
+ const upcoming=snapshot.provider==='LCM' && snapshot.dueDate>result.asOfDate &&
+  result.status!=='stale' && result.status!=='payment_failed' && snapshot.balanceDue>0 &&
+  snapshot.balanceDue<=snapshot.amountDue;
+ const unresolved=!upcoming&&!result.paymentConfirmed&&!coveredBalance&&!ledgerCovered;
  const priority=unresolved&&day>=HOA_POLICY.verifyByDay?'important':'routine';
- if(ledgerCovered&&!result.paymentConfirmed){
+ if(upcoming){
+  result.status='upcoming_assessment';
+  result.alertType='upcoming_assessment';
+ }else if(ledgerCovered&&!result.paymentConfirmed){
   result.status=snapshot.balanceDue<0?'credit_balance':'no_balance_due';
   result.alertType='balance_update';
  }else if(result.monitoringMode!=='balance_only'&&result.status!=='stale'&&!result.paymentConfirmed){

@@ -16,7 +16,9 @@ export function lcmSnapshot(rows,now=new Date(),balanceDue=null) {
  if(balanceDue!==null&&(typeof balanceDue!=='number'||!Number.isFinite(balanceDue)||Math.abs(balanceDue)>100000000))throw Error('Invalid account balance');
  const today=localDate(now,'America/Denver');
  const entries=rows.filter(row=>row.length===4&&/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(row[0])).map(row=>({date:ledgerDate(row[0]),description:row[1],charge:ledgerMoney(row[2]),credit:ledgerMoney(row[3])}));
- const assessments=entries.filter(e=>/assessment/i.test(e.description)&&e.date.slice(0,7)===today.slice(0,7)&&e.date<=today&&e.charge>0);
+ const monthly=entries.filter(e=>/^(?:assessment(?:[- ]monthly)?|monthly assessment)$/i.test(e.description.trim())&&e.charge>0);
+ const upcoming=monthly.filter(e=>e.date>today).map(e=>e.date).sort()[0];
+ const assessments=upcoming?monthly.filter(e=>e.date===upcoming):monthly.filter(e=>e.date.slice(0,7)===today.slice(0,7));
  if(assessments.length!==1)throw Error('Current assessment cannot be identified uniquely');
  const assessment=assessments[0];
  // Paylease credits show posted transactions, but do not identify the assessment paid.

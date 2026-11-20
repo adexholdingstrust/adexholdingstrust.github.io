@@ -3,7 +3,7 @@
  'use strict';
  const origin='https://adex-hoa-monitor.tenantservices.workers.dev';
  const expected={ 'aurora-oxford-co':['hoa','co-condo'],'aurora-hoye-co':['hoa','co-townhouse'],'fallbrook-ca':['hoa','ca-sfh-fallbrook'],'elko-nv-10a-1':['tax','elko-nv-10a-1'],'elko-nv-10a-2':['tax','elko-nv-10a-2'],'navajo-az-10':['tax','navajo-az-10'],'iron-ut-113':['tax','iron-ut-113'],'modena-ut-112':['tax','modena-ut-112'],'valencia-nm-rge-1':['tax','valencia-nm-rge-1'],'valencia-nm-rancho-215':['tax','valencia-nm-rancho-215'],'lancaster-ca-210':['tax','lancaster-ca-210'],'lancaster-ca-253':['tax','lancaster-ca-253'],'pahrump-nv-232':['tax','pahrump-nv-232'],'apache-az-464':['tax','apache-az-464'] };
- const statuses=['missing','unknown','payment_options_unverified','assessment_incomplete','paid','payment_unverified','payment_failed','deadline_unverified','stale','credit_balance','no_balance_due','balance_due','balance_unavailable','no_balance','pending','scheduled_unconfirmed','overdue'];
+ const statuses=['upcoming_assessment','missing','unknown','payment_options_unverified','assessment_incomplete','paid','payment_unverified','payment_failed','deadline_unverified','stale','credit_balance','no_balance_due','balance_due','balance_unavailable','no_balance','pending','scheduled_unconfirmed','overdue'];
  const iso=x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(x)&&Number.isFinite(Date.parse(x));
  const money=(x,negative=false)=>typeof x==='number'&&Number.isFinite(x)&&Math.abs(x)<=100000000&&(negative||x>=0)&&Math.abs(x*100-Math.round(x*100))<0.00001;
  function validate(summary,now=Date.now()){
@@ -32,10 +32,10 @@
  function render(summary){const body=root.document?.getElementById('monitorRows');if(!body)return;body.replaceChildren();
   const properties=[...(root.ADEX_DATA?.rentals||[]),...(root.ADEX_DATA?.lands||[])];
   for(const r of summary.records){const row=root.document.createElement('tr');const title=properties.find(p=>p.id===r.financeId)?.name||r.financeId;
-   const state=r.status==='missing'?'Not connected':!r.fresh?'Stale observation':r.status==='payment_options_unverified'?'Alternative payment options: '+r.paymentOptions.map(o=>o.type.replaceAll('_',' ')+' '+o.dueDate+' '+usd(o.amount)).join('; '):r.status==='balance_unavailable'?'Balance unavailable':r.assessmentScope==='base_tax_only'?'Special assessments unverified':r.status==='credit_balance'?'Credit balance':r.status==='no_balance_due'?'No balance due':r.paymentConfirmed?'Payment confirmed':r.status==='balance_due'?'Balance to review':'Payment unverified';
+   const state=r.status==='missing'?'Not connected':!r.fresh?'Stale observation':r.status==='payment_options_unverified'?'Alternative payment options: '+r.paymentOptions.map(o=>o.type.replaceAll('_',' ')+' '+o.dueDate+' '+usd(o.amount)).join('; '):r.status==='balance_unavailable'?'Balance unavailable':r.assessmentScope==='base_tax_only'?'Special assessments unverified':r.status==='upcoming_assessment'?'Upcoming assessment':r.status==='credit_balance'?'Credit balance':r.status==='no_balance_due'?'No balance due':r.paymentConfirmed?'Payment confirmed':r.status==='balance_due'?'Balance to review':'Payment unverified';
    const balance=r.status==='missing'||r.balanceDue===null?'Not verified':r.balanceDue<0?'Credit '+usd(-r.balanceDue):usd(r.balanceDue);
    const assessment=r.monthlyAssessment!==undefined?usd(r.monthlyAssessment)+' / month':r.annualAssessment!==undefined?usd(r.annualAssessment)+(r.assessmentScope==='base_tax_only'?' base tax; excludes special assessments':' / tax year'):'Published value retained';
-   for(const text of [title,state+(r.monitoringDueDate?' | Due by '+r.monitoringDueDate+' (owner policy)'+(r.priority==='important'?' | IMPORTANT':''):''),balance,assessment,r.observedAt?new Date(r.observedAt).toLocaleString():'—']){const cell=root.document.createElement('td');cell.textContent=text;row.appendChild(cell);}body.appendChild(row);
+   for(const text of [title,state+(r.kind==='hoa'?(r.fresh&&r.dueDate&&r.propertyId==='aurora-oxford-co'?' | Monthly assessment due '+r.dueDate:' | Payment due date unverified'):''),balance,assessment,r.observedAt?new Date(r.observedAt).toLocaleString():'—']){const cell=root.document.createElement('td');cell.textContent=text;row.appendChild(cell);}body.appendChild(row);
   }
  }
  function receive(event){

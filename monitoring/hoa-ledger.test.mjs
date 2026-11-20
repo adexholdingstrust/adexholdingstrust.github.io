@@ -6,8 +6,8 @@ test('LCM current assessment is verified without allocating unreferenced credits
  const result=lcmSnapshot([['11/01/2026','Monthly assessment','$635.03',''],['11/02/2026','Payment','','635.03']],now);
  assert.equal(result.amountDue,635.03);assert.equal(result.dueDate,'2026-11-01');assert.deepEqual(result.payments,[]);assert.equal(result.balanceDue,null);
 });
-test('missing, future and ambiguous assessments fail closed',()=>{
- for(const rows of [[],[['12/01/2026','Assessment','635.03','']],[['11/01/2026','Assessment','635.03',''],['11/02/2026','Assessment','635.03','']]])assert.throws(()=>lcmSnapshot(rows,now));
+test('missing and ambiguous assessments fail closed',()=>{
+ for(const rows of [[],[['11/01/2026','Assessment','635.03',''],['11/02/2026','Assessment','635.03','']]])assert.throws(()=>lcmSnapshot(rows,now));
 });
 test('ledger parsing rejects invalid dates and ambiguous money',()=>{
  assert.equal(ledgerDate('11/1/2026'),'2026-11-01');assert.equal(ledgerMoney('$1,234.56'),1234.56);
@@ -95,4 +95,18 @@ test('reports Paylease credits since the assessment without assigning them to it
  ],now,0);
  assert.deepEqual(snapshot.payleaseCredits,[{postedOn:'2026-11-02',amount:25.55}]);
  assert.deepEqual(snapshot.payments,[]);
+});
+
+test('Oxford early December assessment is upcoming on November 20',async()=>{
+ const {evaluateSnapshot,validateSnapshot}=await import('../hoa-monitor-worker/snapshots.js');
+ const {hoaEmail}=await import('../hoa-monitor-worker/hoa-email.js');
+ const checked=new Date('2026-11-20T16:21:00Z');
+ const rows=[['11/01/2026','Assessment-Monthly','635.03',''],['12/01/2026','Assessment-Monthly','635.03',''],['11/13/2026','Paylease 68220172','','49.23']];
+ const snapshot=validateSnapshot(lcmSnapshot(rows,checked,635.03),[],checked);
+ const result=evaluateSnapshot(snapshot,checked);
+ const mail=hoaEmail(snapshot,result,null);
+ assert.equal(result.requiresHumanReview,false);
+ assert.match(mail.text,/Monthly assessment due: 2026-12-01/);
+ assert.doesNotMatch(mail.text,/2026-11-10|could not match/);
+ assert.doesNotMatch(mail.subject,/Review requested/);
 });
