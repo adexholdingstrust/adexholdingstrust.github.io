@@ -124,9 +124,14 @@ export function evaluateSnapshot(snapshot,now=new Date()) {
   result.status!=='stale' && !result.paymentConfirmed && snapshot.balanceDue===0 &&
   snapshot.payleaseCredits?.some(c=>c.postedOn>=snapshot.dueDate && c.postedOn<=result.asOfDate && c.amount>0) &&
   !snapshot.payments.some(p=>p.dueDate===snapshot.dueDate && ['failed','returned','reversed','nsf'].includes(p.status));
- const unresolved=!result.paymentConfirmed&&!coveredBalance&&!oxfordCovered;
+ const hoyeCovered=snapshot.propertyId==='aurora-hoye-co' && Number.isFinite(snapshot.balanceDue) &&
+  snapshot.balanceDue<=0 && result.status!=='stale' && result.status!=='payment_failed' && !result.paymentConfirmed;
+ const unresolved=!result.paymentConfirmed&&!coveredBalance&&!oxfordCovered&&!hoyeCovered;
  const priority=unresolved&&day>=HOA_POLICY.verifyByDay?'important':'routine';
- if(oxfordCovered){
+ if(hoyeCovered){
+  result.status=snapshot.balanceDue<0?'credit_balance':'no_balance_due';
+  result.alertType='balance_update';
+ }else if(oxfordCovered){
   result.status='no_balance_due';
   result.alertType='no_balance_due';
  }else if(result.monitoringMode!=='balance_only'&&result.status!=='stale'&&!result.paymentConfirmed){
