@@ -73,21 +73,20 @@ export async function processSnapshot(env,snapshot,now=new Date(),previous=null)
     if(paymentState.pending){result.alertType=paymentState.pending.type;result.requiresHumanReview=!result.paymentConfirmed;}
   }
   if(!result.alertType)return {result,delivery:'none'};
-  if(result.alertType==='no_balance_due' && snapshot.propertyId==='aurora-oxford-co'){
-    const message=hoaEmail(snapshot,result,progressText);
-    return {result,delivery:await deliver(env,'oxford-covered:'+result.monitoringDueDate,message,now)};
-  }
-  if(result.monitoringMode==='balance_only') {
-    const signature=JSON.stringify([result.status,snapshot.balanceDue,result.priority,result.priority==='important'?result.asOfDate:'']);
+  let key;
+  if(snapshot.kind==='hoa') {
+    const signature=JSON.stringify([result.asOfDate,result.status,snapshot.balanceDue,result.priority,result.paymentConfirmed]);
     const stateKey='monitor:balance-notice:'+snapshot.propertyId;
     let state=await env.HOA_MONITOR_KV.get(stateKey,'json');
-    if(!state||state.signature!==signature){state={signature,eventId:crypto.randomUUID()};await env.HOA_MONITOR_KV.put(stateKey,JSON.stringify(state));}
-    const message=hoaEmail(snapshot,result,progressText);
-    return {result,delivery:await deliver(env,'balance:'+snapshot.propertyId+':'+state.eventId,message,now)};
+    if(!state||state.signature!==signature){
+      state={signature,eventId:crypto.randomUUID()};
+      await env.HOA_MONITOR_KV.put(stateKey,JSON.stringify(state));
+    }
+    key='balance:'+snapshot.propertyId+':'+state.eventId;
+  } else {
+    key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||(snapshot.kind==='hoa'&&snapshot.dueDate===null?result.asOfDate.slice(0,7):''),snapshot.kind==='hoa'?result.monitoringDueDate:snapshot.dueDate,result.alertType,result.status==='stale'||result.priority==='important'?result.asOfDate:''].join(':');
   }
-
-  let key=[snapshot.kind,snapshot.propertyId,snapshot.taxYear||(snapshot.kind==='hoa'&&snapshot.dueDate===null?result.asOfDate.slice(0,7):''),snapshot.kind==='hoa'?result.monitoringDueDate:snapshot.dueDate,result.alertType,result.status==='stale'||result.priority==='important'?result.asOfDate:''].join(':');
-  if(paymentState?.pending)key+=':event:'+paymentState.pending.id;
+  if(paymentState?.pending && snapshot.kind==='tax')key+=':event:'+paymentState.pending.id;
   const message=snapshot.kind==='hoa'?hoaEmail(snapshot,result,progressText):{subject:`${result.priority==='important'?'IMPORTANT | ':''}Adex ${snapshot.kind==='hoa'?'HOA':'Property Tax'} | ${result.alertType.replaceAll('_',' ')} | ${snapshot.propertyId}`,text:[
     `Property: ${snapshot.propertyId}`,`Source: ${new URL(snapshot.sourceUrl).origin}`,
     ...(snapshot.kind==='tax'?[`Tax year: ${snapshot.taxYear}`]:[]),

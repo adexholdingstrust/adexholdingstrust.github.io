@@ -120,20 +120,14 @@ export function evaluateSnapshot(snapshot,now=new Date()) {
  const currentAssessment=snapshot.dueDate?.slice(0,7)===month;
  if(result.paymentConfirmed&&!currentAssessment){result.paymentConfirmed=false;result.status='payment_unverified';result.alertType='payment_verification_due';delete result.evidence;}
  const coveredBalance=result.monitoringMode==='balance_only'&&result.status!=='stale'&&snapshot.balanceDue!==null&&snapshot.balanceDue<=0;
- const oxfordCovered=snapshot.propertyId==='aurora-oxford-co' && currentAssessment &&
-  result.status!=='stale' && !result.paymentConfirmed && snapshot.balanceDue===0 &&
-  snapshot.payleaseCredits?.some(c=>c.postedOn>=snapshot.dueDate && c.postedOn<=result.asOfDate && c.amount>0) &&
+ const ledgerCovered=result.monitoringMode!=='balance_only' && Number.isFinite(snapshot.balanceDue) &&
+  snapshot.balanceDue<=0 && result.status!=='stale' && !result.sourceStale && result.status!=='payment_failed' &&
   !snapshot.payments.some(p=>p.dueDate===snapshot.dueDate && ['failed','returned','reversed','nsf'].includes(p.status));
- const hoyeCovered=snapshot.propertyId==='aurora-hoye-co' && Number.isFinite(snapshot.balanceDue) &&
-  snapshot.balanceDue<=0 && result.status!=='stale' && result.status!=='payment_failed' && !result.paymentConfirmed;
- const unresolved=!result.paymentConfirmed&&!coveredBalance&&!oxfordCovered&&!hoyeCovered;
+ const unresolved=!result.paymentConfirmed&&!coveredBalance&&!ledgerCovered;
  const priority=unresolved&&day>=HOA_POLICY.verifyByDay?'important':'routine';
- if(hoyeCovered){
+ if(ledgerCovered&&!result.paymentConfirmed){
   result.status=snapshot.balanceDue<0?'credit_balance':'no_balance_due';
   result.alertType='balance_update';
- }else if(oxfordCovered){
-  result.status='no_balance_due';
-  result.alertType='no_balance_due';
  }else if(result.monitoringMode!=='balance_only'&&result.status!=='stale'&&!result.paymentConfirmed){
   result.status=result.status==='payment_failed'?'payment_failed':'payment_unverified';
   result.alertType=result.status==='payment_failed'?'payment_problem':priority==='important'?'payment_review_important':'payment_verification_due';

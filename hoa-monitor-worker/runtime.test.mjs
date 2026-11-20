@@ -19,7 +19,7 @@ test('email acceptance reports provider IP restriction without leaking its respo
 test('balance-only HOA notice states unknown amount and provider freshness, without paid claim',async()=>{
  const previous=globalThis.fetch;let mail;
  globalThis.fetch=async(_u,options)=>{mail=JSON.parse(options.body);return new Response('{}',{status:201});};
- try{const observation={...snapshot,dueDate:null,amountDue:null,balanceDue:-605,sourceUpdatedAt:null};const result=await processSnapshot({HOA_MONITOR_KV:store(),NOTIFICATIONS_ENABLED:'true',BREVO_API_KEY:'test',EMAIL_FROM:'sender@example.test'},observation,now);assert.equal(result.delivery,'sent');assert.match(mail.subject,/^Oxford Place \| \$605.00 account credit/);assert.match(mail.htmlContent,/adexholdings.com\/assets\/logo.png/);assert.match(mail.textContent,/could not match a payment/);}finally{globalThis.fetch=previous;}
+ try{const observation={...snapshot,dueDate:null,amountDue:null,balanceDue:-605,sourceUpdatedAt:null};const result=await processSnapshot({HOA_MONITOR_KV:store(),NOTIFICATIONS_ENABLED:'true',BREVO_API_KEY:'test',EMAIL_FROM:'sender@example.test'},observation,now);assert.equal(result.delivery,'sent');assert.match(mail.subject,/^Oxford Place \| \$605.00 account credit/);assert.match(mail.htmlContent,/adexholdings.com\/assets\/logo.png/);assert.doesNotMatch(mail.textContent,/could not match a payment/);}finally{globalThis.fetch=previous;}
 });
 
 test('Calabrese sends balance changes, suppresses repeats, and alerts when the same debt recurs',async()=>{
@@ -79,4 +79,22 @@ test('private Valencia collection endpoint requires HMAC and never accepts arbit
  assert.equal((await worker.fetch(new Request('https://example.test/internal/collect-valencia',{method:'POST',body:'{}'}),env)).status,401);
  const body=JSON.stringify({propertyId:'other'}),signedRequest=await signed(body);
  assert.equal((await worker.fetch(new Request('https://example.test/internal/collect-valencia',{method:'POST',body,headers:signedRequest.headers}),env)).status,400);
+});
+
+test('each HOA sends a daily status and suppresses duplicate checks that day',async()=>{
+ const original=globalThis.fetch;
+ globalThis.fetch=async()=>new Response('{}',{status:201});
+ try {
+  const env={HOA_MONITOR_KV:store(),NOTIFICATIONS_ENABLED:'true',BREVO_API_KEY:'test',EMAIL_FROM:'sender@example.test'};
+  for(const propertyId of ['aurora-hoye-co','aurora-oxford-co','fallbrook-ca']){
+   for(const day of ['20','21']){
+    const checked=new Date('2026-11-'+day+'T17:00:00Z');
+    const observation={...snapshot,propertyId,observedAt:checked.toISOString(),balanceDue:-2,payments:[]};
+    const first=await processSnapshot(env,observation,checked);
+    assert.equal(first.result.requiresHumanReview,false);
+    assert.equal(first.delivery,'sent');
+    assert.equal((await processSnapshot(env,observation,checked)).delivery,'suppressed');
+   }
+  }
+ }finally{globalThis.fetch=original;}
 });

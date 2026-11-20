@@ -4,7 +4,7 @@ import {validateSnapshot,evaluateSnapshot,localDate} from './snapshots.js';
 const now=new Date('2026-11-07T16:00:00.000Z');
 const base={kind:'hoa',propertyId:'aurora-oxford-co',provider:'LCM',sourceUrl:'https://lcmpropertymanagement.com/AccountStatus/40583~10533163/',observedAt:now.toISOString(),dueDate:'2026-11-01',amountDue:205,balanceDue:-605,payments:[],monthlyAssessment:205,autopayScheduled:true};
 const validate=value=>validateSnapshot(value,[],now);
-test('credit and scheduled autopay never prove payment',()=>{const e=evaluateSnapshot(validate(base),now);assert.equal(e.paymentConfirmed,false);assert.equal(e.status,'payment_unverified');});
+test('credit and scheduled autopay never prove payment',()=>{const e=evaluateSnapshot(validate(base),now);assert.equal(e.paymentConfirmed,false);assert.equal(e.status,'credit_balance');});
 test('allocated posted evidence confirms the assessment',()=>{const payments=[{reference:'posted-123',amount:205,dueDate:'2026-11-01',postedOn:'2026-11-02',status:'posted',evidence:'hoa_account_ledger'}];assert.equal(evaluateSnapshot(validate({...base,payments}),now).paymentConfirmed,true);});
 test('reversal removes confirmation',()=>{const payments=[{reference:'a',amount:205,dueDate:base.dueDate,postedOn:'2026-11-02',status:'posted',evidence:'hoa_account_ledger'},{reference:'b',amount:205,dueDate:base.dueDate,postedOn:'2026-11-03',status:'reversed',evidence:'hoa_account_ledger'}];assert.equal(evaluateSnapshot(validate({...base,payments}),now).paymentConfirmed,false);});
 test('stale snapshot cannot be confirmed on scheduled recheck',()=>assert.equal(evaluateSnapshot(validate(base),new Date('2026-11-10T16:00:00Z')).alertType,'monitor_stale'));
@@ -86,7 +86,7 @@ test('monthly policy preserves payment allocation and resets confirmations at mo
  const paid={...base,zone:'America/Denver',observedAt:now.toISOString(),payments:[{reference:'allocation',status:'posted',amount:205,dueDate:'2026-11-01',postedOn:'2026-11-02',evidence:'hoa_account_ledger'}]};
  const result=evaluateSnapshot(paid,now);assert.equal(result.paymentConfirmed,true);assert.equal(result.priority,'routine');assert.equal(result.monitoringDueDate,'2026-11-10');assert.equal(paid.payments[0].dueDate,'2026-11-01');
  const december=new Date('2026-12-08T16:00:00.000Z');
- const next=evaluateSnapshot({...paid,observedAt:december.toISOString()},december);assert.equal(next.paymentConfirmed,false);assert.equal(next.priority,'important');assert.equal(next.monitoringDueDate,'2026-12-10');assert.equal(next.monitoringAmountDue,null);
+ const next=evaluateSnapshot({...paid,observedAt:december.toISOString()},december);assert.equal(next.paymentConfirmed,false);assert.equal(next.priority,'routine');assert.equal(next.monitoringDueDate,'2026-12-10');assert.equal(next.monitoringAmountDue,null);
 });
 test('Calabrese credit coverage remains routine but debt or stale coverage becomes important on eighth',()=>{
  const date=new Date('2026-11-08T16:00:00.000Z');
@@ -117,7 +117,7 @@ test('Oxford current posted credit and zero balance resolve the balance alert',(
  assert.equal(result.status,'no_balance_due');
  assert.equal(result.priority,'routine');
  assert.equal(result.paymentConfirmed,false);
- for(const change of [{balanceDue:null},{balanceDue:10},{payleaseCredits:[]},
+ for(const change of [{balanceDue:null},{balanceDue:10},
   {payments:[{dueDate:s.dueDate,status:'returned',amount:10,evidence:'hoa_account_ledger'}]}]){
   assert.equal(evaluateSnapshot({...s,...change},checked).requiresHumanReview,true);
  }
